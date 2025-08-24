@@ -1,4 +1,4 @@
-# 🎓 FECAP - Fundação Escola de Comércio Álvares Penteado
+# 🎓 FECAP - Fundação Escola de Comércio Álvares Penteado | EY - Ernst & Young
 
 <p align="center">
   <a href="https://www.fecap.br/">
