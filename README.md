@@ -14,12 +14,12 @@
 
 |        Nome          |                          Perfil                                                                                                                                          |
 |----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Anderson             | [LinkedIn](https://www.linkedin.com/in/eriane-dos-santos-oliveira-cfp-pqo-paap-53116292/)                                                                                |
-| Dandara              | [LinkedIn](https://www.linkedin.com/in/gustavo-roberto-0aa488288/)                                                                                                       |
-| Enzo                 | [LinkedIn](https://www.linkedin.com/in/gustavo-henrique-da-silva-santos-453822326?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app)    |
-| Gabriel              | [LinkedIn](https://www.linkedin.com/in/lucas-alves-bernardo-093871252?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app)                |
-| Gustavo              | [LinkedIn](https://github.com/vs7black)                                                                                                                                  |
-| Nathan               | [LinkedIn](https://github.com/vs7black)                                                                                                                                  |
+| Anderson             | [LinkedIn](https://www.linkedin.com/in/anderson-fernandez-2aa13924b/)                                                                                                    |
+| Dandara              | [LinkedIn](https://www.linkedin.com/in/dandaramonike/)                                                                                                                   |
+| Enzo                 | [LinkedIn](https://www.linkedin.com/in/enzohenrique777/)                                                                                                                 |
+| Gabriel              | [LinkedIn](https://www.linkedin.com/in/gabriel-pires-2082b473/)                                                                                                          |
+| Gustavo              | [LinkedIn](https://www.linkedin.com/in/gustavo-roberto-0aa488288/)                                                                                                       |
+| Nathan               | [LinkedIn](https://www.linkedin.com/in/nathan-leandro-8bb064208/)                                                                                                        |
 
 ## 👨‍🏫 Orientadores
 
