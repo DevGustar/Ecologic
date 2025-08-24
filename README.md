@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://www.ey.com/pt_br/about-us">
-    <img src="https://www.ey.com/content/dam/content-fragments/ey-unified-site/ey-com/people/local/pt_br/images/a/ey-logo.png" alt="EY" width="800"/>
+    <img src="https://tse1.mm.bing.net/th/id/OIP.bc36gRicjZbcvILUXv-uMAHaHa?rs=1&pid=ImgDetMain&o=7&rm=3" alt="EY" width="225"/>
   </a>
 </p>
 
