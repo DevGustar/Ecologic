@@ -1,8 +1,4 @@
-<p>
-    <b style="font-size:25px">🎓 FECAP - Fundação Escola de Comércio Álvares Penteado</b>
-</p>
-
----
+# 🎓 **FECAP - Fundação Escola de Comércio Álvares Penteado**
 
 <p align="center">
   <a href="https://www.fecap.br/">
@@ -10,11 +6,7 @@
   </a>
 </p>
 
-<p>
-    <b style="font-size:25px">🟡 EY - Ernst & Young</b>
-</p>
-
----
+# 🟡  **EY - Ernst & Young**
 
 <p align="center">
   <a href="https://www.ey.com/pt_br/about-us">
@@ -143,7 +135,7 @@ EcoLogic/
 
 ## 📚 **Referências**
 
-- [ANA (Agência Nacional de Águas)](https://dadosabertos.ana.gov.br/)
+>- [ANA (Agência Nacional de Águas)](https://dadosabertos.ana.gov.br/)
 
 ## 🙏 **Agradecimento**
 
