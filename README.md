@@ -1,4 +1,4 @@
-# 🎓 **FECAP - Fundação Escola de Comércio Álvares Penteado**
+# 🎓 **Fundação Escola de Comércio Álvares Penteado**
 
 <p align="center">
   <a href="https://www.fecap.br/">
@@ -6,7 +6,7 @@
   </a>
 </p>
 
-# 🟡  **EY - Ernst & Young**
+# 🟡  **Ernst & Young**
 
 <p align="center">
   <a href="https://www.ey.com/pt_br/about-us">
