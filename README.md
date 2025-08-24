@@ -29,7 +29,7 @@
 | Gustavo              | [LinkedIn](https://www.linkedin.com/in/gustavo-roberto-0aa488288/)                                                                                                       |
 | Nathan               | [LinkedIn](https://www.linkedin.com/in/nathan-leandro-8bb064208/)                                                                                                        |
 
-## 👨‍🏫 **Orientadores**
+## 👨‍🏫 **Orientador**
 
 - [`Dr. Victor Rosetti de Quiroz`](https://www.linkedin.com/in/victorbarq/?originalSubdomain=br)
 
