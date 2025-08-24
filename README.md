@@ -1,10 +1,14 @@
 # 🎓 FECAP - Fundação Escola de Comércio Álvares Penteado
-# 🟡  EY   - Ernst & Young
 
 <p align="center">
   <a href="https://www.fecap.br/">
     <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhZPrRa89Kma0ZZogxm0pi-tCn_TLKeHGVxywp-LXAFGR3B1DPouAJYHgKZGV0XTEf4AE&usqp=CAU" alt="FECAP" />
   </a>
+</p>
+
+# 🟡  EY   - Ernst & Young
+
+<p align="center">
   <a href="https://www.ey.com/pt_br/about-us">
     <img src="https://www.ey.com/content/dam/content-fragments/ey-unified-site/ey-com/people/local/pt_br/images/a/ey-logo.png" alt="EY" />
   </a>
