@@ -29,12 +29,8 @@
 | Gustavo              | [LinkedIn](https://www.linkedin.com/in/gustavo-roberto-0aa488288/)                                                                                                       |
 | Nathan               | [LinkedIn](https://www.linkedin.com/in/nathan-leandro-8bb064208/)                                                                                                        |
 
-## 👨‍🏫 Orientadores
+## 👨‍🏫 Orientador
 
-- [`Dr. Eduardo Savino Gomes`](https://www.linkedin.com/in/eduardo-savino-gomes-77833a10/)
-- [`Me. Francisco de Souza Escobar`](https://www.linkedin.com/in/francisco-escobar/)
-- [`Me. Aimar Martins Lopes`](https://www.linkedin.com/in/aimarlopes/)
-- [`Dr. Jose Carlos Buesso Junior`](https://www.linkedin.com/in/jbuesso/)
 - [`Dr. Victor Rosetti de Quiroz`](https://www.linkedin.com/in/victorbarq/?originalSubdomain=br)
 
 ## 📝 Descrição do Projeto
