@@ -8,7 +8,7 @@
 
 ## 🧠 Projeto
 
-### **Dashboard interativo para mitigação do impacto das inundações e, se possível, secas nas cidades e no agronegócio.**
+### **Dashboard interativo para mitigação de impacto de inundações e, se possível, secas nas cidades e no agronegócio.**
 
 ## 👨‍💻 Equipe: `EcoLogic`
 
