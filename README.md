@@ -69,11 +69,11 @@ Este projeto tem como objetivo desenvolver um **dashboard interativo** para apoi
 - SQL
 - C++
 
-## 📌 Descrição Rápida
+## 📌 **Descrição Rápida**
 
 > Dashboard interativo com uso de **IA** para monitorar, prever e mitigar impactos de **inundações** e **secas** em cidades e no agronegócio.
 
-## 📁 Estrutura do Projeto
+## 📁 **Estrutura do Projeto**
 
 ```
 EcoLogic/
@@ -112,7 +112,7 @@ EcoLogic/
 └── LICENSE                   # Licença do projeto
 ```
 
-## 🗓️ Cronograma de Desenvolvimento
+## 🗓️ **Cronograma de Desenvolvimento**
 
 | Semana |                Atividade                                    |     Responsável           |
 |--------|-------------------------------------------------------------|---------------------------|
@@ -122,7 +122,7 @@ EcoLogic/
 |   5    | Estudos dos custos e visão de negócios.                     | Toda a equipe             |
 |   6    | Simulações de apresentação e entrega final.                 | Toda a equipe             |
 
-## 👥 Tabela de Funções
+## 👥 **Tabela de Funções**
 
 | Membro           | Função Principal      | Atividades Secundárias                                      |
 |------------------|-----------------------|-------------------------------------------------------------|
@@ -133,11 +133,11 @@ EcoLogic/
 | Gustavo          | Internet of Things    | Aqui vai sua função secundária                              |
 | Nathan           | Vendas e Financeiro   | Aqui vai sua função secundária                              |
 
-## 📚 Referências
+## 📚 **Referências**
 
 - [ANA (Agência Nacional de Águas)](https://dadosabertos.ana.gov.br/)
 
-## 🙏 Agradecimento
+## 🙏 **Agradecimento**
 
 Muito obrigado por acompanhar nosso projeto!  
 Esperamos que esta iniciativa contribua para transformar positivamente a sociedade 💡
