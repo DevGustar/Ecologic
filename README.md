@@ -142,5 +142,5 @@ EcoLogic/
 Muito obrigado por acompanhar nosso projeto!  
 Esperamos que esta iniciativa contribua para transformar positivamente a sociedade 💡
 
-Feito com ❤,<br>
+Feito com ❤,<br> 
 **EcoLogic**
