@@ -1,0 +1,15 @@
+# Ficheiro de dependências para o projeto EcoLogic 2.0 Backend
+
+# Framework principal para a nossa API web
+# O '[all]' inclui o uvicorn (servidor) e outras dependências úteis
+fastapi[all]
+
+# Biblioteca para fazer requisições HTTP para as APIs externas
+requests
+
+# Biblioteca para manipulação e análise de dados (a nossa "super-planilha")
+pandas
+
+# Bibliotecas para trabalhar com dados geoespaciais (mapas, fronteiras, etc.)
+geopandas
+shapely
