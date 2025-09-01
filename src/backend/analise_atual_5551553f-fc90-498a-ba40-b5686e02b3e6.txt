@@ -1,8 +1,0 @@
-
---- RESUMO DO CLIMA ATUAL (23:00) ---
-Condição: Céu limpo
-Temperatura: 16.22°C (Sensação: 16.09°C)
-Chuva (última hora): 0 mm
-Umidade: 84%
-Vento: 16.67 km/h
-    
