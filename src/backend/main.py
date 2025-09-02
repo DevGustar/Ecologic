@@ -1,9 +1,8 @@
 # ferramentas nencessárias
 from fastapi import FastAPI, HTTPException
 import uuid
-
-# importa nosso buscador
-from api_connectors import buscar_clima_openweather
+from api_connectors import buscar_clima_openweather # importa nosso buscador
+from api_connectors import fetch_elevation_data # importa nosso buscador de elevação
 
 app = FastAPI(title="EcoLogic 2.0 API")
 
@@ -14,11 +13,17 @@ db_assets = {}
 def create_asset(name: str, lat: float, lon: float): #* para poder criar um ativo é preciso de nome, latitude e longitude
     asset_id = str(uuid.uuid4()) #gera um novo ID único de ativo - uuid4 (método especifico)
 
+    #? ADICIONANDO ELEVAÇÃO NA CRIAÇÃO DO ATIVO
+    print(f"Buscando dados de elevação para o novo ativo {name}...")
+    elevation = fetch_elevation_data(lat=lat, lon=lon)
+    print(f"Elevação encontrada: {elevation} metros")
+
     new_asset = { # dados do novo ativo organizados
         "id": asset_id,
         "name": name,
         "lat": lat,
-        "lon": lon
+        "lon": lon,
+        "elevation_m": elevation # novo dados de elevação em metros
     }
     db_assets[asset_id] = new_asset # adiciona o novo ativo ao banco de dados no espaço ID que foi criado
     print(f"Banco de dados atualizado: {db_assets}")
