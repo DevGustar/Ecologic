@@ -1,6 +1,12 @@
 import requests #permiite fazer requisições
 import pprint #permite imprimir de forma mais legível
 
+# Estas duas linhas foram adicionadas para "silenciar" os avisos de segurança (InsecureRequestWarning)
+# que aparecem ao usar verify=False. Isto deixa o nosso terminal mais limpo.
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+
 def buscar_clima_openweather(lat: float, lon: float): #função que junta tudo e faz a busca do clima usando os parametro para latitude e longitude
     api_key = "e0a38376d4c46a8fec65aeafaa6fdeed"
     LINK_BASE = "https://api.openweathermap.org/data/3.0/onecall"
@@ -14,7 +20,8 @@ def buscar_clima_openweather(lat: float, lon: float): #função que junta tudo e
     }
 
     try: #* o caminho feliz se não houver erros
-        response = requests.get(LINK_BASE, params=parameters)
+        # --- A ÚNICA MUDANÇA ESTÁ AQUI: Adicionamos 'verify=False' ---
+        response = requests.get(LINK_BASE, params=parameters, verify=False)
         response.raise_for_status() #verifica se a requisição foi bem sucedida
         return response.json()
     except requests.exceptions.RequestException as e: #* caminho em caso de erros
@@ -36,8 +43,9 @@ def fetch_elevation_data(lat: float, lon: float) -> float:
     }
     
     try:
+        # --- E A MUDANÇA TAMBÉM ESTÁ AQUI: Adicionamos 'verify=False' ---
         # Usamos requests.get, que é mais simples para este caso
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, verify=False)
         response.raise_for_status()
         data = response.json()
         
