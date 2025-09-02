@@ -1,5 +1,6 @@
 # --- national_risk_generator.py ---
-# Ferramenta para gerar um "Censo de Risco Climático" para as principais cidades do Brasil.
+# Ferramenta para gerar um "Censo Nacional de Risco Climático" usando a API Open-Meteo.
+# VERSÃO CORRIGIDA PARA REDES RESTRITIVAS (FACULDADE/CORPORATIVO)
 
 import pandas as pd
 import requests
@@ -8,7 +9,7 @@ import time
 # Importamos a nossa ferramenta de cálculo de risco
 from risk_calculator import calculate_daily_risk
 
-# URL da nossa lista completa de municípios
+# URL da nossa lista de municípios
 URL_MUNICIPIOS = "https://raw.githubusercontent.com/kelvins/Municipios-Brasileiros/main/csv/municipios.csv"
 
 def buscar_clima_openmeteo(lat: float, lon: float):
@@ -23,56 +24,47 @@ def buscar_clima_openmeteo(lat: float, lon: float):
         "timezone": "auto"
     }
     try:
-        response = requests.get(url_base, params=params)
+        # --- A CORREÇÃO ESTÁ AQUI ---
+        # Adicionamos 'verify=False' para contornar problemas de certificado SSL em redes restritivas.
+        response = requests.get(url_base, params=params, verify=False)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
         print(f"  -> Erro ao conectar com Open-Meteo: {e}")
         return None
 
-def generate_national_risk_report():
+# O resto do código (a função generate_full_national_risk_report e o if __name__ == "__main__")
+# permanece exatamente igual. Cole esta função corrigida no lugar da antiga.
+
+def generate_full_national_risk_report():
     """
-    Função principal que orquestra a criação do nosso dataset.
+    Função principal que orquestra a criação do nosso dataset completo.
     """
-    print("--- Iniciando a geração do Relatório de Risco para Cidades Selecionadas ---")
+    print("--- Iniciando a geração do Relatório Nacional de Risco (TODOS OS MUNICÍPIOS) ---")
     
     # 1. Carregar a lista COMPLETA de todos os municípios
-    print(f"Baixando a lista completa de municípios de: {URL_MUNICIPIOS}")
+    print(f"Baixando a lista de municípios de: {URL_MUNICIPIOS}")
     try:
-        todos_municipios_df = pd.read_csv(URL_MUNICIPIOS)
-        print(f"Sucesso! {len(todos_municipios_df)} municípios encontrados.")
+        municipios_df = pd.read_csv(URL_MUNICIPIOS)
+        print(f"Sucesso! {len(municipios_df)} municípios encontrados.")
     except Exception as e:
-        print(f"!!! ERRO: Não foi possível baixar a lista de municípios. Causa: {e}")
+        print(f"!!! ERRO: Não foi possível baixar la lista de municípios. Causa: {e}")
         return
 
-    # --- A GRANDE MUDANÇA ESTÁ AQUI: A NOSSA LISTA QUALIFICADA ---
-    # Criamos uma lista com as capitais e outros municípios importantes.
-    cidades_selecionadas = [
-        # Capitais
-        'Rio Branco', 'Maceió', 'Macapá', 'Manaus', 'Salvador', 'Fortaleza', 'Brasília', 
-        'Vitória', 'Goiânia', 'São Luís', 'Cuiabá', 'Campo Grande', 'Belo Horizonte', 
-        'Belém', 'João Pessoa', 'Curitiba', 'Recife', 'Teresina', 'Rio de Janeiro', 'Natal', 
-        'Porto Alegre', 'Porto Velho', 'Boa Vista', 'Florianópolis', 'São Paulo', 'Aracaju', 'Palmas',
-        # Outros municípios relevantes
-        'Campinas', 'Guarulhos', 'Joinville', 'Uberlândia', 'Santos'
-    ]
-    
-    # Usamos o Pandas para filtrar a tabela completa e pegar apenas as cidades da nossa lista.
-    municipios_df = todos_municipios_df[todos_municipios_df['nome'].isin(cidades_selecionadas)]
-    print(f"\n--- Processando uma lista selecionada de {len(municipios_df)} municípios importantes. ---\n")
-    
     # 2. Preparar para coletar os resultados
     resultados_finais = []
 
     # 3. "Caminhar" por cada município, buscar dados e calcular o risco
-    print("Iniciando a coleta de dados e cálculo de risco...")
+    print("\nIniciando a coleta de dados e cálculo de risco para todos os 5.570 municípios.")
+    print("Este processo será muito demorado. Por favor, aguarde...")
+    total_municipios = len(municipios_df)
     for index, municipio in municipios_df.iterrows():
         lat = municipio['latitude']
         lon = municipio['longitude']
         nome_municipio = municipio['nome']
         uf_municipio = municipio['codigo_uf']
         
-        print(f"Processando {index + 1}/{len(municipios_df)}: {nome_municipio} ({uf_municipio})...")
+        print(f"Processando {index + 1}/{total_municipios}: {nome_municipio} ({uf_municipio})...")
 
         dados_climaticos = buscar_clima_openmeteo(lat, lon)
         
@@ -100,14 +92,13 @@ def generate_national_risk_report():
         time.sleep(0.5)
 
     # 4. Salvar o resultado final em um CSV
-    nome_arquivo_final = "risk_report_capitais.csv" # Novo nome para o arquivo
+    nome_arquivo_final = "risk_report_todos_municipios.csv"
     resultados_df = pd.DataFrame(resultados_finais)
     resultados_df.to_csv(nome_arquivo_final, index=False, sep=';', encoding='utf-8-sig')
     
-    print(f"\n--- Relatório Concluído! ---")
+    print(f"\n--- Relatório Completo Concluído! ---")
     print(f"✅ -> Arquivo '{nome_arquivo_final}' foi gerado com os dados de {len(resultados_df)} municípios.")
-    print("Agora você pode usar este arquivo no seu ambiente Jupyter para praticar com o Folium.")
 
 # --- Coração do Script ---
 if __name__ == "__main__":
-    generate_national_risk_report()
+    generate_full_national_risk_report()
