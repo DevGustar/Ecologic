@@ -5,6 +5,9 @@ def calculate_daily_risk(daily_forecast_data: dict) -> float:
         se não for esse ele retorna um erro
         -> float ---> é a dica para o valor que vai ser retonado
     """
+    
+    # --- ETAPA 1: Calcular o "Score de Perigo Meteorológico" ---
+    
     # Recebe os dados do dicionario que foram passados e começa a guarda em variaveis
     #? Extraindo os dados por "get" e não [] para caso o valor não exista
     #? ele retorne o número 0, evitando que o codigo quebre
@@ -12,13 +15,33 @@ def calculate_daily_risk(daily_forecast_data: dict) -> float:
     rain_prob = daily_forecast_data.get("prob_chuva_%", 0)
     wind_gust_kmh = daily_forecast_data.get("rajadas_kmh", 0)
 
-    #! Define os pesos para cada variável
+    #! Define os pesos para cada variável de PERIGO
     peso_chuva = 0.5
     peso_prob = 0.05
     peso_vento = 0.08
 
-    #! Aplica os cálculos de risco
-    risk_score_bruto = (rain_volume * peso_chuva) + (rain_prob * peso_prob) + (wind_gust_kmh * peso_vento)
+    #! Aplica os cálculos para o perigo do clima
+    hazard_score = (rain_volume * peso_chuva) + (rain_prob * peso_prob) + (wind_gust_kmh * peso_vento)
+
+    # --- ETAPA 2: Calcular o "Fator de Vulnerabilidade do Terreno" ---
+    #? AQUI ENTRA A NOVA PARTE DO CÓDIGO
+    #? Pegamos o dado de elevação que veio no novo parâmetro 'structural_data'
+    elevation = structural_data.get("elevation_m", 500) # 500m como uma média segura se o dado falhar
+
+    #? Lógica simples para a v1.0: quanto mais baixo, maior a vulnerabilidade.
+    #? Este fator vai multiplicar o perigo.
+    if elevation < 50:
+        vulnerability_factor = 1.5  # Risco 50% maior em áreas muito baixas
+    elif elevation < 400:
+        vulnerability_factor = 1.2  # Risco 20% maior
+    elif elevation < 800:
+        vulnerability_factor = 1.0  # Risco normal (base)
+    else:
+        vulnerability_factor = 0.8  # Risco 20% menor em áreas altas
+    
+    # --- ETAPA 3: Calcular a Nota de Risco Final ---
+    #? A fórmula agora combina o Perigo com a Vulnerabilidade
+    risk_score_bruto = hazard_score * vulnerability_factor
     
     # Garante que os valores fiquem entre 0 e 10
     # max(risco, 0) --> pega o max entre 2 valores, garantindo que o risco não fique negativo
