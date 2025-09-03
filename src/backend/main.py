@@ -13,7 +13,8 @@ from risk_calculator import calculate_daily_risk
 # --- Criação da Aplicação ---
 app = FastAPI(title="EcoLogic 2.0 API")
 
-# --- Configuração do CORS ---
+# --- Configuração do CORS para o futuro frontend
+# garantindo que quando o React for chamar a API, não haja problemas de CORS
 origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
 app.add_middleware(
     CORSMiddleware,
@@ -38,26 +39,23 @@ def create_asset(name: str, lat: float, lon: float):
         "longitude": lon, "elevation_m": elevation
     }
     db_assets[asset_id] = new_asset
+    print(f"Ativo criado: {new_asset}")
     return new_asset
 
-# --- A NOVA "PORTA DE ATENDIMENTO" QUE ESTAVA EM FALTA ---
 @app.get("/assets/{asset_id}")
 def get_asset_info(asset_id: str):
     """
     Retorna os dados estruturais de um único ativo que já foi criado.
     """
-    if asset_id not in db_assets:
+    if asset_id not in db_assets: # se o id existe no banco de dados
         raise HTTPException(status_code=404, detail="Ativo não encontrado")
-    return db_assets[asset_id]
+    return db_assets[asset_id] # retorna os dados do ativo
 
 @app.get("/assets/{asset_id}/climate")
 def get_asset_climate(asset_id: str):
-    # (Esta função permanece a mesma, para quem quiser os dados brutos)
+    # puxa dados brutos da API Climatica
     if asset_id not in db_assets:
         raise HTTPException(status_code=404, detail="Ativo não encontrado")
     asset = db_assets[asset_id]
     dados_climáticos = buscar_clima_openweather(lat=asset['latitude'], lon=asset['longitude'])
     return dados_climáticos
-
-# O endpoint de análise de risco, que vamos construir a seguir, ficará aqui...
-# (Por agora, pode deixar como está, não o estamos a usar no teste do risk_calculator)

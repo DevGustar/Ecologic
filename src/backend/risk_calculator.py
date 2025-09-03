@@ -1,8 +1,3 @@
-# --- risk_calculator.py ---
-# O "Cérebro" da EcoLogic 2.0 (v2.0 - com noção de vulnerabilidade)
-
-# --- 1. A Ferramenta Principal (O "Chef" que só sabe a receita) ---
-# A "porta de entrada" da função agora aceita DOIS pacotes de dados
 def calculate_daily_risk(climate_data: dict, structural_data: dict) -> float:
     """
     Função que recebe parametro quando for chamado
@@ -65,36 +60,40 @@ if __name__ == "__main__":
     target_asset_id = sys.argv[1] # Pega o segundo argumento da lista que é o ID do ativo 
     
     print(f"--- MODO DE TESTE DO CALCULADOR DE RISCO PARA O ATIVO: {target_asset_id} ---")
-    
+
+    # ------------------------- URLS DO BACKEND -------------------------
     BACKEND_URL = "http://127.0.0.1:8000"
-    # O "Gerente de Testes" agora precisa de dois endereços: um para os dados do ativo e outro para o clima
-    url_asset = f"{BACKEND_URL}/assets/{target_asset_id}"
-    url_clima = f"{BACKEND_URL}/assets/{target_asset_id}/climate"
-    
+    url_asset = f"{BACKEND_URL}/assets/{target_asset_id}" # url dos dados do ativo
+    url_clima = f"{BACKEND_URL}/assets/{target_asset_id}/climate" # url dos dados climáticos brutos do ativo
+
     try:
-        # Primeiro, o "Gerente" busca os dados estruturais do ativo para saber a elevação
+        # busca os dados estruturais do ativo para saber a elevação
         print(f"Buscando dados estruturais do ativo em: {url_asset}")
-        asset_response = requests.get(url_asset, verify=False)
-        asset_response.raise_for_status()
-        asset_data = asset_response.json()
+        asset_response = requests.get(url_asset, verify=False) # note o verify=False para ignorar avisos SSL
+        asset_response.raise_for_status() # depois de puxar os dados, checa se deu erro
+        asset_data = asset_response.json() # extrai os dados JSON da resposta
 
         # Depois, ele busca os dados do clima
-        print(f"Buscando dados de clima em: {url_clima}")
-        climate_response = requests.get(url_clima, verify=False)
-        climate_response.raise_for_status()
-        climate_data = climate_response.json()
+        print(f"Buscando dados de clima em: {url_clima}") # url dos dados climáticos brutos do ativo
+        climate_response = requests.get(url_clima, verify=False) # guarda o get em uma variavel
+        climate_response.raise_for_status() #verifica se deu erro
+        climate_data = climate_response.json() # guarda os dados JSON em uma variavel
         print("Dados recebidos com sucesso!\n")
-        
-        lista_previsao_diaria = climate_data.get('daily', [])
-        
-        # Preparamos o pacote de dados ESTRUTURAIS (que é o mesmo para todos os dias)
+
+        lista_previsao_diaria = climate_data.get('daily', []) 
+        # cria uma lista puxando cada dia dentro dos dados brutos com 8 dias
+        # vai até a etiqueta "daily" para puxar os dados, caso não encontre
+        # retorne uma lista vazia
+
+        # cria um dicionario puxando os dados de elevação do ativo
         dados_estruturais_ativo = {
             "elevation_m": asset_data.get("elevation_m", 500)
         }
 
         print("--- CÁLCULO DE RISCO (COM VULNERABILIDADE) PARA OS PRÓXIMOS DIAS ---")
-        for previsao_de_um_dia in lista_previsao_diaria:
+        for previsao_de_um_dia in lista_previsao_diaria: # forEach para cada dia guardado em lista_previsao_diaria
             # Preparamos o pacote de dados CLIMÁTICOS para aquele dia
+            # guarda cada dado do ativo em um dicionário
             dados_climaticos_dia = {
                 "volume_chuva_mm": previsao_de_um_dia.get('rain', 0),
                 "prob_chuva_%": previsao_de_um_dia.get('pop', 0) * 100,
@@ -104,6 +103,8 @@ if __name__ == "__main__":
                 dados_climaticos_dia["volume_chuva_mm"] = 0
             
             # O momento chave: agora chamamos a função com os DOIS pacotes
+            # puxa climate_data e passa o dicionario de um dia
+            # passa 2 pacotes para o calculate_daily_risk calcular o risco
             nota_de_risco = calculate_daily_risk(
                 climate_data=dados_climaticos_dia, 
                 structural_data=dados_estruturais_ativo
