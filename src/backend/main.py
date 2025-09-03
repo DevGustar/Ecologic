@@ -1,50 +1,63 @@
-# ferramentas nencessárias
-from fastapi import FastAPI, HTTPException
-import uuid
-from api_connectors import buscar_clima_openweather # importa nosso buscador
-from api_connectors import fetch_elevation_data # importa nosso buscador de elevação
+# --- main.py ---
+# O Gerente da Aplicação (v2.1 - agora com um endpoint para dados do ativo)
 
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+import uuid
+from datetime import datetime
+
+# Importamos NOSSAS DUAS ferramentas especialistas
+from api_connectors import buscar_clima_openweather, fetch_elevation_data
+from risk_calculator import calculate_daily_risk
+
+# --- Criação da Aplicação ---
 app = FastAPI(title="EcoLogic 2.0 API")
 
-# banco de dados simplificado em memória
+# --- Configuração do CORS ---
+origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# --- Nosso "Banco de Dados em Memória" ---
 db_assets = {}
 
-@app.post("/assets/") # endpoint para criação de ativos
-def create_asset(name: str, lat: float, lon: float): #* para poder criar um ativo é preciso de nome, latitude e longitude
-    asset_id = str(uuid.uuid4()) #gera um novo ID único de ativo - uuid4 (método especifico)
+# --- Endpoints da API ---
 
-    #? ADICIONANDO ELEVAÇÃO NA CRIAÇÃO DO ATIVO
-    print(f"Buscando dados de elevação para o novo ativo {name}...")
-    elevation = fetch_elevation_data(lat=lat, lon=lon)
-    print(f"Elevação encontrada: {elevation} metros")
-
-    new_asset = { # dados do novo ativo organizados
-        "id": asset_id,
-        "name": name,
-        "lat": lat,
-        "lon": lon,
-        "elevation_m": elevation # novo dados de elevação em metros
+@app.post("/assets")
+def create_asset(name: str, lat: float, lon: float):
+    # (Esta função permanece a mesma)
+    asset_id = str(uuid.uuid4())
+    elevation = fetch_elevation_data(lat, lon)
+    new_asset = {
+        "id": asset_id, "name": name, "latitude": lat, 
+        "longitude": lon, "elevation_m": elevation
     }
-    db_assets[asset_id] = new_asset # adiciona o novo ativo ao banco de dados no espaço ID que foi criado
-    print(f"Banco de dados atualizado: {db_assets}")
-    return new_asset # retorna dados do novo ativo criado
+    db_assets[asset_id] = new_asset
+    return new_asset
 
-@app.get("/assets/{asset_id}/climate/") # endpoint para buscar o clima de um ativo usando o ID do ativo
-def get_asset_clima(asset_id: str):
-    #* 1. procura o ID no banco de dados
+# --- A NOVA "PORTA DE ATENDIMENTO" QUE ESTAVA EM FALTA ---
+@app.get("/assets/{asset_id}")
+def get_asset_info(asset_id: str):
+    """
+    Retorna os dados estruturais de um único ativo que já foi criado.
+    """
     if asset_id not in db_assets:
-        # se não for encontrado o ID no banco de dados
-        raise HTTPException(status_code=404, detail="Ativo não encontrado.")
-    
-    #* 2. se achou o ID ele puxa as informações
+        raise HTTPException(status_code=404, detail="Ativo não encontrado")
+    return db_assets[asset_id]
+
+@app.get("/assets/{asset_id}/climate")
+def get_asset_climate(asset_id: str):
+    # (Esta função permanece a mesma, para quem quiser os dados brutos)
+    if asset_id not in db_assets:
+        raise HTTPException(status_code=404, detail="Ativo não encontrado")
     asset = db_assets[asset_id]
-    
-    #* 3. cria var e armazena as informações que vai precisar do ativo
-    asset_lat = asset["lat"]
-    asset_lon = asset["lon"]
+    dados_climáticos = buscar_clima_openweather(lat=asset['latitude'], lon=asset['longitude'])
+    return dados_climáticos
 
-    #* 4. busca o clima usando a função buscar_clima passando as coordenadas do ativo
-    dados_climaticos = buscar_clima_openweather(lat=asset_lat, lon=asset_lon)
-
-    #* 5. retorna os dados climáticos
-    return dados_climaticos
+# O endpoint de análise de risco, que vamos construir a seguir, ficará aqui...
+# (Por agora, pode deixar como está, não o estamos a usar no teste do risk_calculator)
