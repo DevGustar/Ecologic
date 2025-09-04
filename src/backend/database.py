@@ -1,30 +1,24 @@
-# --- database.py ---
-# Responsável por toda a configuração e gestão da ligação com a base de dados SQLite.
+from sqlalchemy import create_engine # cria comunicação entre app e db - e o dialeto para sqlite
+from sqlalchemy.ext.declarative import declarative_base # permite criar tabelas em python e depois ela converte em SQL
+from sqlalchemy.orm import sessionmaker # cria sessões para executar comandos no banco de dados
 
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-
-# --- 1. CONFIGURAÇÃO DA LIGAÇÃO ---
-# Esta é a "morada" do nosso ficheiro de base de dados.
-# O 'sqlite:///./ecologic.db' significa: "use o SQLite e crie um ficheiro chamado ecologic.db
-# no mesmo diretório (./) em que a aplicação está a rodar".
+# Comando para usar o sqlite e criar o ecologic.db no mesmo ficheiro do backend
 DATABASE_URL = "sqlite:///./ecologic.db"
 
-# --- 2. CRIAÇÃO DO "MOTOR" ---
-# O "motor" é o ponto central de comunicação da SQLAlchemy com a base de dados.
-# O 'connect_args' é uma necessidade específica do SQLite com FastAPI para permitir
-# que múltiplos pedidos usem a mesma ligação de forma segura.
+# cria a engine e arruma o dialeto para o SQL
 engine = create_engine(
     DATABASE_URL, connect_args={"check_same_thread": False}
+    # check_same_thread permite que outros "trabalhadores" mexam no db
+    # necessario para performar bem com o FastAPI já que ele usa multiplos threads para lidar com tarefas
 )
 
-# --- 3. CRIAÇÃO DA "SESSÃO" ---
-# A sessão é a nossa "conversa" com a base de dados. Cada vez que quisermos
+# A sessão é a "conversa" com a base de dados. Cada vez que quisermos
 # fazer uma operação (criar, ler, apagar), abriremos uma sessão.
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    # bind=engine -> é o que liga a engine á todas as 'conversas' com o db
+    # autocommit=false -> cria uma medida de segurança para não commitar qualquer alteração
+    # autoflush=false -> parametro de performance, impede que alterações sejam enviadas antes do commit
 
-# --- 4. A BASE DOS NOSSOS MODELOS ---
-# Esta é uma classe "mágica" da qual todos os nossos modelos de tabelas (como a de ativos)
-# irão herdar para terem os poderes da SQLAlchemy.
+# Constrói e devolve uma classe base para nós, usada para moldar os comandos do models.py
+# para uma base de dados sql
 Base = declarative_base()
