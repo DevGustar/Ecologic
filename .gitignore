@@ -14,3 +14,6 @@ __pycache__/
 
 # Ficheiros de sistema
 .DS_Store
+
+# Base de Dados SQLite
+ecologic.db

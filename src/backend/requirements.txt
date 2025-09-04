@@ -1,15 +1,35 @@
 # Ficheiro de dependências para o projeto EcoLogic 2.0 Backend
 
-# Framework principal para a nossa API web
-# O '[all]' inclui o uvicorn (servidor) e outras dependências úteis
+# --- Núcleo da Aplicação ---
+
+# Framework principal para a nossa API web.
+# O '[all]' inclui o uvicorn (servidor) e outras dependências úteis.
 fastapi[all]
 
-# Biblioteca para fazer requisições HTTP para as APIs externas
+# Biblioteca para fazer requisições HTTP para as APIs externas.
 requests
 
-# Biblioteca para manipulação e análise de dados (a nossa "super-planilha")
+# --- Camada de Dados e Persistência ---
+
+# ORM (Object-Relational Mapper) que nos permite "falar" com a base de dados
+# usando Python em vez de SQL puro.
+sqlalchemy
+
+# Driver específico para a base de dados PostgreSQL.
+# Mesmo a usar SQLite, é bom tê-lo, pois muitas ferramentas do ecossistema dependem dele.
+psycopg2-binary
+
+# --- Análise e Manipulação de Dados ---
+
+# A nossa "super-planilha" para manipular e analisar dados,
+# essencial para os nossos scripts de exploração.
 pandas
 
-# Bibliotecas para trabalhar com dados geoespaciais (mapas, fronteiras, etc.)
+# Bibliotecas para trabalhar com dados geoespaciais (mapas, fronteiras, etc.).
 geopandas
 shapely
+
+# --- Ferramentas de Visualização e Debug ---
+
+# Para criar outputs de terminal bonitos e organizados.
+rich
