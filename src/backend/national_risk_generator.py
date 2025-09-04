@@ -1,6 +1,6 @@
 # --- national_risk_generator.py ---
-# Ferramenta para gerar um "Censo Nacional de Risco Climático" usando a API Open-Meteo.
-# VERSÃO CORRIGIDA PARA REDES RESTRITIVAS (FACULDADE/CORPORATIVO)
+# Ferramenta para gerar um "Censo Nacional de Risco Climático" para TODOS os municípios do Brasil.
+# ATENÇÃO: A execução deste script é muito demorada (mais de 1 hora).
 
 import pandas as pd
 import requests
@@ -24,7 +24,6 @@ def buscar_clima_openmeteo(lat: float, lon: float):
         "timezone": "auto"
     }
     try:
-        # --- A CORREÇÃO ESTÁ AQUI ---
         # Adicionamos 'verify=False' para contornar problemas de certificado SSL em redes restritivas.
         response = requests.get(url_base, params=params, verify=False)
         response.raise_for_status()
@@ -32,9 +31,6 @@ def buscar_clima_openmeteo(lat: float, lon: float):
     except requests.exceptions.RequestException as e:
         print(f"  -> Erro ao conectar com Open-Meteo: {e}")
         return None
-
-# O resto do código (a função generate_full_national_risk_report e o if __name__ == "__main__")
-# permanece exatamente igual. Cole esta função corrigida no lugar da antiga.
 
 def generate_full_national_risk_report():
     """
@@ -48,7 +44,7 @@ def generate_full_national_risk_report():
         municipios_df = pd.read_csv(URL_MUNICIPIOS)
         print(f"Sucesso! {len(municipios_df)} municípios encontrados.")
     except Exception as e:
-        print(f"!!! ERRO: Não foi possível baixar la lista de municípios. Causa: {e}")
+        print(f"!!! ERRO: Não foi possível baixar a lista de municípios. Causa: {e}")
         return
 
     # 2. Preparar para coletar os resultados
@@ -64,22 +60,30 @@ def generate_full_national_risk_report():
         nome_municipio = municipio['nome']
         uf_municipio = municipio['codigo_uf']
         
+        # Mostra o progresso no terminal
         print(f"Processando {index + 1}/{total_municipios}: {nome_municipio} ({uf_municipio})...")
 
+        # Chama o nosso especialista em API
         dados_climaticos = buscar_clima_openmeteo(lat, lon)
         
-        if not dados_climaticos or 'daily' not in dados_climaticos:
-            print(f"  -> Falha ao obter dados para {nome_municipio}. Pulando.")
-            time.sleep(1)
+        if not dados_climaticos or 'daily' not in dados_climaticos or not dados_climaticos['daily'].get('precipitation_sum'):
+            print(f"  -> Falha ou dados incompletos para {nome_municipio}. Pulando.")
+            time.sleep(1) # Pausa mesmo em caso de erro
             continue
 
+        # Preparamos os dados para o cálculo, agora de forma mais segura
         previsao_amanha = {
-            "volume_chuva_mm": dados_climaticos['daily']['precipitation_sum'][1],
+            "volume_chuva_mm": dados_climaticos['daily']['precipitation_sum'][1] if dados_climaticos['daily']['precipitation_sum'] else 0,
             "prob_chuva_%": 0,
-            "rajadas_kmh": dados_climaticos['daily']['windgusts_10m_max'][1]
+            "rajadas_kmh": dados_climaticos['daily']['windgusts_10m_max'][1] if dados_climaticos['daily']['windgusts_10m_max'] else 0
         }
         
-        nota_de_risco = calculate_daily_risk(previsao_amanha)
+        # Como não temos dados de elevação para cada município, passamos um dicionário vazio.
+        # A nossa função `calculate_daily_risk` usará o valor padrão (500m).
+        dados_estruturais_mock = {}
+        
+        # Chamamos o nosso "cérebro" para calcular o risco
+        nota_de_risco = calculate_daily_risk(previsao_amanha, dados_estruturais_mock)
 
         resultados_finais.append({
             "municipio": nome_municipio,
@@ -89,7 +93,7 @@ def generate_full_national_risk_report():
             "nota_de_risco": nota_de_risco,
         })
 
-        time.sleep(0.5)
+        time.sleep(0.5) # Pausa pequena para sermos gentis com a API
 
     # 4. Salvar o resultado final em um CSV
     nome_arquivo_final = "risk_report_todos_municipios.csv"
