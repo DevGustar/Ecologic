@@ -1,13 +1,14 @@
-from fastapi import FastAPI, Depends, HTTPException ### Adicionamos 'Depends'
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+
 from sqlalchemy.orm import Session ### Adicionamos a 'Session'
 from . import models, database ### Importamos os nossos novos módulos de base de dados
 import uuid
 from datetime import datetime
 
 # Importando funções para buscar clima, elevação e calcular risco
-from api_connectors import buscar_clima_openweather, fetch_elevation_data
-from risk_calculator import calculate_daily_risk
-
+from .api_connectors import buscar_clima_openweather, fetch_elevation_data
+from .risk_calculator import calculate_daily_risk
 
 ### Esta linha diz ao SQLAlchemy para criar a nossa tabela "assets"
 ### no ficheiro ecologic.db se ela ainda não existir.

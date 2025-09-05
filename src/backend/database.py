@@ -3,8 +3,8 @@ from sqlalchemy.ext.declarative import declarative_base # permite criar tabelas 
 from sqlalchemy.orm import sessionmaker # cria sessões para executar comandos no banco de dados
 
 # Comando para usar o sqlite e criar o ecologic.db no mesmo ficheiro do backend
-DATABASE_URL = "sqlite:///./ecologic.db"
-
+# Em src/backend/database.py
+DATABASE_URL = "sqlite:///./backend/ecologic.db"
 # cria a engine e arruma o dialeto para o SQL
 engine = create_engine(
     DATABASE_URL, connect_args={"check_same_thread": False}
