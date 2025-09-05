@@ -1,0 +1,25 @@
+/* src/frontend/src/index.css */
+
+/* Importa as fontes do Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap');
+
+/* Zera as margens e paddings padrão do navegador */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Define um fundo escuro e uma cor de texto clara para toda a aplicação */
+body {
+  font-family: 'Roboto', sans-serif; /* Fonte padrão do corpo */
+  background-color: #1A1D24; /* O nosso azul-ardósia muito escuro */
+  color: #EFEFEF; /* O nosso branco suave */
+  -webkit-font-smoothing: antialiased; /* Melhorar a renderização da fonte */
+  -moz-osx-font-smoothing: grayscale; /* Melhorar a renderização da fonte */
+}
+
+/* Garante que a aplicação ocupe a altura total da tela */
+#root {
+  height: 100vh;
+}

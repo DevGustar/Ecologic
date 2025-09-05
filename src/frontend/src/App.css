@@ -1,0 +1,188 @@
+/* src/frontend/src/App.css */
+
+/* --- Layout Principal --- */
+.dashboard-container {
+  display: flex;
+  height: 100vh;
+  font-family: 'Roboto', sans-serif; /* Fonte padrão para a maioria dos textos */
+}
+
+.sidebar {
+  width: 350px; /* Um pouco mais largo para acomodar os KPIs */
+  background-color: #2C313A; /* Fundo secundário */
+  padding: 30px 25px; /* Mais padding para espaçamento */
+  border-right: 1px solid #444;
+  display: flex; /* Para organizar os elementos em coluna */
+  flex-direction: column;
+  gap: 25px; /* Espaçamento entre os elementos da sidebar */
+}
+
+.main-content {
+  flex-grow: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column; /* Conteúdo principal em coluna */
+  justify-content: flex-start; /* Alinha o conteúdo ao topo */
+  align-items: center;
+  position: relative; /* Para a legenda */
+}
+
+/* --- Títulos --- */
+.sidebar-title {
+  font-family: 'Inter', sans-serif; /* Fonte para títulos */
+  font-size: 1.8rem;
+  color: #EFEFEF;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.main-content-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.8rem;
+  color: #EFEFEF;
+  margin-bottom: 20px;
+}
+
+.panel-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.25rem; /* 20px */
+  font-weight: 600; /* Semi-Bold */
+  color: #EFEFEF;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #444; /* Separador */
+  padding-bottom: 10px;
+}
+
+
+/* --- KPIs --- */
+.kpi-card {
+  background-color: #1A1D24; /* Fundo principal escuro */
+  padding: 15px 20px;
+  border-radius: 8px;
+  border: 1px solid #3A3F47;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.kpi-label {
+  font-size: 1rem; /* 16px */
+  color: #A0AEC0; /* Texto secundário */
+}
+
+.kpi-number {
+  font-family: 'Inter', sans-serif;
+  font-size: 2.5rem; /* 40px */
+  font-weight: 700; /* Bold */
+}
+
+.kpi-high {
+  color: #E74C3C; /* Vermelho */
+}
+
+.kpi-medium {
+  color: #F1C40F; /* Amarelo */
+}
+
+.kpi-low {
+  color: #2ECC71; /* Verde (não usado aqui, mas bom ter) */
+}
+
+.kpi-text {
+  font-size: 1rem;
+  color: #00A8FF; /* Acento principal para o evento crítico */
+  font-weight: 500;
+}
+
+
+/* --- Lista de Risco (Hotspots) --- */
+.risk-list {
+  list-style: none; /* Remove bolinhas */
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  
+}
+
+.risk-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem; /* 14px */
+  color: #EFEFEF;
+}
+
+.risk-status {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%; /* Bolinha */
+  margin-right: 10px;
+}
+
+/* --- Botão de Ação --- */
+.accent-button {
+  background-color: #00A8FF; /* Acento principal */
+  color: #1A1D24; /* Texto escuro no botão claro */
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: auto; /* Empurra o botão para o fundo da sidebar */
+}
+
+.accent-button:hover {
+  background-color: #0088CC; /* Azul um pouco mais escuro ao passar o mouse */
+}
+
+/* --- Texto Secundário --- */
+.secondary-text {
+  font-size: 0.75rem; /* 12px */
+  color: #A0AEC0;
+  margin-top: 15px;
+  text-align: center;
+}
+
+
+/* --- Placeholder do Mapa --- */
+.map-placeholder {
+  flex-grow: 1; /* Ocupa todo o espaço restante */
+  width: 100%;
+  background-color: #2C313A; /* Cor de fundo do mapa */
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #A0AEC0;
+  font-size: 1.2rem;
+  text-align: center;
+  gap: 10px;
+  padding: 20px;
+}
+
+/* --- Legenda do Mapa --- */
+.legend {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(44, 49, 58, 0.8); /* Fundo semi-transparente */
+  padding: 10px 15px;
+  border-radius: 8px;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  font-size: 0.875rem;
+  color: #EFEFEF;
+}
+
+.legend .risk-status {
+  width: 12px;
+  height: 12px;
+  margin-right: 5px;
+}
