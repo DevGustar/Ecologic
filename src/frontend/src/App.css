@@ -460,7 +460,19 @@ input:checked + .slider:before {
   color: var(--cor-alerta);
 }
 
+/* Estilos para mensagem de erro */
+.error-message {
+  color: var(--cor-alerta);
+  background-color: rgba(255, 0, 0, 0.1);
+  border: 1px solid var(--cor-alerta);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 2rem;
+}
+
 /* ---------------------------------------------------- */
+
+/* --- Layout Principal --- */
 .asset-detail-layout {
   display: flex;
   height: 100vh;
@@ -469,14 +481,16 @@ input:checked + .slider:before {
   color: var(--texto-principal);
 }
 
-/* Sidebar de lista de ativos */
+/* --- Sidebar da Lista de Ativos (Esquerda) --- */
 .asset-list-sidebar {
-  width: 300px; /* Largura fixa */
+  width: 300px;
   background-color: var(--fundo-secundario);
   border-right: 1px solid var(--borda);
   display: flex;
   flex-direction: column;
-  flex-shrink: 0; /* Impede que encolha */
+  flex-shrink: 0;
+  box-shadow: 5px 0 15px rgba(0, 0, 0, 0.2); /* Sombra para dar profundidade */
+  z-index: 10;
 }
 
 .asset-list-header {
@@ -487,7 +501,7 @@ input:checked + .slider:before {
 .asset-list-header h2 {
   margin: 1rem 0 0 0;
   font-family: var(--fonte-titulo);
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   font-weight: 600;
   color: var(--texto-principal);
 }
@@ -497,7 +511,7 @@ input:checked + .slider:before {
   text-decoration: none;
   font-size: 0.9rem;
   transition: color 0.2s;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.4rem;
 }
@@ -514,49 +528,49 @@ input:checked + .slider:before {
 }
 
 .asset-list-item {
-  padding: 1rem 1.5rem;
+  padding: 1.2rem 1.5rem;
   cursor: pointer;
   border-bottom: 1px solid var(--borda);
   font-weight: 500;
-  transition: background-color 0.2s, color 0.2s;
+  transition: all 0.2s ease-in-out;
   color: var(--texto-secundario);
+  position: relative;
 }
 
 .asset-list-item:hover {
   background-color: var(--fundo-principal);
   color: var(--texto-principal);
+  padding-left: 2rem;
 }
 
 .asset-list-item.active {
   background-color: var(--acento-primario);
-  color: var(--fundo-principal); /* Texto preto no destaque */
+  color: white;
   font-weight: 700;
-  position: relative;
 }
-.asset-list-item.active::before { /* Pequeno indicador visual ativo */
+.asset-list-item.active::before {
     content: '';
     position: absolute;
     left: 0;
     top: 0;
     bottom: 0;
-    width: 5px;
-    background-color: var(--texto-principal); /* Linha branca lateral */
-    border-radius: 0 5px 5px 0;
+    width: 4px;
+    background-color: white;
 }
 
 
-/* Área de conteúdo principal da análise */
+/* --- Área de Conteúdo Principal (Direita) --- */
 .asset-detail-content {
-  padding: 2.5rem 3.5rem; /* Padding generoso */
+  padding: 2.5rem 3.5rem;
   flex-grow: 1;
   overflow-y: auto;
 }
 
 .asset-detail-content h1 {
   font-family: var(--fonte-titulo);
-  font-size: 2.8rem; /* Título maior */
+  font-size: 2.8rem; /* Ajuste para ser ligeiramente menor */
   margin-top: 0;
-  margin-bottom: 2.5rem; /* Mais espaço abaixo do título */
+  margin-bottom: 2.5rem;
   font-weight: 700;
   color: var(--texto-principal);
 }
@@ -565,71 +579,70 @@ input:checked + .slider:before {
   color: var(--acento-primario);
 }
 
-/* Grelha principal da análise (Mapa, KPI, Detalhes) */
+/* --- Grelha da Análise --- */
 .analysis-grid {
   display: grid;
-  grid-template-columns: 280px 1fr; /* KPI um pouco maior, mapa/detalhes flexíveis */
-  grid-template-rows: 350px auto; /* Mapa com altura fixa, detalhes abaixo */
-  gap: 2rem; /* Espaçamento consistente */
+  grid-template-columns: 280px 1fr;
+  grid-template-rows: auto 1fr;
+  gap: 2rem;
+  height: calc(100% - 120px);
   grid-template-areas:
     "kpi   map"
-    "details map"; /* Mapa ainda ocupa 2 linhas */
+    "details map";
 }
 
-/* Estilos dos painéis */
+/* Estilo base para todos os painéis */
+.map-panel,
+.kpi-panel,
+.details-panel {
+  background-color: var(--fundo-secundario);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  padding: 2rem;
+}
+
 .map-panel {
   grid-area: map;
-  background-color: var(--fundo-secundario); /* Cor de fundo para o painel do mapa */
-  border: 1px solid var(--borda);
-  border-radius: 8px;
-  overflow: hidden; /* Garante que o mapa não 'escape' das bordas */
+  overflow: hidden;
+  padding: 0;
 }
 
 .kpi-panel {
   grid-area: kpi;
-  background-color: var(--fundo-secundario);
-  border: 1px solid var(--borda);
-  border-radius: 8px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 2rem 1rem;
+  text-align: center;
 }
 
 .kpi-panel .kpi-title {
-    font-size: 1rem;
-    color: var(--texto-secundario);
-    margin-bottom: 0.5rem;
-    text-align: center;
+  font-size: 1rem;
+  color: var(--texto-secundario);
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
 }
 
 .kpi-panel .kpi-value {
-    font-size: 4.5rem; /* KPI ainda maior */
-    font-weight: 800; /* Mais bold */
-    color: var(--acento-primario); /* Cor do acento para o valor */
+  font-family: var(--fonte-titulo);
+  font-size: 5rem; /* Ajuste para ser ligeiramente menor, mas ainda dominante */
+  font-weight: 800;
+  color: var(--acento-primario);
+  line-height: 1;
 }
 
 .details-panel {
   grid-area: details;
-}
-
-/* Card de detalhes */
-.details-card {
-  background-color: var(--fundo-secundario);
-  border: 1px solid var(--borda);
-  border-radius: 8px;
-  padding: 1.5rem 2rem;
-  height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-between; /* Empurra o último item para baixo */
 }
 
-.details-card h4 {
+.details-panel h4 {
   margin: 0 0 1.5rem 0;
   font-family: var(--fonte-titulo);
-  font-size: 1.3rem; /* Título um pouco maior */
+  font-size: 1.35rem; /* Ajuste para ser ligeiramente menor */
   border-bottom: 1px solid var(--borda);
   padding-bottom: 1rem;
   color: var(--texto-principal);
@@ -639,19 +652,23 @@ input:checked + .slider:before {
   font-style: italic;
   color: var(--texto-secundario);
   margin: 0 0 2rem 0;
-  line-height: 1.6;
-  font-size: 1rem;
+  line-height: 1.7;
+  font-size: 0.95rem; /* Ligeiramente menor para os detalhes */
+  flex-grow: 1;
 }
 
 .weather-details {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  font-size: 1rem;
+  gap: 1rem; /* Ligeiramente menos espaçamento para compactar */
+  font-size: 0.95rem; /* Consistente com o summary */
+  border-top: 1px solid var(--borda);
+  padding-top: 1.5rem;
 }
 
 .weather-details span {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
   color: var(--texto-secundario);
@@ -660,6 +677,7 @@ input:checked + .slider:before {
 .weather-details strong {
   color: var(--texto-principal);
   font-weight: 700;
+  font-size: 1rem; /* Ligeiramente menor */
 }
 
 /* Estilos para mensagem de erro */
