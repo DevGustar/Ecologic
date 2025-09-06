@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session ### Adicionamos a 'Session'
 from . import models, database ### Importamos os nossos novos módulos de base de dados
 import uuid
 from datetime import datetime
+from . import models, schemas # 1. Importe o 'schemas'
+
 
 # Importando funções para buscar clima, elevação e calcular risco
 from .api_connectors import buscar_clima_openweather, fetch_elevation_data
@@ -20,7 +22,11 @@ app = FastAPI(title="EcoLogic 2.0 API")
 
 # --- Configuração do CORS para o futuro frontend
 # (Esta parte permanece igual)
-origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
+origins = [
+    "http://localhost:5173",  # A URL do seu frontend
+    "http://127.0.0.1:5173",  # Caso o navegador use 127.0.0.1
+]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -47,32 +53,30 @@ def get_db():
 # CRIAÇÃO DE ATIVOS
 
 @app.post("/assets")
-### A nossa função agora "pede" uma ligação à base de dados (db)
-def create_asset(name: str, lat: float, lon: float, db: Session = Depends(get_db)): 
+# 2. A função agora espera um único "pacote" (asset) que segue o molde do AssetCreate
+def create_asset(asset: schemas.AssetCreate, db: Session = Depends(get_db)): 
     """
-    Endpoint para criar um ativo, recebe nome, latitude e longitude 
+    Endpoint para criar um ativo, recebe um objeto JSON com nome, latitude e longitude
     """
-    asset_id = str(uuid.uuid4()) # Gera um ID único para o ativo
-    elevation = fetch_elevation_data(lat, lon) # Busca a elevação usando a função importada
+    asset_id = str(uuid.uuid4())
+    # 3. Acessamos os dados de dentro do pacote: asset.latitude, asset.longitude
+    elevation = fetch_elevation_data(asset.latitude, asset.longitude)
 
-    ### Em vez de um dicionário, criamos um "molde" do nosso modelo Asset
+    # O resto do código usa os nomes corretos do seu models.py
     new_asset_model = models.Asset(
         asset_uuid=asset_id,
-        name=name,
-        latitude=lat,
-        longitude=lon,
+        name=asset.name,
+        latitude=asset.latitude,
+        longitude=asset.longitude,
         elevation_m=elevation
     )
 
-    ### Agora, usamos a base de dados para guardar o ativo permanentemente
-    db.add(new_asset_model) # Adiciona o novo ativo à "conversa" com a base de dados
-    db.commit()             # Confirma e salva as alterações
-    db.refresh(new_asset_model) # Atualiza o objeto com os dados finais do banco
+    db.add(new_asset_model)
+    db.commit()
+    db.refresh(new_asset_model)
     
     print(f"Ativo criado e salvo no banco de dados: {new_asset_model.name}")
     return new_asset_model
-
-
 # ------------------------------------------------------
 # DADOS ESTRUTURAIS DO ATIVO
 

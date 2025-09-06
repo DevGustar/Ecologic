@@ -178,3 +178,149 @@
 .legend-item span {
   font-size: 0.8rem;
 }
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(10, 25, 47, 0.7); /* Fundo escuro semi-transparente */
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.modal-content {
+  background-color: var(--fundo-secundario);
+  padding: 1.5rem 2rem;
+  border-radius: 8px;
+  border: 1px solid var(--borda);
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--borda);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-family: var(--fonte-titulo);
+  color: var(--texto-principal);
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: var(--texto-secundario);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+/* === Estilos do Formulário === */
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--texto-secundario);
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: var(--fundo-principal);
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  color: var(--texto-principal);
+  font-size: 1rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.button-primary, .button-secondary {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.button-primary {
+  background-color: var(--acento-primario);
+  color: var(--texto-principal);
+}
+.button-primary:hover {
+  background-color: #4A90E2;
+}
+
+.button-secondary {
+  background-color: var(--borda);
+  color: var(--texto-secundario);
+}
+.button-secondary:hover {
+  background-color: #4B5563; /* Cinza um pouco mais claro */
+  color: var(--texto-principal);
+}
+
+.coordinates-group {
+  display: flex;
+  gap: 1rem; /* Adiciona um espaço entre os campos de lat e lon */
+}
+
+
+/* === Estilo para o Botão "Criar Ativo" === */
+.create-asset-button {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  
+  background-color: var(--acento-primario); /* Cor de destaque azul */
+  color: var(--texto-principal); /* Texto branco */
+  
+  border: none; /* Remove a borda padrão do botão */
+  border-radius: 6px;
+  
+  font-family: var(--fonte-corpo); /* Garante a fonte correta */
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+  
+  cursor: pointer; /* Muda o cursor para a "mãozinha" */
+  transition: background-color 0.2s ease-in-out;
+}
+
+.create-asset-button:hover {
+  background-color: #4A90E2; /* Um azul um pouco mais claro no hover */
+}
+
+.error-message {
+  background-color: rgba(217, 83, 79, 0.2); /* Fundo vermelho transparente */
+  color: #D9534F; /* Texto vermelho */
+  border: 1px solid #D9534F;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}

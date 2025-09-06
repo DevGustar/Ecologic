@@ -3,35 +3,28 @@
 import React from 'react';
 import KpiCard from '../dashboard/KpiCard';
 
-function Sidebar() {
+// O componente agora recebe a prop 'onOpenCreateAssetModal'
+function Sidebar({ onOpenCreateAssetModal }) {
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
         <h2>Ecologic</h2>
       </div>
       
+      {/* O botão agora é um <button> que chama a função recebida via prop */}
+      <button onClick={onOpenCreateAssetModal} className="create-asset-button">
+        + Criar Novo Ativo
+      </button>
+
       <nav className="sidebar-nav">
+        {/* Usamos 'a' simples por enquanto, já que não temos rotas */}
         <a href="#" className="nav-item active">Dashboard</a>
-        <a href="#" className="nav-item">Relatórios</a>
-        <a href="#" className="nav-item">Alertas</a>
       </nav>
 
       <div className="sidebar-kpis">
-        {/* 1. O KPI "Herói" continua sendo um KpiCard para ter destaque */}
-        <KpiCard title="Risk Score" value="85.2" isHero={true} />
-
-        {/* 2. As métricas secundárias agora são uma lista */}
-        <div className="kpi-list">
-          <div className="kpi-list-item">
-            <span className="kpi-list-title">Alertas Críticos</span>
-            <span className="kpi-list-value">12</span>
-          </div>
-          <div className="kpi-list-item">
-            <span className="kpi-list-title">Zonas em Atenção</span>
-            <span className="kpi-list-value">3</span>
-          </div>
-          {/* Podemos facilmente adicionar mais itens aqui no futuro */}
-        </div>
+        <KpiCard title="Risk Score" value="85.2" />
+        <KpiCard title="Alertas Críticos" value="12" />
+        <KpiCard title="Zonas em Atenção" value="3" />
       </div>
     </aside>
   );
