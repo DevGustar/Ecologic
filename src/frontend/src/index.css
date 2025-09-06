@@ -1,25 +1,33 @@
-/* src/frontend/src/index.css */
+/* src/index.css */
 
-/* Importa as fontes do Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap');
+/* 1. Definição das Variáveis Globais (Cores e Fontes) */
+:root {
+  /* NOVA PALETA - Mais escura e séria */
+  --fundo-principal: #111827; /* Cinza-carvão quase preto */
+  --fundo-secundario: #1F2937; /* Cinza-carvão um pouco mais claro para cards/sidebar */
+  --borda: #374151; /* Cinza-escuro para bordas e divisórias */
+  
+  --texto-principal: #E5E7EB; /* Um branco levemente acinzentado */
+  --texto-secundario: #9CA3AF; /* Cinza mais claro para textos secundários */
 
-/* Zera as margens e paddings padrão do navegador */
-* {
+  --acento-primario: #3A7CA5; /* Nosso azul principal, usado com moderação */
+  --cor-alerta: #D9534F;
+  --cor-sucesso: #28A745;
+
+  --fonte-titulo: 'Lora', serif;
+  --fonte-corpo: 'Inter', sans-serif;
+}
+
+/* 2. Reset Básico e Estilos Globais */
+body {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
+  font-family: var(--fonte-corpo);
+  background-color: var(--fundo-principal);
+  color: var(--texto-principal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Define um fundo escuro e uma cor de texto clara para toda a aplicação */
-body {
-  font-family: 'Roboto', sans-serif; /* Fonte padrão do corpo */
-  background-color: #1A1D24; /* O nosso azul-ardósia muito escuro */
-  color: #EFEFEF; /* O nosso branco suave */
-  -webkit-font-smoothing: antialiased; /* Melhorar a renderização da fonte */
-  -moz-osx-font-smoothing: grayscale; /* Melhorar a renderização da fonte */
-}
-
-/* Garante que a aplicação ocupe a altura total da tela */
-#root {
-  height: 100vh;
-}
+/* Não se esqueça de importar as fontes no seu index.html ou aqui! */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Lora:wght@400;700&display=swap');

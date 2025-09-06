@@ -1,188 +1,180 @@
-/* src/frontend/src/App.css */
+/* src/App.css */
 
-/* --- Layout Principal --- */
-.dashboard-container {
+/* === Layout Principal === */
+.dashboard-layout {
   display: flex;
   height: 100vh;
-  font-family: 'Roboto', sans-serif; /* Fonte padrão para a maioria dos textos */
-}
-
-.sidebar {
-  width: 350px; /* Um pouco mais largo para acomodar os KPIs */
-  background-color: #2C313A; /* Fundo secundário */
-  padding: 30px 25px; /* Mais padding para espaçamento */
-  border-right: 1px solid #444;
-  display: flex; /* Para organizar os elementos em coluna */
-  flex-direction: column;
-  gap: 25px; /* Espaçamento entre os elementos da sidebar */
+  width: 100vw;
+  background-color: var(--fundo-principal); /* Garante que o fundo da área principal seja o mais escuro */
 }
 
 .main-content {
   flex-grow: 1;
-  padding: 20px;
-  display: flex;
-  flex-direction: column; /* Conteúdo principal em coluna */
-  justify-content: flex-start; /* Alinha o conteúdo ao topo */
-  align-items: center;
-  position: relative; /* Para a legenda */
+  padding: 1.5rem;
+  overflow-y: auto;
 }
 
-/* --- Títulos --- */
-.sidebar-title {
-  font-family: 'Inter', sans-serif; /* Fonte para títulos */
-  font-size: 1.8rem;
-  color: #EFEFEF;
-  margin-bottom: 20px;
+/* === Sidebar === */
+.sidebar {
+  width: 280px;
+  background-color: var(--fundo-secundario);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  border-right: 1px solid var(--borda);
+}
+
+.sidebar-header h2 {
+  font-family: var(--fonte-titulo);
   text-align: center;
+  margin: 0 0 1rem 0; /* Adiciona um pouco de margem inferior */
+  font-size: 2rem;
+  color: var(--texto-principal);
 }
 
-.main-content-title {
-  font-family: 'Inter', sans-serif;
-  font-size: 1.8rem;
-  color: #EFEFEF;
-  margin-bottom: 20px;
-}
-
-.panel-subtitle {
-  font-family: 'Inter', sans-serif;
-  font-size: 1.25rem; /* 20px */
-  font-weight: 600; /* Semi-Bold */
-  color: #EFEFEF;
-  margin-bottom: 15px;
-  border-bottom: 1px solid #444; /* Separador */
-  padding-bottom: 10px;
-}
-
-
-/* --- KPIs --- */
-.kpi-card {
-  background-color: #1A1D24; /* Fundo principal escuro */
-  padding: 15px 20px;
-  border-radius: 8px;
-  border: 1px solid #3A3F47;
+/* === Navegação da Sidebar === */
+.sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 0.5rem;
 }
 
-.kpi-label {
-  font-size: 1rem; /* 16px */
-  color: #A0AEC0; /* Texto secundário */
-}
-
-.kpi-number {
-  font-family: 'Inter', sans-serif;
-  font-size: 2.5rem; /* 40px */
-  font-weight: 700; /* Bold */
-}
-
-.kpi-high {
-  color: #E74C3C; /* Vermelho */
-}
-
-.kpi-medium {
-  color: #F1C40F; /* Amarelo */
-}
-
-.kpi-low {
-  color: #2ECC71; /* Verde (não usado aqui, mas bom ter) */
-}
-
-.kpi-text {
-  font-size: 1rem;
-  color: #00A8FF; /* Acento principal para o evento crítico */
-  font-weight: 500;
-}
-
-
-/* --- Lista de Risco (Hotspots) --- */
-.risk-list {
-  list-style: none; /* Remove bolinhas */
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  
-}
-
-.risk-item {
-  display: flex;
-  align-items: center;
-  font-size: 0.875rem; /* 14px */
-  color: #EFEFEF;
-}
-
-.risk-status {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%; /* Bolinha */
-  margin-right: 10px;
-}
-
-/* --- Botão de Ação --- */
-.accent-button {
-  background-color: #00A8FF; /* Acento principal */
-  color: #1A1D24; /* Texto escuro no botão claro */
-  border: none;
-  padding: 12px 20px;
+.nav-item {
+  color: var(--texto-secundario); /* Texto dos links um pouco mais sutil */
+  text-decoration: none;
+  padding: 0.75rem 1rem;
   border-radius: 6px;
-  font-family: 'Inter', sans-serif;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  margin-top: auto; /* Empurra o botão para o fundo da sidebar */
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
 
-.accent-button:hover {
-  background-color: #0088CC; /* Azul um pouco mais escuro ao passar o mouse */
+.nav-item:hover {
+  background-color: var(--fundo-principal); /* Fundo mais escuro no hover */
+  color: var(--texto-principal);
 }
 
-/* --- Texto Secundário --- */
-.secondary-text {
-  font-size: 0.75rem; /* 12px */
-  color: #A0AEC0;
-  margin-top: 15px;
-  text-align: center;
+.nav-item.active {
+  background-color: var(--acento-primario);
+  color: var(--texto-principal);
+  font-weight: 700; /* Usa font-weight em vez de bold */
 }
 
-
-/* --- Placeholder do Mapa --- */
-.map-placeholder {
-  flex-grow: 1; /* Ocupa todo o espaço restante */
-  width: 100%;
-  background-color: #2C313A; /* Cor de fundo do mapa */
-  border-radius: 8px;
+/* === Seção de KPIs === */
+.sidebar-kpis {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: #A0AEC0;
-  font-size: 1.2rem;
-  text-align: center;
-  gap: 10px;
-  padding: 20px;
+  gap: 1.5rem;
+  border-top: 1px solid var(--borda);
+  padding-top: 1.5rem;
 }
 
-/* --- Legenda do Mapa --- */
-.legend {
+/* === Card de KPI "Herói" (Risk Score) === */
+.kpi-card {
+  background-color: var(--fundo-principal); /* Fundo mais escuro para destaque */
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.kpi-title {
+  display: block;
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+  color: var(--texto-secundario);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.kpi-value {
+  display: block;
+  font-family: var(--fonte-titulo);
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--texto-principal);
+}
+
+/* === Lista de KPIs Secundários === */
+.kpi-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.kpi-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.9rem;
+}
+
+.kpi-list-title {
+  color: var(--texto-secundario);
+}
+
+.kpi-list-value {
+  font-family: var(--fonte-corpo);
+  font-weight: 700;
+  color: var(--texto-principal);
+  background-color: transparent;
+  padding: 0.1rem 0.5rem;
+}
+.map-container-wrapper {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden; /* Garante que a borda arredondada se aplique ao mapa */
+}
+
+/* Garante que o container do Leaflet preencha o wrapper */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  background-color: var(--fundo-secundario);
+}
+
+.map-legend {
   position: absolute;
   bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: rgba(44, 49, 58, 0.8); /* Fundo semi-transparente */
+  right: 20px;
   padding: 10px 15px;
+  background-color: rgba(31, 41, 55, 0.8); /* Cor --fundo-secundario com transparência */
+  backdrop-filter: blur(5px); /* Efeito de vidro fosco */
+  border: 1px solid var(--borda);
   border-radius: 8px;
-  display: flex;
-  gap: 15px;
-  align-items: center;
-  font-size: 0.875rem;
-  color: #EFEFEF;
+  z-index: 1000; /* Garante que a legenda fique acima do mapa */
+  color: var(--texto-principal);
+  width: 120px; /* Largura fixa para melhor alinhamento */
 }
 
-.legend .risk-status {
-  width: 12px;
-  height: 12px;
-  margin-right: 5px;
+.map-legend h4 {
+  margin: 0 0 10px 0;
+  font-family: var(--fonte-corpo);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.legend-item:last-child {
+  margin-bottom: 0;
+}
+
+.legend-item i {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Borda sutil no quadrado de cor */
+  border-radius: 4px;
+}
+
+.legend-item span {
+  font-size: 0.8rem;
 }
