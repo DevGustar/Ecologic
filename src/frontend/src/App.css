@@ -1,5 +1,3 @@
-/* src/App.css */
-
 /* === Layout Principal === */
 .dashboard-layout {
   display: flex;
@@ -323,4 +321,94 @@
   padding: 0.75rem;
   margin-bottom: 1.5rem;
   text-align: center;
+}
+/* src/App.css */
+
+.view-mode-toggle {
+  background-color: var(--fundo-principal);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.view-mode-toggle label {
+  display: flex;
+  /* Altera para center, para que os itens fiquem próximos */
+  justify-content: center; 
+  align-items: center;
+  width: 100%;
+  cursor: pointer;
+  /* Adiciona um gap para espaçamento entre os itens */
+  gap: 0.8rem; 
+}
+
+.view-mode-toggle .toggle-label-text { /* Nova classe para o texto */
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--texto-secundario);
+  /* Garante que o texto não quebre para a próxima linha */
+  white-space: nowrap; 
+}
+
+/* === Estilos MELHORADOS para o NOSSO ToggleSwitch === */
+/* Esta classe envolve o ToggleSwitch para controlar o seu alinhamento */
+.toggle-switch-container {
+    /* Define uma largura fixa para o container do toggle */
+    width: 50px; 
+    /* Remove qualquer flex-grow para que não se expanda */
+    flex-shrink: 0; 
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 100%; /* Agora ele ocupa 100% do seu container de 50px */
+  height: 28px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--borda); /* Cor de fundo quando desligado */
+  transition: .3s; /* Transição mais suave */
+  border-radius: 28px;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.4); /* Sombra interna para dar profundidade */
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: var(--texto-secundario); /* Bolinha do slider com cor de texto secundário */
+  transition: .3s; /* Transição mais suave */
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Sombra externa para a bolinha */
+}
+
+input:checked + .slider {
+  background-color: var(--acento-primario); /* Fica azul quando ligado */
+}
+
+input:hover:not(:checked) + .slider {
+    background-color: #4B5563; /* Cinza um pouco mais claro no hover quando desligado */
+}
+
+input:checked + .slider:before {
+  transform: translateX(22px);
+  background-color: white; /* Bolinha fica branca para máximo contraste quando ligado */
 }

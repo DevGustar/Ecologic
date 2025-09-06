@@ -2,24 +2,46 @@
 
 import React from 'react';
 import KpiCard from '../dashboard/KpiCard';
+import ToggleSwitch from './ToggleSwitch'; // 1. Importe o NOSSO ToggleSwitch
 
-// O componente agora recebe a prop 'onOpenCreateAssetModal'
-function Sidebar({ onOpenCreateAssetModal }) {
+function Sidebar({ onOpenCreateAssetModal, viewMode, onViewModeChange }) {
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
         <h2>Ecologic</h2>
       </div>
       
-      {/* O botão agora é um <button> que chama a função recebida via prop */}
       <button onClick={onOpenCreateAssetModal} className="create-asset-button">
         + Criar Novo Ativo
       </button>
 
       <nav className="sidebar-nav">
-        {/* Usamos 'a' simples por enquanto, já que não temos rotas */}
         <a href="#" className="nav-item active">Dashboard</a>
       </nav>
+
+      <div className="view-mode-toggle">
+        <label>
+          {/* 1. Mude esta linha: */}
+          {/* <span>Visão Nacional</span> */}
+          {/* Para esta: */}
+          <span className="toggle-label-text">Visão Nacional</span>
+          
+          {/* 2. Mude esta linha: */}
+          {/* <ToggleSwitch ... /> */}
+          {/* Para esta, envolvendo-o numa div: */}
+          <div className="toggle-switch-container">
+            <ToggleSwitch
+              checked={viewMode === 'assets'}
+              onChange={(e) => onViewModeChange(e.target.checked ? 'assets' : 'national')}
+            />
+          </div>
+
+          {/* 3. Mude esta linha: */}
+          {/* <span>Meus Ativos</span> */}
+          {/* Para esta: */}
+          <span className="toggle-label-text">Meus Ativos</span>
+        </label>
+      </div>
 
       <div className="sidebar-kpis">
         <KpiCard title="Risk Score" value="85.2" />

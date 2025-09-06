@@ -8,8 +8,10 @@ import CreateAssetModal from '../components/modals/CreateAssetModal';
 function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [assets, setAssets] = useState([]);
+  // Novo estado para o modo de visualização, começa em 'national' (Visão Nacional)
+  const [viewMode, setViewMode] = useState('national'); 
 
-  // 1. A lógica de buscar os ativos agora está numa função reutilizável
+  // Função para buscar os ativos do backend
   const fetchAssets = async () => {
     try {
       const apiUrl = 'http://127.0.0.1:8000/assets';
@@ -18,36 +20,42 @@ function DashboardPage() {
         throw new Error('Falha ao buscar os ativos');
       }
       const data = await response.json();
-      console.log("Ativos atualizados e recebidos do backend:", data);
-      setAssets(data); // Atualiza o estado com a nova lista de ativos
+      console.log("Ativos recebidos do backend:", data);
+      setAssets(data);
     } catch (error) {
       console.error("Erro ao buscar ativos:", error);
     }
   };
 
-  // 2. O useEffect agora simplesmente chama a nossa nova função quando a página carrega
+  // useEffect para buscar os dados dos ativos quando a página carrega
   useEffect(() => {
     fetchAssets();
-  }, []); // O array vazio [] garante que isto execute apenas uma vez ao montar
+  }, []); // O array vazio [] faz com que isto execute apenas uma vez
 
-  // 3. Esta função será chamada pelo modal após um ativo ser criado com sucesso
+  // Função chamada pelo modal após um ativo ser criado com sucesso
   const handleAssetCreated = () => {
-    setIsModalOpen(false); // Primeiro, fecha o modal
-    fetchAssets();         // Depois, re-busca a lista de ativos para atualizar o mapa
+    setIsModalOpen(false); // Fecha o modal
+    fetchAssets();         // Re-busca a lista de ativos para atualizar o mapa
   };
 
   return (
     <div className="dashboard-layout">
-      <Sidebar onOpenCreateAssetModal={() => setIsModalOpen(true)} />
+      {/* Passa o estado e a função de mudança para a Sidebar */}
+      <Sidebar 
+        onOpenCreateAssetModal={() => setIsModalOpen(true)}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+      />
       
       <main className="main-content">
-        <InteractiveMap assets={assets} />
+        {/* Passa o modo de visualização também para o Mapa */}
+        <InteractiveMap assets={assets} viewMode={viewMode} />
       </main>
 
       <CreateAssetModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} // O botão 'Cancelar' ou 'X' apenas fecha o modal
-        onSuccess={handleAssetCreated}       // A prop 'onSuccess' é chamada após o sucesso
+        onClose={() => setIsModalOpen(false)} // 'Cancelar' apenas fecha
+        onSuccess={handleAssetCreated}       // 'Salvar' fecha e atualiza
       />
     </div>
   );
