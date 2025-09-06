@@ -6,6 +6,7 @@ from . import models, database ### Importamos os nossos novos módulos de base d
 import uuid
 from datetime import datetime
 from . import models, schemas # 1. Importe o 'schemas'
+from typing import List # 1. Importe 'List' de 'typing'
 
 
 # Importando funções para buscar clima, elevação e calcular risco
@@ -77,7 +78,18 @@ def create_asset(asset: schemas.AssetCreate, db: Session = Depends(get_db)):
     
     print(f"Ativo criado e salvo no banco de dados: {new_asset_model.name}")
     return new_asset_model
-# ------------------------------------------------------
+
+# --------------------- ROTA PARA PUXAR TODOS OS ATIVOS ---------------------
+
+@app.get("/assets", response_model=List[schemas.Asset])
+def read_assets(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """
+    Endpoint para ler uma lista de todos os ativos da base de dados.
+    """
+    assets = db.query(models.Asset).offset(skip).limit(limit).all()
+    print(f"Encontrados {len(assets)} ativos na base de dados.")
+    return assets
+
 # DADOS ESTRUTURAIS DO ATIVO
 
 @app.get("/assets/{asset_uuid}")

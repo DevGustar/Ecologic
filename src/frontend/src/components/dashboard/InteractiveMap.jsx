@@ -1,17 +1,28 @@
 // src/components/dashboard/InteractiveMap.jsx
 
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, Marker, Popup } from 'react-leaflet';
 import Papa from 'papaparse';
-import MapLegend from './MapLegend'; // Importa a legenda
+import MapLegend from './MapLegend';
 import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
-function InteractiveMap() {
+let DefaultIcon = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41]
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
+
+function InteractiveMap({ assets }) {
   const [geoJsonData, setGeoJsonData] = useState(null);
   const [riskData, setRiskData] = useState(null);
   const mapCenter = [-14.235, -51.925];
 
-  // Paleta de cores monocromática
   const getRiskColor = (risk) => {
     if (risk > 8) return '#1C3A5E';
     if (risk > 6) return '#2A528A';
@@ -37,7 +48,6 @@ function InteractiveMap() {
         setRiskData(riskLookup);
       },
     });
-
     fetch('/geojson/municipios_brasil.json')
       .then((response) => response.json())
       .then((data) => {
@@ -56,26 +66,15 @@ function InteractiveMap() {
       fillOpacity: 0.9,
     };
   };
-
   const onEachFeature = (feature, layer) => {
     const municipalityId = feature.properties.id;
     const municipalityName = feature.properties.name;
     if (municipalityName && riskData) {
       const risk = riskData[municipalityId] !== undefined ? riskData[municipalityId].toFixed(2) : 'Não calculado';
       layer.bindPopup(`<strong>${municipalityName}</strong><br/>Nota de Risco: ${risk}`);
-
       layer.on({
-        mouseover: (e) => {
-          const layer = e.target;
-          layer.setStyle({
-            weight: 2,
-            color: '#FFFFFF',
-            fillOpacity: 1,
-          });
-        },
-        mouseout: (e) => {
-          e.target.setStyle(geoJsonStyle(feature));
-        },
+        mouseover: (e) => e.target.setStyle({ weight: 2, color: '#FFFFFF', fillOpacity: 1 }),
+        mouseout: (e) => e.target.setStyle(geoJsonStyle(feature)),
       });
     }
   };
@@ -85,8 +84,9 @@ function InteractiveMap() {
       {geoJsonData && riskData ? (
         <MapContainer center={mapCenter} zoom={4} style={{ height: '100%', width: '100%' }}>
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            // A URL para o CartoDB Voyager Dark
+            url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
           />
           <GeoJSON 
             data={geoJsonData} 
@@ -94,6 +94,17 @@ function InteractiveMap() {
             onEachFeature={onEachFeature}
           />
           <MapLegend />
+          {assets && assets.map(asset => (
+            <Marker 
+              key={asset.asset_uuid} 
+              position={[asset.latitude, asset.longitude]}
+            >
+              <Popup>
+                <strong>Ativo:</strong> {asset.name}<br/>
+                <strong>Elevação:</strong> {asset.elevation_m.toFixed(2)}m
+              </Popup>
+            </Marker>
+          ))}
         </MapContainer>
       ) : (
         <p>Carregando dados do mapa e de risco...</p>
