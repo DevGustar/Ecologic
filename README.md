@@ -1,17 +1,17 @@
 # 🎓 **Fundação Escola de Comércio Álvares Penteado (FECAP)**
 
 <p align="center">
-  <a href="https://www.fecap.br/">
-    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhZPrRa89Kma0ZZogxm0pi-tCn_TLKeHGVxywp-LXAFGR3B1DPouAJYHgKZGV0XTEf4AE&usqp=CAU" alt="FECAP" />
-  </a>
+  <a href="https://www.fecap.br/">
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhZPrRa89Kma0ZZogxm0pi-tCn_TLKeHGVxywp-LXAFGR3B1DPouAJYHgKZGV0XTEf4AE&usqp=CAU" alt="FECAP" />
+  </a>
 </p>
 
 # 🟡 **Ernst & Young (EY)**
 
 <p align="center">
-  <a href="https://www.ey.com/pt_br/about-us">
-    <img src="https://tse1.mm.bing.net/th/id/OIP.bc36gRicjZbcvILUXv-uMAHaHa?rs=1&pid=ImgDetMain&o=7&rm=3" alt="EY" width="225"/>
-  </a>
+  <a href="https://www.ey.com/pt_br/about-us">
+    <img src="https://tse1.mm.bing.net/th/id/OIP.bc36gRicjZbcvILUXv-uMAHaHa?rs=1&pid=ImgDetMain&o=7&rm=3" alt="EY" width="225"/>
+  </a>
 </p>
 
 # 🧠 **Projeto: Plataforma de Inteligência Climática Dinâmica (EcoLogic 2.0)**
@@ -60,63 +60,80 @@ A plataforma é agnóstica de setor, mas o foco inicial de validação será em 
 | **Base de Dados**| PostgreSQL com PostGIS |
 | **Análise Inicial**| Power BI |
 
----
-
-## 👨‍💻 **Equipa:** `EcoLogic`
-
-|         Nome         |                                                                                                                                                                                                                                             Perfil                                                                                                                                                                                                                                              |
-| :------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| Anderson             | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/anderson-fernandez-2aa13924b/)                                                                                                                                                                                                                                      |
-| Dandara              | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/dandaramonike/)                                                                                                                                                                                                                                                        |
-| Enzo                 | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/enzohenrique777/)                                                                                                                                                                                                                                                        |
-| Gabriel              | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/gabriel-pires-2082b473/)                                                                                                                                                                                                                                                    |
-| Gustavo              | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/gustavo-roberto-0aa488288/)                                                                                                                                                                                                                                            |
-| Nathan               | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/nathan-leandro-8bb064208/)                                                                                                                                                                                                                                                |
-
-## 👨‍🏫 **Orientador**
-
-- [`Dr. Victor Rosetti de Quiroz`](https://www.linkedin.com/in/victorbarq/?originalSubdomain=br)
-
 ## 📁 **Estrutura do Projeto (Monorepo)**
 
 A EcoLogic 2.0 é desenvolvida usando uma arquitetura de Monorepo, que organiza o código-fonte e a documentação num único repositório para uma gestão simplificada e consistente.
 
-## 📁 **Estrutura do Projeto**
-
 ```
 EcoLogic/
-├── 📁 docs/               # Documentação Estratégica do Projeto
-│   ├── Project_Charter.md  # O documento de fundação e objetivos do projeto.
-│   └── research/           # Dossiês de pesquisa de mercado e impacto.
+├── 📁 docs/                   # Documentação Estratégica do Projeto
+│   ├── Project_Charter.md    # O documento de fundação e objetivos do projeto.
+│   └── research/             # Dossiês de pesquisa de mercado e impacto.
 │
-├── 📁 src/                # Código-Fonte da Aplicação ("Source")
-│   ├── backend/            # Projeto do Backend (Python, FastAPI). O "cérebro".
-│   └── frontend/           # Projeto do Frontend (React, Vite). O "rosto".
+├── 📁 src/                    # Código-Fonte da Aplicação ("Source")
+│   ├── backend/              # Projeto do Backend (Python, FastAPI). O "cérebro".
+│   └── frontend/             # Projeto do Frontend (React, Vite). O "rosto".
 │
-├── .gitignore              # Ficheiro para ignorar ficheiros e pastas desnecessários.
-└── README.md               # Descrição principal do projeto (este ficheiro).
+├── .gitignore                # Ficheiro para ignorar ficheiros e pastas desnecessários.
+└── README.md                 # Descrição principal do projeto (este ficheiro).
 ```
+
+---
 
 ## 🚀 **Como Começar (Ambiente de Desenvolvimento)**
 
-### Backend
+Siga os passos abaixo para configurar e executar o projeto localmente. Você precisará de **dois terminais abertos simultaneamente**: um para o backend e outro para o frontend.
 
-1.  Navegue até à pasta do backend: `cd src/backend`
-2.  Crie e ative o ambiente virtual:
-    ```bash
-    py -m venv venv
-    .\venv\Scripts\activate
-    ```
-3.  Instale as dependências: `pip install -r requirements.txt`
-4.  Inicie o servidor: `uvicorn main:app --reload`
-5.  O backend estará a rodar em `http://127.0.0.1:8000`.
+### Pré-requisitos
 
-### Frontend
+-   [Node.js](https://nodejs.org/en/) (versão 18 ou superior)
+-   [Python](https://www.python.org/downloads/) (versão 3.9 ou superior)
 
-1.  Navegue até à pasta do frontend: `cd src/frontend`
-2.  Instale as dependências: `npm install`
-3.  Inicie o servidor de desenvolvimento: `npm run dev`
-4.  O frontend estará a rodar em `http://localhost:5173`.
+### 1. Configurando o Backend (Terminal 1)
+
+```bash
+# 1. Navegue até a pasta do backend
+cd src/backend
+
+# 2. Crie e ative o ambiente virtual
+# No Windows:
+py -m venv venv
+.\venv\Scripts\activate
+# No macOS/Linux:
+python3 -m venv venv
+source venv/bin/activate
+
+# 3. Instale as dependências do Python
+pip install -r requirements.txt
+
+# 4. Inicie o servidor do backend
+uvicorn main:app --reload
+```
+
+O backend estará rodando em `http://127.0.0.1:8000`. Deixe este terminal aberto.
+
+### 2. Configurando o Frontend (Terminal 2)
+
+Abra um **novo terminal**.
+
+```bash
+# 1. Navegue até a pasta do frontend
+cd src/frontend
+
+# 2. Instale as dependências do Node.js
+npm install
+
+# 3. Inicie o servidor de desenvolvimento
+npm run dev
+```
+
+O frontend estará rodando em `http://localhost:5173`.
+
+### 3. Acessando a Aplicação
+
+Com os dois servidores rodando, abra seu navegador e acesse a URL do frontend: **`http://localhost:5173`**. A aplicação Ecologic deve carregar e estar pronta para uso.
+
+---
 
 ## 📚 **Referências**
 
@@ -125,9 +142,24 @@ EcoLogic/
 >- [Open-Meteo API](https://open-meteo.com/)
 >- [MapBiomas](https://mapbiomas.org/)
 
+## 👨‍🏫 **Orientador**
+
+- [`Dr. Victor Rosetti de Quiroz`](https://www.linkedin.com/in/victorbarq/?originalSubdomain=br)
+
+## 👨‍💻 **Equipa:** `EcoLogic`
+
+|           Nome           |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    Perfil                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| :------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| Anderson             | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/anderson-fernandez-2aa13924b/)                                                                                                                                                                                                                                                                                                                              |
+| Dandara              | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/dandaramonike/)                                                                                                                                                                                                                                                                                                                                              |
+| Enzo                 | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/enzohenrique777/)                                                                                                                                                                                                                                                                                                                                            |
+| Gabriel              | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/gabriel-pires-2082b473/)                                                                                                                                                                                                                                                                                                                                      |
+| Gustavo              | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/gustavo-roberto-0aa488288/)                                                                                                                                                                                                                                                                                                                                    |
+| Nathan               | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/nathan-leandro-8bb064208/)                                                                                                                                                                                                                                                                                                                                      |
+
 ## 🙏 **Agradecimento**
 
 Muito obrigado por acompanhar o nosso projeto! Esperamos que esta iniciativa contribua para criar soluções resilientes e inovadoras para os desafios climáticos do Brasil.
 
 Feito com ❤️,<br>
-**Equipa EcoLogic**
+**Equipe EcoLogic**
