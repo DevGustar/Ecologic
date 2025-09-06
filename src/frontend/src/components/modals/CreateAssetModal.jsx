@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 
-function CreateAssetModal({ isOpen, onClose }) {
-  // Se o modal não estiver aberto, não renderiza nada.
+// O componente agora recebe 'onSuccess' para notificar a criação bem-sucedida
+function CreateAssetModal({ isOpen, onClose, onSuccess }) {
+  // Se não estiver aberto, não renderiza nada
   if (!isOpen) {
     return null;
   }
@@ -13,28 +14,23 @@ function CreateAssetModal({ isOpen, onClose }) {
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
   
-  // Estados para dar feedback ao usuário (carregando, erro)
+  // Estados para feedback ao usuário
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  // Função que lida com o envio do formulário para o backend
   const handleSubmit = async (event) => {
-    event.preventDefault(); // Previne o recarregamento da página
+    event.preventDefault();
     setIsSubmitting(true);
     setError(null);
 
+    const newAsset = {
+      name: assetName,
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
+    };
+
     try {
-      // 1. Cria o objeto de dados com os nomes corretos ('latitude', 'longitude')
-      const newAsset = {
-        name: assetName,
-        latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude),
-      };
-
-      // A URL correta do seu backend FastAPI
       const apiUrl = 'http://127.0.0.1:8000/assets';
-
-      // 2. Faz a requisição POST, enviando os dados como JSON
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -43,27 +39,23 @@ function CreateAssetModal({ isOpen, onClose }) {
         body: JSON.stringify(newAsset),
       });
 
-      // 3. Verifica se a resposta da API indica um erro
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        // O erro do FastAPI com Pydantic geralmente vem no campo 'detail'
         throw new Error(errorData.detail || `Erro ${response.status}: Falha ao criar o ativo.`);
       }
 
-      // 4. Se tudo deu certo
       const createdAsset = await response.json();
       console.log('Ativo criado com sucesso:', createdAsset);
       alert(`Ativo "${createdAsset.name}" foi criado com sucesso!`);
       
-      onClose(); // Fecha o modal
+      // Chama a função onSuccess que recebemos da DashboardPage.
+      // Ela vai tratar de fechar o modal E de recarregar os dados.
+      onSuccess();
 
     } catch (err) {
-      // 5. Se deu algum erro, guarda a mensagem para exibir na tela
       console.error("Erro ao enviar o ativo:", err);
       setError(err.message);
-    } finally {
-      // 6. Independentemente do resultado, para o estado de "carregando"
-      setIsSubmitting(false);
+      setIsSubmitting(false); // Para o loading apenas se der erro
     }
   };
 
@@ -96,7 +88,7 @@ function CreateAssetModal({ isOpen, onClose }) {
               <div className="coordinates-group">
                 <input
                   type="number"
-                  step="any"
+                  step="any" // Permite casas decimais
                   value={latitude}
                   onChange={(e) => setLatitude(e.target.value)}
                   placeholder="Latitude (ex: -15.7801)"
@@ -104,7 +96,7 @@ function CreateAssetModal({ isOpen, onClose }) {
                 />
                 <input
                   type="number"
-                  step="any"
+                  step="any" // Permite casas decimais
                   value={longitude}
                   onChange={(e) => setLongitude(e.target.value)}
                   placeholder="Longitude (ex: -47.9292)"
