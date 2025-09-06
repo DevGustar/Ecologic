@@ -412,3 +412,262 @@ input:checked + .slider:before {
   transform: translateX(22px);
   background-color: white; /* Bolinha fica branca para máximo contraste quando ligado */
 }
+
+/* ----------------------------------------------------- */
+
+.map-popup-content strong {
+  font-size: 1rem;
+  color: var(--texto-principal);
+}
+
+.map-popup-content p {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.popup-details-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: var(--acento-primario);
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.popup-details-link:hover {
+  text-decoration: underline;
+}
+
+/* Ajuste para o fundo do pop-up do Leaflet combinar com o nosso tema */
+.leaflet-popup-content-wrapper {
+  background-color: var(--fundo-secundario);
+  color: var(--texto-secundario);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+}
+
+.leaflet-popup-tip {
+  background-color: var(--fundo-secundario);
+}
+
+.popup-loading, .popup-error {
+  font-style: italic;
+  color: var(--texto-secundario);
+  margin: 0.5rem 0;
+}
+
+.popup-error {
+  color: var(--cor-alerta);
+}
+
+/* ---------------------------------------------------- */
+.asset-detail-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background-color: var(--fundo-principal);
+  color: var(--texto-principal);
+}
+
+/* Sidebar de lista de ativos */
+.asset-list-sidebar {
+  width: 300px; /* Largura fixa */
+  background-color: var(--fundo-secundario);
+  border-right: 1px solid var(--borda);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0; /* Impede que encolha */
+}
+
+.asset-list-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--borda);
+}
+
+.asset-list-header h2 {
+  margin: 1rem 0 0 0;
+  font-family: var(--fonte-titulo);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--texto-principal);
+}
+
+.back-link {
+  color: var(--texto-secundario);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.back-link:hover {
+  color: var(--acento-primario);
+}
+
+.asset-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.asset-list-item {
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--borda);
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s;
+  color: var(--texto-secundario);
+}
+
+.asset-list-item:hover {
+  background-color: var(--fundo-principal);
+  color: var(--texto-principal);
+}
+
+.asset-list-item.active {
+  background-color: var(--acento-primario);
+  color: var(--fundo-principal); /* Texto preto no destaque */
+  font-weight: 700;
+  position: relative;
+}
+.asset-list-item.active::before { /* Pequeno indicador visual ativo */
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    background-color: var(--texto-principal); /* Linha branca lateral */
+    border-radius: 0 5px 5px 0;
+}
+
+
+/* Área de conteúdo principal da análise */
+.asset-detail-content {
+  padding: 2.5rem 3.5rem; /* Padding generoso */
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.asset-detail-content h1 {
+  font-family: var(--fonte-titulo);
+  font-size: 2.8rem; /* Título maior */
+  margin-top: 0;
+  margin-bottom: 2.5rem; /* Mais espaço abaixo do título */
+  font-weight: 700;
+  color: var(--texto-principal);
+}
+
+.asset-detail-content h1 span {
+  color: var(--acento-primario);
+}
+
+/* Grelha principal da análise (Mapa, KPI, Detalhes) */
+.analysis-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr; /* KPI um pouco maior, mapa/detalhes flexíveis */
+  grid-template-rows: 350px auto; /* Mapa com altura fixa, detalhes abaixo */
+  gap: 2rem; /* Espaçamento consistente */
+  grid-template-areas:
+    "kpi   map"
+    "details map"; /* Mapa ainda ocupa 2 linhas */
+}
+
+/* Estilos dos painéis */
+.map-panel {
+  grid-area: map;
+  background-color: var(--fundo-secundario); /* Cor de fundo para o painel do mapa */
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  overflow: hidden; /* Garante que o mapa não 'escape' das bordas */
+}
+
+.kpi-panel {
+  grid-area: kpi;
+  background-color: var(--fundo-secundario);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1rem;
+}
+
+.kpi-panel .kpi-title {
+    font-size: 1rem;
+    color: var(--texto-secundario);
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.kpi-panel .kpi-value {
+    font-size: 4.5rem; /* KPI ainda maior */
+    font-weight: 800; /* Mais bold */
+    color: var(--acento-primario); /* Cor do acento para o valor */
+}
+
+.details-panel {
+  grid-area: details;
+}
+
+/* Card de detalhes */
+.details-card {
+  background-color: var(--fundo-secundario);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  padding: 1.5rem 2rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Empurra o último item para baixo */
+}
+
+.details-card h4 {
+  margin: 0 0 1.5rem 0;
+  font-family: var(--fonte-titulo);
+  font-size: 1.3rem; /* Título um pouco maior */
+  border-bottom: 1px solid var(--borda);
+  padding-bottom: 1rem;
+  color: var(--texto-principal);
+}
+
+.forecast-summary {
+  font-style: italic;
+  color: var(--texto-secundario);
+  margin: 0 0 2rem 0;
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+.weather-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  font-size: 1rem;
+}
+
+.weather-details span {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--texto-secundario);
+}
+
+.weather-details strong {
+  color: var(--texto-principal);
+  font-weight: 700;
+}
+
+/* Estilos para mensagem de erro */
+.error-message {
+  color: var(--cor-alerta);
+  background-color: rgba(255, 0, 0, 0.1);
+  border: 1px solid var(--cor-alerta);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 2rem;
+}

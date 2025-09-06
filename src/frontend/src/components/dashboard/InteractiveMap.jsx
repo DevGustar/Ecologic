@@ -1,8 +1,8 @@
 // src/components/dashboard/InteractiveMap.jsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { MapContainer, TileLayer, GeoJSON, Marker, Popup } from 'react-leaflet';
-import Papa from 'papaparse';
+import { Link } from 'react-router-dom';
 import MapLegend from './MapLegend';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -15,13 +15,33 @@ let DefaultIcon = L.icon({
     iconSize: [25, 41],
     iconAnchor: [12, 41]
 });
-
 L.Marker.prototype.options.icon = DefaultIcon;
 
-function InteractiveMap({ assets }) {
-  const [geoJsonData, setGeoJsonData] = useState(null);
-  const [riskData, setRiskData] = useState(null);
-  const mapCenter = [-14.235, -51.925];
+function InteractiveMap({ assets, riskData, viewMode }) {
+  const [popupContent, setPopupContent] = useState({ isLoading: false, data: null, error: null });
+
+  const handleMarkerClick = async (asset) => {
+    setPopupContent({ isLoading: true, data: null, error: null });
+    try {
+      const apiUrl = `http://127.0.0.1:8000/assets/${asset.asset_uuid}/risk_analysis`;
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error('Falha ao buscar análise de risco');
+      }
+      const analysisData = await response.json();
+      setPopupContent({ isLoading: false, data: analysisData, error: null });
+    } catch (err) {
+      console.error("Erro ao buscar análise para o pop-up:", err);
+      setPopupContent({ isLoading: false, data: null, error: err.message });
+    }
+  };
+
+  const [geoJsonData, setGeoJsonData] = React.useState(null);
+  React.useEffect(() => {
+    fetch('/geojson/municipios_brasil.json')
+      .then((res) => res.json())
+      .then((data) => setGeoJsonData(data));
+  }, []);
 
   const getRiskColor = (risk) => {
     if (risk > 8) return '#1C3A5E';
@@ -30,30 +50,6 @@ function InteractiveMap({ assets }) {
     if (risk > 2) return '#5F98C4';
     return '#A2C4DF';
   };
-
-  useEffect(() => {
-    Papa.parse('/risk_report_final.csv', {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        const riskLookup = results.data.reduce((acc, row) => {
-          const id = row.codigo_ibge;
-          const risk = parseFloat(row.nota_de_risco);
-          if (id && !isNaN(risk)) {
-            acc[id.trim()] = risk;
-          }
-          return acc;
-        }, {});
-        setRiskData(riskLookup);
-      },
-    });
-    fetch('/geojson/municipios_brasil.json')
-      .then((response) => response.json())
-      .then((data) => {
-        setGeoJsonData(data);
-      });
-  }, []);
 
   const geoJsonStyle = (feature) => {
     const municipalityId = feature.properties.id;
@@ -66,6 +62,7 @@ function InteractiveMap({ assets }) {
       fillOpacity: 0.9,
     };
   };
+
   const onEachFeature = (feature, layer) => {
     const municipalityId = feature.properties.id;
     const municipalityName = feature.properties.name;
@@ -82,10 +79,9 @@ function InteractiveMap({ assets }) {
   return (
     <div className="map-container-wrapper">
       {geoJsonData && riskData ? (
-        <MapContainer center={mapCenter} zoom={4} style={{ height: '100%', width: '100%' }}>
+        <MapContainer center={[-14.235, -51.925]} zoom={4} style={{ height: '100%', width: '100%' }}>
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            // A URL para o CartoDB Voyager Dark
+            attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
             url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
           />
           <GeoJSON 
@@ -94,14 +90,36 @@ function InteractiveMap({ assets }) {
             onEachFeature={onEachFeature}
           />
           <MapLegend />
+          
           {assets && assets.map(asset => (
             <Marker 
               key={asset.asset_uuid} 
               position={[asset.latitude, asset.longitude]}
+              eventHandlers={{
+                click: () => handleMarkerClick(asset),
+              }}
             >
               <Popup>
-                <strong>Ativo:</strong> {asset.name}<br/>
-                <strong>Elevação:</strong> {asset.elevation_m.toFixed(2)}m
+                <div className="map-popup-content">
+                  <strong>{asset.name}</strong>
+                  {popupContent.isLoading ? (
+                    <p className="popup-loading">A calcular risco...</p>
+                  ) : popupContent.error ? (
+                    <p className="popup-error">Erro: {popupContent.error}</p>
+                  ) : popupContent.data ? (
+                    <>
+                      <p>
+                        Nota de Risco: <strong>{popupContent.data.daily_forecast_with_risk[0].nota_de_risco.toFixed(2)}</strong>
+                      </p>
+                      <p>Elevação: {popupContent.data.asset_info.elevation_m.toFixed(2)}m</p>
+                      <Link to={`/asset/${asset.asset_uuid}`} className="popup-details-link">
+                        Ver mais detalhes &rarr;
+                      </Link>
+                    </>
+                  ) : (
+                    <p>Clique novamente para carregar os dados.</p>
+                  )}
+                </div>
               </Popup>
             </Marker>
           ))}

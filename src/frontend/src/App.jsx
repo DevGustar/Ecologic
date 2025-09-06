@@ -1,10 +1,16 @@
+// src/App.jsx
 import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import DashboardPage from './pages/DashboardPage';
-import './App.css'; // Vamos usar este arquivo para os estilos do layout
+import AssetDetailPage from './pages/AssetDetailPage';
+import './App.css'; // O CSS principal continua aqui
 
 function App() {
   return (
-    <DashboardPage />
+    <Routes>
+      <Route path="/" element={<DashboardPage />} />
+      <Route path="/asset/:assetId" element={<AssetDetailPage />} />
+    </Routes>
   );
 }
 
