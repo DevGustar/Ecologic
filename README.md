@@ -64,45 +64,55 @@ EcoLogic/
 ---
 
 ## 🚀 **Como Começar (Ambiente de Desenvolvimento)**
-Siga os passos abaixo para configurar e executar o projeto. Você precisará de **dois terminais abertos simultaneamente**.
+
+Siga os passos abaixo para configurar e executar o projeto localmente. Você precisará de **dois terminais abertos simultaneamente**.
+
+*Nota: Estas instruções foram testadas num ambiente de desenvolvimento padrão. Em máquinas corporativas com restrições de firewall ou proxy, podem ser necessários ajustes adicionais na configuração de rede do Python (pip) e do Node.js (npm).*
 
 ### 1. Configurando o Backend (Terminal 1)
+
 ```bash
-# Navegue para a pasta do backend
-cd src/backend
+# 1. Navegue para a pasta raiz do código-fonte
+cd src
 
-# Crie e ative o ambiente virtual
+# 2. Crie e ative o ambiente virtual dentro da pasta do backend
 # No Windows:
-py -m venv venv
-.\venv\Scripts\activate
+py -m venv backend\venv
+.\backend\venv\Scripts\activate
 # No macOS/Linux:
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv backend/venv
+source backend/venv/bin/activate
 
-# Instale as dependências
-pip install -r requirements.txt
+# 3. Instale as dependências do Python
+pip install -r backend/requirements.txt
 
-# Inicie o servidor
-uvicorn main:app --reload
+# 4. Inicie o servidor Uvicorn a partir da pasta 'src'
+# (Isto é crucial para que o Python encontre o módulo 'backend')
+uvicorn backend.main:app --reload
 ```
-O backend estará a rodar em `http://127.0.0.1:8000`.
+O backend estará a rodar em `http://12.0.0.1:8000`. Deixe este terminal aberto.
 
 ### 2. Configurando o Frontend (Terminal 2)
+
+Abra um **novo terminal**.
+
 ```bash
-# Navegue para a pasta do frontend
+# 1. Navegue para a pasta do frontend
 cd src/frontend
 
-# Instale as dependências
+# 2. Instale as dependências do Node.js
 npm install
 
-# Inicie o servidor de desenvolvimento
+# 3. Inicie o servidor de desenvolvimento
 npm run dev
 ```
 O frontend estará a rodar em `http://localhost:5173`.
 
----
+### 3. Acessando a Aplicação
 
-## 👨‍💻 **Equipa e Contribuições**
+Com os dois servidores rodando, abra seu navegador e acesse a URL do frontend: **`http://localhost:5173`**. A aplicação Ecologic deve carregar e estar pronta para uso.
+
+## 👨‍💻 **Equipe e Contribuições**
 
 ### Papéis e Contribuições
 Este projeto foi desenvolvido com as seguintes responsabilidades principais:
