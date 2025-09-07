@@ -2,9 +2,10 @@
 
 import React from 'react';
 import KpiCard from '../dashboard/KpiCard';
-import ToggleSwitch from './ToggleSwitch'; // 1. Importe o NOSSO ToggleSwitch
+import ToggleSwitch from './ToggleSwitch';
 
-function Sidebar({ onOpenCreateAssetModal, viewMode, onViewModeChange }) {
+// 1. A função agora recebe a prop 'kpis'
+function Sidebar({ onOpenCreateAssetModal, viewMode, onViewModeChange, kpis }) {
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -21,32 +22,25 @@ function Sidebar({ onOpenCreateAssetModal, viewMode, onViewModeChange }) {
 
       <div className="view-mode-toggle">
         <label>
-          {/* 1. Mude esta linha: */}
-          {/* <span>Visão Nacional</span> */}
-          {/* Para esta: */}
           <span className="toggle-label-text">Visão Nacional</span>
-          
-          {/* 2. Mude esta linha: */}
-          {/* <ToggleSwitch ... /> */}
-          {/* Para esta, envolvendo-o numa div: */}
           <div className="toggle-switch-container">
             <ToggleSwitch
               checked={viewMode === 'assets'}
               onChange={(e) => onViewModeChange(e.target.checked ? 'assets' : 'national')}
             />
           </div>
-
-          {/* 3. Mude esta linha: */}
-          {/* <span>Meus Ativos</span> */}
-          {/* Para esta: */}
           <span className="toggle-label-text">Meus Ativos</span>
         </label>
       </div>
 
       <div className="sidebar-kpis">
-        <KpiCard title="Risk Score" value="85.2" />
-        <KpiCard title="Alertas Críticos" value="12" />
-        <KpiCard title="Zonas em Atenção" value="3" />
+        {/* O título agora muda com base no viewMode */}
+        <KpiCard 
+          title={viewMode === 'national' ? 'Risk Score (Nacional)' : 'Risk Score (Ativos)'} 
+          value={kpis.riskScore} 
+        />
+        <KpiCard title="Alertas Críticos" value={kpis.criticalAlerts} />
+        <KpiCard title="Zonas em Atenção" value={kpis.attentionZones} />
       </div>
     </aside>
   );
