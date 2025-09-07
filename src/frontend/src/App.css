@@ -2,11 +2,11 @@
 :root {
   /* ... suas variáveis existentes ... */
 
-  --cor-critica: #dc3545;   /* Vermelho para risco muito alto */
-  --cor-alerta: #fd7e14;    /* Laranja para risco alto */
-  --cor-cuidado: #ffc107;   /* Amarelo para risco moderado */
-  --cor-sucesso: #28a745;   /* Verde para risco baixo */
-  --cor-neutra: #17a2b8;    /* Azul/Ciano para risco muito baixo */
+  --cor-critica: #C02E2E;   /* Vermelho escuro/vinho para risco EXTREMO */
+  --cor-alerta: #FF7B00;    /* Laranja brilhante para risco ALTO */
+  --cor-cuidado: #FFCC00;   /* Amarelo dourado para risco MODERADO */
+  --cor-sucesso: #4CAF50;   /* Verde para risco BAIXO */
+  --cor-neutra: #1E90FF;    /* Azul claro/dodger blue para risco MUITO BAIXO/Mínimo */
 }
 
 
@@ -799,4 +799,21 @@ input:checked + .slider:before {
   background-color: white; /* Cor do furo (sempre branco) */
   border-radius: 50%; /* Forma circular do furo */
   transform: rotate(45deg); /* Desfaz a rotação do outer para manter o furo reto */
+}
+
+/* === ESTILOS PARA O MARCADOR DE ATIVO PADRÃO (DASHBOARD PRINCIPAL) === */
+
+/* Alvo é o ícone padrão do Leaflet */
+.leaflet-marker-icon {
+  /* Filtro de CSS para mudar a cor do ícone azul para um roxo/magenta vibrante.
+    'hue-rotate' muda a cor, 'saturate' e 'brightness' intensificam-na.
+  */
+  filter: hue-rotate(180deg) saturate(2.5) brightness(1.1);
+
+  /* Adiciona uma "borda" usando uma sombra projetada (drop-shadow).
+    A sombra é branca, sem deslocamento (0 0), e com 2px de "blur" para criar um brilho
+    que funciona como uma borda subtil, mas forte.
+  */
+  -webkit-filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 2px rgba(255, 255, 255, 0.7));
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 2px rgba(255, 255, 255, 0.7));
 }

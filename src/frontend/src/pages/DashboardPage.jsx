@@ -146,7 +146,7 @@ function DashboardPage() {
             assets={assetsWithRisk}
             riskData={riskData}
             viewMode={viewMode} 
-            geoJsonData={geoJsonData}
+            geoJsonData={geoJsonData} // Garanta que o geoJsonData está a ser passado
           />
         ) : (
           <div className="loading-map-message">
