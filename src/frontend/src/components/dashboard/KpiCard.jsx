@@ -1,16 +1,14 @@
-// src/components/dashboard/KpiCard.jsx
-
 import React from 'react';
 
-// Adicionamos a prop 'isHero'
-function KpiCard({ title, value, isHero = false }) {
-  // A classe 'hero' será adicionada condicionalmente
-  const cardClass = isHero ? "kpi-card hero" : "kpi-card";
-
+// O componente agora recebe a prop 'color'
+function KpiCard({ title, value, color }) {
   return (
-    <div className={cardClass}>
+    <div className="kpi-card">
       <span className="kpi-title">{title}</span>
-      <span className="kpi-value">{value}</span>
+      {/* O estilo da cor é aplicado diretamente aqui */}
+      <span className="kpi-value" style={{ color: color }}>
+        {value}
+      </span>
     </div>
   );
 }

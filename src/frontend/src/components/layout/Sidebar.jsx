@@ -4,7 +4,6 @@ import React from 'react';
 import KpiCard from '../dashboard/KpiCard';
 import ToggleSwitch from './ToggleSwitch';
 
-// 1. A função agora recebe a prop 'kpis'
 function Sidebar({ onOpenCreateAssetModal, viewMode, onViewModeChange, kpis }) {
   return (
     <aside className="sidebar">
@@ -16,9 +15,9 @@ function Sidebar({ onOpenCreateAssetModal, viewMode, onViewModeChange, kpis }) {
         + Criar Novo Ativo
       </button>
 
-      <nav className="sidebar-nav">
+      {/* <nav className="sidebar-nav">
         <a href="#" className="nav-item active">Dashboard</a>
-      </nav>
+      </nav> */}
 
       <div className="view-mode-toggle">
         <label>
@@ -34,13 +33,21 @@ function Sidebar({ onOpenCreateAssetModal, viewMode, onViewModeChange, kpis }) {
       </div>
 
       <div className="sidebar-kpis">
-        {/* O título agora muda com base no viewMode */}
         <KpiCard 
           title={viewMode === 'national' ? 'Risk Score (Nacional)' : 'Risk Score (Ativos)'} 
-          value={kpis.riskScore} 
+          value={kpis.riskScore}
+          color={kpis.riskScoreColor} // Passa a cor do Risk Score
         />
-        <KpiCard title="Alertas Críticos" value={kpis.criticalAlerts} />
-        <KpiCard title="Zonas em Atenção" value={kpis.attentionZones} />
+        <KpiCard 
+          title="Alertas Críticos" 
+          value={kpis.criticalAlerts}
+          color={kpis.criticalAlertsColor} // Passa a cor dos Alertas
+        />
+        <KpiCard 
+          title="Zonas em Atenção" 
+          value={kpis.attentionZones}
+          color={kpis.attentionZonesColor} // Passa a cor das Zonas
+        />
       </div>
     </aside>
   );

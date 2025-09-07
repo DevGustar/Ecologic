@@ -5,11 +5,11 @@ import React from 'react';
 // A PALETA MONOCROMÁTICA CORRETA e os limites de risco que definimos
 const grades = [0, 2, 4, 6, 8];
 const colors = [
-  '#A2C4DF', // Risco Mínimo (0-2)
-  '#5F98C4', // Risco Baixo (2-4)
-  '#3A7CA5', // Risco Médio (4-6)
-  '#2A528A', // Risco Alto (6-8)
-  '#1C3A5E'  // Risco Crítico (8+)
+  'var(--cor-neutra)', // Risco Mínimo (0-2)
+  'var(--cor-sucesso)', // Risco Baixo (2-4)
+  'var(--cor-cuidado)', // Risco Médio (4-6)
+  'var(--cor-alerta)', // Risco Alto (6-8)
+  'var(--cor-critica)'  // Risco Crítico (8+)
 ];
 const labels = [
   'Mínimo (0-2)',

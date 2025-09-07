@@ -43,21 +43,22 @@ function InteractiveMap({ assets, riskData, viewMode }) {
       .then((data) => setGeoJsonData(data));
   }, []);
 
-  const getRiskColor = (risk) => {
-    if (risk > 8) return '#1C3A5E';
-    if (risk > 6) return '#2A528A';
-    if (risk > 4) return '#3A7CA5';
-    if (risk > 2) return '#5F98C4';
-    return '#A2C4DF';
-  };
+ const getRiskColor = (risk) => {
+  // Usamos as variáveis CSS que já definimos
+  if (risk >= 8) return 'var(--cor-critica)';
+  if (risk >= 6) return 'var(--cor-alerta)';
+  if (risk >= 4) return 'var(--cor-cuidado)';
+  if (risk >= 2) return 'var(--cor-sucesso)';
+  return 'var(--cor-neutra)';
+};
 
   const geoJsonStyle = (feature) => {
     const municipalityId = feature.properties.id;
     const risk = riskData && riskData[municipalityId] !== undefined ? riskData[municipalityId] : 0;
     return {
       fillColor: getRiskColor(risk),
-      weight: 0.2,
-      opacity: 1,
+      weight: 0.3,
+      opacity: .8,
       color: '#A2C4DF',
       fillOpacity: 0.9,
     };

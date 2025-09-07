@@ -7,17 +7,25 @@ import CreateAssetModal from '../components/modals/CreateAssetModal';
 import Papa from 'papaparse';
 import inside from 'point-in-polygon';
 
+// Função para definir a cor do KPI de Risk Score
+const getRiskScoreColor = (score) => {
+  if (score > 8) return 'var(--cor-critica)';
+  if (score > 6) return 'var(--cor-alerta)';
+  if (score > 4) return 'var(--cor-cuidado)';
+  if (score > 2) return 'var(--cor-sucesso)';
+  return 'var(--cor-neutra)';
+};
+
 function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [assets, setAssets] = useState([]);
-  const [viewMode, setViewMode] = useState('national'); 
-  const [riskData, setRiskData] = useState(null); // Contém {ibgeCode: riskScore}
-  const [geoJsonData, setGeoJsonData] = useState(null); // Contém os dados GeoJSON dos municípios
+  const [viewMode, setViewMode] = useState('national');
+  const [riskData, setRiskData] = useState(null);
+  const [geoJsonData, setGeoJsonData] = useState(null);
   
   const [nationalKpis, setNationalKpis] = useState({ riskScore: '0.00', criticalAlerts: 0, attentionZones: 0 });
   const [assetKpis, setAssetKpis] = useState({ riskScore: '0.00', criticalAlerts: 0, attentionZones: 0 });
 
-  // Função para buscar ativos da API
   const fetchAssets = async () => {
     try {
       const response = await fetch('http://127.0.0.1:8000/assets');
@@ -28,9 +36,7 @@ function DashboardPage() {
     }
   };
 
-  // useEffect principal para carregar dados iniciais (CSV, GeoJSON, Ativos)
   useEffect(() => {
-    // Carregar CSV de risco
     Papa.parse('/risk_report_final.csv', {
       download: true, header: true, skipEmptyLines: true,
       complete: (results) => {
@@ -42,7 +48,6 @@ function DashboardPage() {
         }, {});
         setRiskData(riskLookup);
 
-        // Calcular KPIs NACIONAIS IMEDIATAMENTE após carregar o riskData
         const allRisks = Object.values(riskLookup);
         if (allRisks.length > 0) {
           const totalRisk = allRisks.reduce((sum, risk) => sum + risk, 0);
@@ -57,33 +62,19 @@ function DashboardPage() {
         }
       },
     });
-
-    // Carregar GeoJSON
-    fetch('/geojson/municipios_brasil.json')
-      .then(res => res.json())
-      .then(data => setGeoJsonData(data))
-      .catch(error => console.error("Erro ao carregar GeoJSON:", error));
-
-    // Carregar Ativos
+    fetch('/geojson/municipios_brasil.json').then(res => res.json()).then(data => setGeoJsonData(data));
     fetchAssets();
-  }, []); // Executa apenas uma vez no carregamento inicial
+  }, []);
 
-  // useMemo para calcular assetsWithRisk (filtra para garantir que todos os dados estão carregados)
   const assetsWithRisk = useMemo(() => {
-    if (!assets || !riskData || !geoJsonData) {
-      return []; // Retorna vazio se algum dado estiver faltando
-    }
-
+    if (!assets || !riskData || !geoJsonData) return [];
     return assets.map(asset => {
       const assetPoint = [asset.longitude, asset.latitude];
       let containingMunicipality = null;
-
-      // Percorre as features do GeoJSON para encontrar o município do ativo
       for (const feature of geoJsonData.features) {
         if (feature.geometry && feature.geometry.coordinates) {
           const geometryType = feature.geometry.type;
           let polygonsToCheck = [];
-
           if (geometryType === 'Polygon') {
             polygonsToCheck.push(feature.geometry.coordinates[0]);
           } else if (geometryType === 'MultiPolygon') {
@@ -91,7 +82,6 @@ function DashboardPage() {
               polygonsToCheck.push(polygon[0]);
             }
           }
-          
           for (const polygonCoords of polygonsToCheck) {
             if (inside(assetPoint, polygonCoords)) {
               containingMunicipality = feature;
@@ -101,69 +91,62 @@ function DashboardPage() {
         }
         if (containingMunicipality) break;
       }
-
       let riskScore = null;
       if (containingMunicipality) {
         const ibgeCode = containingMunicipality.properties.id;
-        // Garante que o ibgeCode existe em riskData
-        riskScore = riskData[ibgeCode] !== undefined ? riskData[ibgeCode] : null;
+        riskScore = riskData[ibgeCode] || null;
       }
       return { ...asset, riskScore };
     });
-  }, [assets, riskData, geoJsonData]); // Recalcula quando assets, riskData ou geoJsonData mudam
+  }, [assets, riskData, geoJsonData]);
 
-  // useEffect para CALCULAR os KPIs DOS ATIVOS
   useEffect(() => {
-    // Só calcula se assetsWithRisk não estiver vazio
-    if (assetsWithRisk.length > 0) {
-      const assetsWithValidRisk = assetsWithRisk.filter(asset => asset.riskScore !== null);
-
-      if (assetsWithValidRisk.length > 0) {
-        const totalRisk = assetsWithValidRisk.reduce((sum, asset) => sum + asset.riskScore, 0);
-        const avgRisk = (totalRisk / assetsWithValidRisk.length);
-        const critical = assetsWithValidRisk.filter(asset => asset.riskScore > 8).length;
-        const attention = assetsWithValidRisk.filter(asset => asset.riskScore >= 6 && asset.riskScore <= 8).length;
-        setAssetKpis({
-          riskScore: avgRisk.toFixed(2),
-          criticalAlerts: critical,
-          attentionZones: attention
-        });
-      } else {
-        // Se houver ativos, mas nenhum com risco válido
-        setAssetKpis({ riskScore: '0.00', criticalAlerts: 0, attentionZones: 0 });
-      }
+    const assetsWithValidRisk = assetsWithRisk.filter(asset => asset.riskScore !== null);
+    if (assetsWithValidRisk.length > 0) {
+      const totalRisk = assetsWithValidRisk.reduce((sum, asset) => sum + asset.riskScore, 0);
+      const avgRisk = (totalRisk / assetsWithValidRisk.length);
+      const critical = assetsWithValidRisk.filter(asset => asset.riskScore > 8).length;
+      const attention = assetsWithValidRisk.filter(asset => asset.riskScore >= 6 && asset.riskScore <= 8).length;
+      setAssetKpis({
+        riskScore: avgRisk.toFixed(2),
+        criticalAlerts: critical,
+        attentionZones: attention
+      });
     } else {
-      // Se não houver ativos nenhuns
       setAssetKpis({ riskScore: '0.00', criticalAlerts: 0, attentionZones: 0 });
     }
-  }, [assetsWithRisk]); // Recalcula sempre que a lista de ativos enriquecida for atualizada
+  }, [assetsWithRisk]);
 
   const handleAssetCreated = () => {
     setIsModalOpen(false);
-    fetchAssets(); // Rebusca os ativos para atualizar a lista
+    fetchAssets();
   };
 
-  // Escolhe qual conjunto de KPIs mostrar com base no viewMode
-  const currentKpis = viewMode === 'national' ? nationalKpis : assetKpis;
+  const kpisToShow = viewMode === 'national' ? nationalKpis : assetKpis;
 
-  // Renderiza a UI
+  const kpisWithColors = {
+    ...kpisToShow,
+    riskScoreColor: getRiskScoreColor(parseFloat(kpisToShow.riskScore)),
+    criticalAlertsColor: kpisToShow.criticalAlerts > 0 ? 'var(--cor-critica)' : 'var(--texto-principal)',
+    attentionZonesColor: kpisToShow.attentionZones > 0 ? 'var(--cor-alerta)' : 'var(--texto-principal)',
+  };
+
   return (
     <div className="dashboard-layout">
       <Sidebar 
         onOpenCreateAssetModal={() => setIsModalOpen(true)}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-        kpis={currentKpis} 
+        kpis={kpisWithColors} 
       />
       
       <main className="main-content">
-        {/* Renderiza o mapa apenas quando todos os dados estiverem carregados */}
         {(riskData && geoJsonData) ? (
           <InteractiveMap 
             assets={assetsWithRisk}
-            riskData={riskData} // Continua a passar o riskData bruto para o mapa
+            riskData={riskData}
             viewMode={viewMode} 
-            geoJsonData={geoJsonData} // Passe o geoJsonData também, o mapa vai precisar
+            geoJsonData={geoJsonData}
           />
         ) : (
           <div className="loading-map-message">
