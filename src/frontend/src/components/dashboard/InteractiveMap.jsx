@@ -94,7 +94,7 @@ function InteractiveMap({ assets, riskData, viewMode, geoJsonData }) {
     const municipalityName = feature.properties.name;
     if (municipalityName && riskData) {
       const risk = riskData[municipalityId] !== undefined ? riskData[municipalityId].toFixed(2) : 'Não calculado';
-      layer.bindPopup(`<strong>${municipalityName}</strong><br/>Nota de Risco (CSV): ${risk}`);
+      layer.bindPopup(`<strong>${municipalityName}</strong><br/>Nota de Risco: ${risk}`);
       layer.on({
         mouseover: (e) => e.target.setStyle({ weight: 2, color: '#FFFFFF', fillOpacity: 1 }),
         mouseout: (e) => e.target.setStyle(geoJsonStyle(feature)),
