@@ -2,7 +2,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import AssetLocationMap from '../components/dashboard/AssetLocationMap'; // Importa o novo mapa focado
+import AssetLocationMap from '../components/dashboard/AssetLocationMap';
+import AssetListModal from '../components/modals/AssetListModal';
+import RiskForecastChart from '../components/dashboard/RiskForecastChart';
+
+// A função de cores agora é definida aqui para ser partilhada
+const getRiskColor = (risk) => {
+  // Usamos as variáveis CSS que já definimos
+  if (risk >= 8) return 'var(--cor-critica)';
+  if (risk >= 6) return 'var(--cor-alerta)';
+  if (risk >= 4) return 'var(--cor-cuidado)';
+  if (risk >= 2) return 'var(--cor-sucesso)';
+  return 'var(--cor-neutra)';
+};
 
 function AssetDetailPage() {
   const { assetId } = useParams();
@@ -11,8 +23,9 @@ function AssetDetailPage() {
   const [allAssets, setAllAssets] = useState([]);
   const [riskAnalysis, setRiskAnalysis] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAssetListModalOpen, setIsAssetListModalOpen] = useState(false);
 
-  // Busca a lista de todos os ativos para a barra lateral
+  // Busca a lista de todos os ativos para o modal
   useEffect(() => {
     const fetchAllAssets = async () => {
       try {
@@ -27,9 +40,8 @@ function AssetDetailPage() {
     fetchAllAssets();
   }, []);
 
-  // Busca a ANÁLISE DE RISCO do ativo SELECIONADO
+  // Busca a análise de risco do ativo selecionado
   useEffect(() => {
-    // Só executa se tivermos um assetId
     if (assetId) {
       const fetchRiskAnalysis = async () => {
         setIsLoading(true);
@@ -49,67 +61,57 @@ function AssetDetailPage() {
       };
       fetchRiskAnalysis();
     }
-  }, [assetId]); // Roda sempre que o assetId (da URL) mudar
+  }, [assetId]);
 
+  // Função para ser chamada pelo modal para navegar para um novo ativo
   const handleAssetSelect = (newAssetId) => {
     navigate(`/asset/${newAssetId}`);
+    setIsAssetListModalOpen(false);
   };
 
-  // Encontra o ativo selecionado completo para usar no título e no mapa
   const currentAsset = allAssets.find(asset => asset.asset_uuid === assetId);
-  // Extrai a previsão do primeiro dia para fácil acesso
   const todayForecast = riskAnalysis?.daily_forecast_with_risk?.[0];
 
   return (
-    <div className="asset-detail-layout">
-      {/* Coluna da Esquerda: Lista de ativos */}
-      <aside className="asset-list-sidebar">
-        <div className="asset-list-header">
-          <Link to="/" className="back-link">&larr; Voltar ao Dashboard</Link>
-          <h2>Meus Ativos</h2>
-        </div>
-        <ul className="asset-list">
-          {allAssets.map(asset => (
-            <li 
-              key={asset.asset_uuid} 
-              className={asset.asset_uuid === assetId ? 'asset-list-item active' : 'asset-list-item'}
-              onClick={() => handleAssetSelect(asset.asset_uuid)}
-            >
-              {asset.name}
-            </li>
-          ))}
-        </ul>
-      </aside>
-
-      {/* Coluna da Direita: Conteúdo principal com a grelha de análise */}
-      <main className="asset-detail-content">
+    <div className="asset-detail-page-container">
+      <header className="asset-detail-header">
+        <Link to="/" className="back-link">&larr; Voltar ao Dashboard</Link>
         <h1>Análise: <span style={{ color: 'var(--acento-primario)' }}>{currentAsset?.name || 'Carregando...'}</span></h1>
-        
+        <button onClick={() => setIsAssetListModalOpen(true)} className="button-secondary">
+          Mudar Ativo
+        </button>
+      </header>
+
+      <main className="asset-detail-content-full">
         {isLoading ? (
           <p>A calcular risco em tempo real...</p>
         ) : riskAnalysis?.error ? (
           <div className="error-message">{riskAnalysis.error}</div>
         ) : currentAsset && todayForecast ? (
           <div className="analysis-grid">
+            {/* Painel do KPI Principal */}
+            <div className="kpi-panel">
+                <span className="kpi-title">Nota de Risco (Hoje)</span>
+                <span 
+                  className="kpi-value" 
+                  style={{ color: getRiskColor(todayForecast.nota_de_risco) }}
+                >
+                  {todayForecast.nota_de_risco.toFixed(2)}
+                </span>
+            </div>
+
             {/* Painel do Mapa Focado */}
             <div className="map-panel">
               <AssetLocationMap 
                 latitude={currentAsset.latitude} 
                 longitude={currentAsset.longitude} 
-                assetName={currentAsset.name}               />
+                assetName={currentAsset.name}
+                riskColor={getRiskColor(todayForecast.nota_de_risco)}
+              />
             </div>
 
-            {/* Painel do KPI Principal */}
-            <div className="kpi-panel">
-              <div className="kpi-card">
-                <span className="kpi-title">Nota de Risco (Hoje)</span>
-                <span className="kpi-value">{todayForecast.nota_de_risco.toFixed(2)}</span>
-              </div>
-            </div>
-
-            {/* Painel dos Detalhes da Previsão */}
+            {/* Painel de Detalhes da Previsão do Dia */}
             <div className="details-panel">
-              <div className="details-card">
                 <h4>Previsão para {new Date(todayForecast.dt * 1000).toLocaleDateString('pt-BR')}</h4>
                 <p className="forecast-summary">{todayForecast.summary}</p>
                 <div className="weather-details">
@@ -117,13 +119,28 @@ function AssetDetailPage() {
                   <span>Chuva: <strong>{todayForecast.rain || 0} mm</strong></span>
                   <span>Clima: <strong>{todayForecast.weather[0].description}</strong></span>
                 </div>
-              </div>
+            </div>
+
+            {/* Painel do Gráfico de Previsão de Risco Futura */}
+            <div className="risk-forecast-panel">
+              <RiskForecastChart 
+                dailyForecastWithRisk={riskAnalysis.daily_forecast_with_risk}
+                getRiskColor={getRiskColor} // Passa a função de cores como prop
+              />
             </div>
           </div>
         ) : (
-          <p>Não foi possível carregar os dados da análise. Verifique o backend e a seleção de ativo.</p>
+          <p>Não foi possível carregar os dados da análise.</p>
         )}
       </main>
+
+      <AssetListModal
+        isOpen={isAssetListModalOpen}
+        onClose={() => setIsAssetListModalOpen(false)}
+        assets={allAssets}
+        currentAssetId={assetId}
+        onSelect={handleAssetSelect}
+      />
     </div>
   );
 }

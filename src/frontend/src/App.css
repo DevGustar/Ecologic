@@ -1,4 +1,23 @@
 /* === Layout Principal === */
+:root {
+  /* ... suas variáveis existentes ... */
+
+  --cor-critica: #dc3545;   /* Vermelho para risco muito alto */
+  --cor-alerta: #fd7e14;    /* Laranja para risco alto */
+  --cor-cuidado: #ffc107;   /* Amarelo para risco moderado */
+  --cor-sucesso: #28a745;   /* Verde para risco baixo */
+  --cor-neutra: #17a2b8;    /* Azul/Ciano para risco muito baixo */
+}
+
+
+html, body, #root {
+  overflow-x: hidden; /* Garante que não haverá scroll horizontal no HTML/Body/Root */
+  width: 100vw; /* Garante que a largura é exatamente a da viewport */
+  height: 100vh; /* Garante que a altura é exatamente a da viewport */
+  margin: 0;
+  padding: 0;
+}
+
 .dashboard-layout {
   display: flex;
   height: 100vh;
@@ -473,41 +492,63 @@ input:checked + .slider:before {
 /* ---------------------------------------------------- */
 
 /* --- Layout Principal --- */
-.asset-detail-layout {
-  display: flex;
+.asset-detail-page-container {
   height: 100vh;
   width: 100vw;
   background-color: var(--fundo-principal);
   color: var(--texto-principal);
-}
-
-/* --- Sidebar da Lista de Ativos (Esquerda) --- */
-.asset-list-sidebar {
-  width: 300px;
-  background-color: var(--fundo-secundario);
-  border-right: 1px solid var(--borda);
   display: flex;
   flex-direction: column;
+}
+.asset-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 2.5rem 2.5rem;
+  margin-top: 1rem;
+  margin-bottom: 2.5rem;
   flex-shrink: 0;
-  box-shadow: 5px 0 15px rgba(0, 0, 0, 0.2); /* Sombra para dar profundidade */
-  z-index: 10;
 }
 
-.asset-list-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--borda);
-}
-
-.asset-list-header h2 {
-  margin: 1rem 0 0 0;
+.asset-detail-header h1 {
   font-family: var(--fonte-titulo);
-  font-size: 1.6rem;
-  font-weight: 600;
+  font-size: 2.8rem;
+  margin: 0;
+  font-weight: 700;
   color: var(--texto-principal);
+}
+.asset-detail-header h1 span {
+  color: var(--acento-primario);
+}
+
+.asset-detail-content-full {
+  flex-grow: 1;
+  /* Adiciona o padding que tiramos do container aqui */
+  padding: 2.5rem 3.5rem; 
+  overflow-y: auto; /* Permite scroll vertical se o conteúdo for grande */
+}
+
+/* A grelha de análise continua a mesma, mas agora tem mais espaço para respirar */
+.analysis-grid {
+  display: grid;
+  /* NOVO: Larguras fixas para os cards da esquerda, e o resto para o mapa */
+  /* Vamos dar 250px para cada card na linha de cima (ou 270px para ter um pouco mais de respiro) */
+  grid-template-columns: 270px 270px 1fr; /* Coluna 1 (KPI), Coluna 2 (Detalhes), Coluna 3 (Mapa - ocupa o resto) */
+  
+  /* Mantemos as duas linhas principais */
+  grid-template-rows: auto 1fr; 
+  
+  gap: 2rem;
+  height: 100%;
+  
+  /* As áreas da grelha permanecem as mesmas */
+  grid-template-areas:
+    "kpi     details map"
+    "forecast forecast map"; 
 }
 
 .back-link {
-  color: var(--texto-secundario);
+  color: var(--texto-secundario); /* Cor normal */
   text-decoration: none;
   font-size: 0.9rem;
   transition: color 0.2s;
@@ -516,90 +557,21 @@ input:checked + .slider:before {
   gap: 0.4rem;
 }
 .back-link:hover {
-  color: var(--acento-primario);
-}
-
-.asset-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  overflow-y: auto;
-  flex-grow: 1;
-}
-
-.asset-list-item {
-  padding: 1.2rem 1.5rem;
-  cursor: pointer;
-  border-bottom: 1px solid var(--borda);
-  font-weight: 500;
-  transition: all 0.2s ease-in-out;
-  color: var(--texto-secundario);
-  position: relative;
-}
-
-.asset-list-item:hover {
-  background-color: var(--fundo-principal);
   color: var(--texto-principal);
-  padding-left: 2rem;
-}
-
-.asset-list-item.active {
-  background-color: var(--acento-primario);
-  color: white;
-  font-weight: 700;
-}
-.asset-list-item.active::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background-color: white;
-}
-
-
-/* --- Área de Conteúdo Principal (Direita) --- */
-.asset-detail-content {
-  padding: 2.5rem 3.5rem;
-  flex-grow: 1;
-  overflow-y: auto;
-}
-
-.asset-detail-content h1 {
-  font-family: var(--fonte-titulo);
-  font-size: 2.8rem; /* Ajuste para ser ligeiramente menor */
-  margin-top: 0;
-  margin-bottom: 2.5rem;
-  font-weight: 700;
-  color: var(--texto-principal);
-}
-
-.asset-detail-content h1 span {
-  color: var(--acento-primario);
-}
-
-/* --- Grelha da Análise --- */
-.analysis-grid {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  grid-template-rows: auto 1fr;
-  gap: 2rem;
-  height: calc(100% - 120px);
-  grid-template-areas:
-    "kpi   map"
-    "details map";
 }
 
 /* Estilo base para todos os painéis */
 .map-panel,
 .kpi-panel,
-.details-panel {
+.details-panel,
+.risk-forecast-panel {
   background-color: var(--fundo-secundario);
   border: 1px solid var(--borda);
   border-radius: 12px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-  padding: 2rem;
+  /* Remover o padding geral aqui para controlarmos individualmente */
+  display: flex;
+  flex-direction: column;
 }
 
 .map-panel {
@@ -610,11 +582,10 @@ input:checked + .slider:before {
 
 .kpi-panel {
   grid-area: kpi;
-  display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
+  padding: 2rem 1.5rem; /* Menos padding vertical */
 }
 
 .kpi-panel .kpi-title {
@@ -635,35 +606,32 @@ input:checked + .slider:before {
 
 .details-panel {
   grid-area: details;
-  display: flex;
-  flex-direction: column;
+  justify-content: flex-start;
+  padding: 1.5rem 1.5rem; /* Padding vertical reduzido para compactar */
 }
-
 .details-panel h4 {
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 1rem 0; /* Menos margin-bottom */
   font-family: var(--fonte-titulo);
-  font-size: 1.35rem; /* Ajuste para ser ligeiramente menor */
+  font-size: 1.35rem;
   border-bottom: 1px solid var(--borda);
-  padding-bottom: 1rem;
+  padding-bottom: 0.8rem; /* Menos padding-bottom */
   color: var(--texto-principal);
 }
-
 .forecast-summary {
   font-style: italic;
   color: var(--texto-secundario);
-  margin: 0 0 2rem 0;
-  line-height: 1.7;
-  font-size: 0.95rem; /* Ligeiramente menor para os detalhes */
-  flex-grow: 1;
+  margin: 0 0 1rem 0; /* Menos margin-bottom */
+  line-height: 1.6; /* Ligeiramente mais compacto */
+  font-size: 0.95rem;
+  /* flex-grow: 1; -> Remover se estiver a causar excesso de altura */
 }
-
 .weather-details {
   display: flex;
   flex-direction: column;
-  gap: 1rem; /* Ligeiramente menos espaçamento para compactar */
-  font-size: 0.95rem; /* Consistente com o summary */
+  gap: 0.8rem; /* Menos gap */
+  font-size: 0.95rem;
   border-top: 1px solid var(--borda);
-  padding-top: 1.5rem;
+  padding-top: 1rem; /* Menos padding-top */
 }
 
 .weather-details span {
@@ -673,7 +641,6 @@ input:checked + .slider:before {
   gap: 0.5rem;
   color: var(--texto-secundario);
 }
-
 .weather-details strong {
   color: var(--texto-principal);
   font-weight: 700;
@@ -688,4 +655,148 @@ input:checked + .slider:before {
   border-radius: 8px;
   padding: 1rem;
   margin-top: 2rem;
+}
+
+/* Estilos para o novo Modal da Lista de Ativos */
+.asset-list-modal .asset-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 60vh; /* Altura máxima para a lista */
+  overflow-y: auto;
+}
+.asset-list-modal .asset-list-item {
+  padding: 1.2rem 1.5rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--borda);
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+  color: var(--texto-secundario);
+  position: relative;
+}
+.asset-list-modal .asset-list-item:last-child {
+  border-bottom: none;
+}
+.asset-list-modal .asset-list-item:hover {
+  background-color: var(--fundo-principal);
+  color: var(--texto-principal);
+  padding-left: 2rem;
+}
+.asset-list-modal .asset-list-item.active {
+  background-color: var(--acento-primario);
+  color: white;
+  font-weight: 700;
+}
+.asset-list-modal .asset-list-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background-color: white;
+}
+
+/* --- Estilos para o novo Painel de Previsão de Risco Futura --- */
+.risk-forecast-panel {
+  grid-area: forecast;
+  background-color: var(--fundo-secundario);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  padding: 1.5rem 1.5rem; /* Ajuste o padding para ser consistente com outros cards */
+  display: flex;
+  flex-direction: column;
+}
+
+.risk-forecast-panel h4 {
+  margin: 0 0 1rem 0;
+  font-family: var(--fonte-titulo);
+  font-size: 1.35rem;
+  border-bottom: 1px solid var(--borda);
+  padding-bottom: 0.8rem;
+  color: var(--texto-principal);
+}
+
+.forecast-items-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.forecast-item-card {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem; /* Menos gap para compactar */
+  background-color: var(--fundo-principal);
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--borda);
+}
+
+.forecast-date {
+  font-weight: 600;
+  color: var(--texto-principal);
+  flex-shrink: 0;
+  width: 75px; /* Ligeiramente mais largura para "ter., 09/09" caber */
+  text-align: left; /* Alinhar à esquerda */
+  font-size: 0.85rem;
+}
+
+.risk-bar-wrapper { /* Estilos para o novo wrapper da barra */
+  flex-grow: 1;
+  height: 10px;
+  background-color: var(--borda);
+  border-radius: 5px;
+  overflow: hidden;
+  position: relative; /* Para posicionar a barra interna */
+}
+
+.risk-bar {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
+}
+
+.forecast-risk-value {
+  font-family: var(--fonte-titulo);
+  font-weight: 700;
+  flex-shrink: 0;
+  width: 45px; /* Ajustado para caber o valor com 2 casas decimais */
+  text-align: right;
+  font-size: 0.95rem;
+}
+
+.custom-marker-container {
+  /* Este é apenas um container para o Leaflet posicionar, não damos muito estilo aqui */
+  border: none;
+  background: transparent;
+  display: flex; /* Para centralizar o pino dentro dele */
+  justify-content: center;
+  align-items: flex-end; /* Alinha o pino à base do container */
+  height: 100%;
+  width: 100%;
+}
+
+.custom-marker-outer {
+  width: 30px; /* Largura do pino externo */
+  height: 30px; /* Altura do pino externo */
+  border-radius: 50% 50% 50% 0; /* Forma de pingo */
+  transform: rotate(-45deg); /* Rotação para formar o pingo */
+  border: 1px solid white; /* Borda branca */
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4); /* Sombra */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative; /* Para o inner ser posicionado absolutamente em relação a ele */
+  margin-bottom: 12px; /* Eleva o pingo um pouco para que a ponta esteja no centro */
+  transition: background-color 0.3s ease-in-out; /* Suavizar a mudança de cor */
+}
+
+.custom-marker-inner {
+  width: 10px; /* Tamanho do furo interno */
+  height: 10px; /* Tamanho do furo interno */
+  background-color: white; /* Cor do furo (sempre branco) */
+  border-radius: 50%; /* Forma circular do furo */
+  transform: rotate(45deg); /* Desfaz a rotação do outer para manter o furo reto */
 }
