@@ -7,6 +7,8 @@
   --cor-cuidado: #FFCC00;   /* Amarelo dourado para risco MODERADO */
   --cor-sucesso: #4CAF50;   /* Verde para risco BAIXO */
   --cor-neutra: #1E90FF;    /* Azul claro/dodger blue para risco MUITO BAIXO/Mínimo */
+    --borda-clara: #4A5568; /* Uma cor de borda um pouco mais clara para as linhas do grid do gráfico */
+
 }
 
 
@@ -492,27 +494,20 @@ input:checked + .slider:before {
 /* ---------------------------------------------------- */
 
 /* --- Layout Principal --- */
-.asset-detail-page-container {
-  height: 100vh;
-  width: 100vw;
-  background-color: var(--fundo-principal);
-  color: var(--texto-principal);
-  display: flex;
-  flex-direction: column;
-}
+
 .asset-detail-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin: 2.5rem 2.5rem;
   margin-top: 1rem;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
   flex-shrink: 0;
 }
 
 .asset-detail-header h1 {
   font-family: var(--fonte-titulo);
-  font-size: 2.8rem;
+  font-size: 2.5rem;
   margin: 0;
   font-weight: 700;
   color: var(--texto-principal);

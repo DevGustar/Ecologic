@@ -31,7 +31,7 @@ function AssetLocationMap({ latitude, longitude, assetName, riskColor }) {
     <MapContainer 
       key={position.toString()} 
       center={position} 
-      zoom={11}
+      zoom={18}
       scrollWheelZoom={false} 
       style={{ height: '100%', width: '100%', borderRadius: '8px' }}
     >
