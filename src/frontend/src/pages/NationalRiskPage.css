@@ -1,0 +1,84 @@
+/* src/frontend/src/pages/NationalRiskPage.css */
+
+.national-risk-page-container {
+    display: flex;
+    height: 100vh; /* Ajusta a altura da página */
+    width: 100%;
+    background-color: #0a1a2a; /* Cor de fundo do seu tema */
+    color: #e0e0e0; /* Cor do texto */
+}
+
+.national-risk-sidebar {
+    width: 300px; /* Largura fixa para a barra lateral */
+    background-color: #1a2a3a; /* Cor de fundo da barra lateral */
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto; /* Adiciona scroll se o conteúdo for muito longo */
+}
+
+.national-risk-sidebar h2 {
+    color: #64ffda; /* Cor de destaque para o título */
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.kpi-card {
+    background-color: #0e1e2c; /* Fundo mais escuro para os cartões KPI */
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    text-align: center;
+}
+
+.kpi-card h3 {
+    margin-top: 0;
+    color: #a0a0a0;
+    font-size: 0.9em;
+}
+
+.kpi-value {
+    font-size: 2.2em;
+    font-weight: bold;
+    color: #e0e0e0;
+    margin-top: 5px;
+}
+
+/* Estilos para a Legenda de Risco */
+.kpi-card.risk-legend {
+    text-align: left;
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #0e1e2c;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.risk-legend h3 {
+    text-align: center;
+    margin-bottom: 15px;
+    color: #64ffda;
+    font-size: 1em;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 0.9em;
+}
+
+.legend-item span {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    margin-right: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Borda sutil */
+}
+
+
+.national-risk-map-area {
+    flex-grow: 1; /* O mapa ocupará todo o espaço restante */
+    height: 100%;
+}
