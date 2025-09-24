@@ -1,84 +1,117 @@
-/* src/frontend/src/pages/NationalRiskPage.css */
+/* src/frontend/src/pages/NationalRiskPage.css (LAYOUT DE 3 COLUNAS - Estilos para sidebars e painéis de gráfico) */
+
+:root {
+    --background-dark: #1e1e1e;
+    --sidebar-bg: #2b2b2b;
+    --text-light: #e0e0e0;
+    --accent-color: #64ffda;
+    --border-color: #444;
+    --critical-color: #F44336;
+    --chart-bg: #3c3c3c; /* Fundo para os painéis de gráfico */
+}
 
 .national-risk-page-container {
-    display: flex;
-    height: 100vh; /* Ajusta a altura da página */
-    width: 100%;
-    background-color: #0a1a2a; /* Cor de fundo do seu tema */
-    color: #e0e0e0; /* Cor do texto */
+    display: grid; /* Usaremos Grid para o layout principal de 3 colunas */
+    /* Define 3 colunas: 300px para a esquerda, 1fr para o centro (flexível), 300px para a direita */
+    grid-template-columns: 300px 1fr 300px; 
+    height: 100vh; 
+    background-color: var(--background-dark);
+    color: var(--text-light);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
 }
 
-.national-risk-sidebar {
-    width: 300px; /* Largura fixa para a barra lateral */
-    background-color: #1a2a3a; /* Cor de fundo da barra lateral */
+/* Estilos para Ambas as Sidebars (Left e Right) */
+.sidebar {
+    background-color: var(--sidebar-bg);
     padding: 20px;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5); 
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    overflow-y: auto; /* Adiciona scroll se o conteúdo for muito longo */
+    gap: 15px;
+    overflow-y: auto;
+    flex-shrink: 0;
 }
 
-.national-risk-sidebar h2 {
-    color: #64ffda; /* Cor de destaque para o título */
+/* Sombra específica para a sidebar direita (para destacar) */
+.sidebar-right {
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5); 
+}
+
+.sidebar .header-kpi h2 {
+    color: var(--accent-color);
+    font-size: 1.8em;
+    margin-top: 0;
+    margin-bottom: 20px;
     text-align: center;
-    margin-bottom: 30px;
 }
 
-.kpi-card {
-    background-color: #0e1e2c; /* Fundo mais escuro para os cartões KPI */
+/* Legenda de Risco - pode precisar de `flex-grow` para preencher espaço */
+.risk-legend-container {
+    background-color: var(--sidebar-bg); 
     padding: 15px;
     border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-    text-align: center;
-}
-
-.kpi-card h3 {
-    margin-top: 0;
-    color: #a0a0a0;
-    font-size: 0.9em;
-}
-
-.kpi-value {
-    font-size: 2.2em;
-    font-weight: bold;
-    color: #e0e0e0;
-    margin-top: 5px;
-}
-
-/* Estilos para a Legenda de Risco */
-.kpi-card.risk-legend {
-    text-align: left;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     margin-top: 20px;
-    padding: 20px;
-    background-color: #0e1e2c;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    flex-grow: 1; /* Ocupa o espaço restante na sidebar */
+    display: flex;
+    flex-direction: column;
 }
 
-.risk-legend h3 {
+.risk-legend-container h3 {
+    margin-top: 0;
+    color: var(--text-light);
+    font-size: 1.1em;
+    margin-bottom: 10px;
     text-align: center;
-    margin-bottom: 15px;
-    color: #64ffda;
-    font-size: 1em;
 }
 
 .legend-item {
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
-    font-size: 0.9em;
+    margin-bottom: 5px;
 }
 
-.legend-item span {
+.legend-color {
     width: 20px;
     height: 20px;
     border-radius: 4px;
     margin-right: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.2); /* Borda sutil */
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.legend-text {
+    font-size: 0.9em;
+    color: var(--text-light);
+}
 
-.national-risk-map-area {
-    flex-grow: 1; /* O mapa ocupará todo o espaço restante */
-    height: 100%;
+/* Área Central do Conteúdo (Mapa) */
+.main-content-area {
+    flex-grow: 1; 
+    padding: 20px;
+    display: flex; /* Para centralizar ou controlar o mapa */
+    justify-content: center;
+    align-items: center;
+}
+
+/* Estilos para os painéis de gráficos dentro da sidebar direita */
+.chart-panel {
+    background-color: var(--chart-bg); /* Fundo específico para gráficos */
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    flex-shrink: 0; /* Impede que o painel encolha */
+    /* height: 250px; /* Altura fixa temporária para visualização, ajustar depois */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-panel h3 {
+    color: var(--accent-color);
+    font-size: 1.2em;
+    margin-top: 0;
+    margin-bottom: 15px;
+    text-align: center;
 }

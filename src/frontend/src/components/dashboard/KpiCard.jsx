@@ -1,16 +1,14 @@
 import React from 'react';
+// Não vamos importar './KpiCard.css' para não bagunçar, confiando no App.css
 
-// O componente agora recebe a prop 'color'
-function KpiCard({ title, value, color }) {
-  return (
-    <div className="kpi-card">
-      <span className="kpi-title">{title}</span>
-      {/* O estilo da cor é aplicado diretamente aqui */}
-      <span className="kpi-value" style={{ color: color }}>
-        {value}
-      </span>
-    </div>
-  );
-}
+const KpiCard = ({ title, value, isCritical = false }) => {
+    // A classe `kpi-card` e `isCritical` virá do App.css
+    return (
+        <div className={`kpi-card ${isCritical ? 'isCritical' : ''}`}>
+            <h3>{title}</h3>
+            <p className="kpi-value">{value}</p>
+        </div>
+    );
+};
 
 export default KpiCard;

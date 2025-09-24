@@ -1,7 +1,7 @@
-// src/frontend/src/components/dashboard/NationalRiskMap.jsx (VERSÃO COMPLETA E ATUALIZADA)
+// src/frontend/src/components/dashboard/NationalRiskMap.jsx (VERSÃO ATUALIZADA - FUNCIONAL)
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { MapContainer, TileLayer, GeoJSON, ZoomControl, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, ZoomControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import axios from 'axios';
 
@@ -16,7 +16,7 @@ L.Icon.Default.mergeOptions({
 
 
 // URL base da sua API FastAPI
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = "http://127.00.0.1:8000";
 
 // --- Definição da Legenda de Risco (Cores e Intervalos baseados nas imagens do Power BI) ---
 // Ajuste os valores min/max e cores aqui para corresponder EXATAMENTE ao seu Power BI, se necessário.
@@ -42,8 +42,7 @@ const getColorForRisk = (riskScore) => {
         }
     }
     // Caso o score esteja fora dos limites definidos na legenda
-    // Poderíamos retornar uma cor de "Não Classificado" ou cinza mais claro
-    return '#B0BEC5';
+    return '#B0BEC5'; // Cor padrão (cinza claro)
 };
 
 const NationalRiskMap = ({ onDataLoaded }) => {
@@ -103,15 +102,24 @@ const NationalRiskMap = ({ onDataLoaded }) => {
             });
             setStatesRiskMap(processedStatesData);
 
+            // CÁLCULO DO NOVO KPI: RIOS CRÍTICOS
+            const criticalRiversCount = riversData.filter(item => {
+                const riskScore = parseFloat(item['Nota_de_Risco']);
+                // Consideramos "Crítico" se a nota for maior ou igual ao mínimo da categoria Crítico na nossa legenda
+                return !isNaN(riskScore) && riskScore >= RISK_LEGEND.Critico.min;
+            }).length;
+
             // Calcula os KPIs para a página pai
             if (onDataLoaded) {
                 const nationalAverageRisk = countStatesForAvg > 0 ? (totalRiskSum / countStatesForAvg) : 0;
                 const statesWithData = Object.keys(processedStatesData).length;
 
                 onDataLoaded({
-                    totalRivers: totalRiverRecords, // Passa o total de registros de rios
+                    totalRivers: totalRiverRecords, 
                     nationalAverageRisk: nationalAverageRisk,
-                    statesWithData: statesWithData
+                    statesWithData: statesWithData,
+                    criticalRivers: criticalRiversCount, // NOVO KPI
+                    riversData: riversData // <--- IMPORTANTE: Passar os dados brutos dos rios para os gráficos
                 });
             }
         }
@@ -184,11 +192,11 @@ const NationalRiskMap = ({ onDataLoaded }) => {
 
 
     if (loading) {
-        return <div style={{ color: 'white', padding: '20px', textAlign: 'center' }}>Carregando dados do mapa...</div>;
+        return <div style={{ color: 'var(--text-light)', padding: '20px', textAlign: 'center' }}>Carregando dados do mapa...</div>;
     }
 
     if (error) {
-        return <div style={{ color: 'red', padding: '20px', textAlign: 'center' }}>Erro: {error}</div>;
+        return <div style={{ color: 'var(--critical-color)', padding: '20px', textAlign: 'center' }}>Erro: {error}</div>;
     }
 
     return (
@@ -200,7 +208,7 @@ const NationalRiskMap = ({ onDataLoaded }) => {
                 maxZoom={10}
                 scrollWheelZoom={true}
                 zoomControl={false} // Desabilitado para ter controle manual via ZoomControl
-                style={{ height: '100%', width: '100%', backgroundColor: '#0A1A2A' }} // Cor de fundo do mapa
+                style={{ height: '100%', width: '100%', backgroundColor: 'var(--background-dark)' }} // Cor de fundo do mapa
             >
                 <TileLayer
                     attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
