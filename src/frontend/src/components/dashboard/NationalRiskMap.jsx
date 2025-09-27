@@ -1,11 +1,11 @@
-// src/frontend/src/components/dashboard/NationalRiskMap.jsx (VERSÃO ATUALIZADA - FUNCIONAL)
+// src/frontend/src/components/dashboard/NationalRiskMap.jsx (CÓDIGO COMPLETO FINAL - REVERSÃO E NOVA APLICAÇÃO)
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, GeoJSON, ZoomControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import axios from 'axios';
 
-// Importa os ícones padrão do Leaflet, corrigindo problemas com o Webpack/Vite
+// Importa os ícones padrão do Leaflet
 import L from 'leaflet';
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -14,47 +14,30 @@ L.Icon.Default.mergeOptions({
     shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
 
-
 // URL base da sua API FastAPI
-const API_BASE_URL = "http://127.00.0.1:8000";
+const API_BASE_URL = "http://127.0.0.1:8000";
 
-// --- Definição da Legenda de Risco (Cores e Intervalos baseados nas imagens do Power BI) ---
-// Ajuste os valores min/max e cores aqui para corresponder EXATAMENTE ao seu Power BI, se necessário.
-const RISK_LEGEND = {
-    MuitoBaixo: { min: 0, max: 2, color: '#4CAF50', text: 'Muito Baixo (0-2)' }, // Verde escuro
-    Baixo: { min: 2.1, max: 4, color: '#8BC34A', text: 'Baixo (2-4)' },      // Verde claro
-    Moderado: { min: 4.1, max: 6, color: '#FFEB3B', text: 'Moderado (4-6)' }, // Amarelo
-    Alto: { min: 6.1, max: 8, color: '#FF9800', text: 'Alto (6-8)' },        // Laranja
-    Critico: { min: 8.1, max: 10, color: '#F44336', text: 'Crítico (8+)' },    // Vermelho
-    Extremo: { min: 10.1, max: 12, color: '#D32F2F', text: 'Extremo (10+)' } // Vermelho mais forte (se existirem notas acima de 10)
+// --- DEFINIÇÃO DA LEGENDA DE RISCO PARA O MAPA ---
+const RISK_LEGEND_MAP = {
+    'Baixo': '#8BC34A',         
+    'Moderado': '#FFEB3B',      
+    'Alto': '#FF9800',          
+    'Crítico': '#F44336'        
 };
 
-// Função auxiliar para obter a cor com base na nota de risco
-const getColorForRisk = (riskScore) => {
-    if (riskScore === null || isNaN(riskScore)) return '#808080'; // Cinza para dados inválidos (sem dados)
-
-    // Percorre a legenda na ordem das categorias
-    // É importante que os intervalos não se sobreponham e cubram a gama esperada de scores
-    for (const categoryKey in RISK_LEGEND) {
-        const { min, max, color } = RISK_LEGEND[categoryKey];
-        if (riskScore >= min && riskScore <= max) {
-            return color;
-        }
-    }
-    // Caso o score esteja fora dos limites definidos na legenda
-    return '#B0BEC5'; // Cor padrão (cinza claro)
+const getColorForClassification = (classification) => {
+    return RISK_LEGEND_MAP[classification] || '#808080'; 
 };
 
 const NationalRiskMap = ({ onDataLoaded }) => {
     const [statesGeoJson, setStatesGeoJson] = useState(null);
-    const [riversData, setRiversData] = useState([]); // Agora estes são os dados dos rios/estados
-    const [statesRiskMap, setStatesRiskMap] = useState({}); // Mapa {SIGLA: {averageRisk: nota, riverCount: count}}
+    const [riversData, setRiversData] = useState([]); 
+    const [statesMapData, setStatesMapData] = useState({}); 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const geoJsonRef = useRef(); // Ref para o componente GeoJSON do Leaflet
+    const geoJsonRef = useRef(); 
 
-    // Efeito para buscar os dados iniciais da API
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -62,7 +45,9 @@ const NationalRiskMap = ({ onDataLoaded }) => {
                 setStatesGeoJson(statesResponse.data);
 
                 const riversResponse = await axios.get(`${API_BASE_URL}/map_data/rivers`);
-                setRiversData(riversResponse.data); // Assume que este endpoint já retorna os dados de rios/estados com Nota_de_Risco
+                // >>>>> ESTA É A LINHA CRÍTICA QUE DEVE ESTAR AQUI <<<<<
+                setRiversData((Array.isArray(riversResponse.data) ? riversResponse.data : []).flat()); 
+                // >>>>> FIM DA LINHA CRÍTICA <<<<<
 
                 setLoading(false);
             } catch (err) {
@@ -73,90 +58,146 @@ const NationalRiskMap = ({ onDataLoaded }) => {
         };
 
         fetchData();
-    }, []); // Dependências vazias: só executa uma vez ao montar o componente
+    }, []);
 
-    // Efeito para processar os dados dos rios (que agora contêm o risco por estado)
     useEffect(() => {
         if (riversData.length > 0) {
-            const processedStatesData = {};
-            let totalRiskSum = 0;
-            let countStatesForAvg = 0; // Contagem de estados com risco válido para a média nacional
-            let totalRiverRecords = 0; // Total de registros de rios (linhas no CSV)
+            console.log("DEBUG: Dados de rios para processamento (dentro do useEffect):", riversData.slice(0, 5));
+
+            const tempStatesMapData = {}; 
+            let totalRiskSum = 0; 
+            let totalValidRiskScoresCount = 0; 
+            let criticalRiversCount = 0; 
+            let statesWithAnyData = new Set(); 
 
             riversData.forEach(item => {
-                // VERIFIQUE ESTAS CHAVES: Devem corresponder EXATAMENTE ao que sua API retorna.
                 const stateSigla = item['Sigla do Estado']; 
-                const riskScore = parseFloat(item['Nota_de_Risco']); 
-
-                if (stateSigla && !isNaN(riskScore)) {
-                    // Armazenar a nota de risco e contar as ocorrências por estado
-                    if (!processedStatesData[stateSigla]) {
-                        processedStatesData[stateSigla] = { averageRisk: riskScore, riverCount: 0 };
-                        // Se é a primeira vez que vemos este estado, contamos para a média nacional
-                        totalRiskSum += riskScore;
-                        countStatesForAvg += 1;
+                const riskScore = parseFloat(String(item['Nota_de_Risco'])?.replace(',', '.')) || null; 
+                const classification = item['Classificacao_Risco']; 
+                
+                if (stateSigla) {
+                    statesWithAnyData.add(stateSigla); 
+                    if (!tempStatesMapData[stateSigla]) {
+                        tempStatesMapData[stateSigla] = { totalRisk: 0, count: 0, classificationCounts: {} };
                     }
-                    processedStatesData[stateSigla].riverCount += 1;
-                    totalRiverRecords += 1; // Contabiliza todos os registros de rios
+
+                    if (riskScore !== null) { 
+                        tempStatesMapData[stateSigla].totalRisk += riskScore;
+                        tempStatesMapData[stateSigla].count += 1;
+                    }
+
+                    if (classification) {
+                        tempStatesMapData[stateSigla].classificationCounts[classification] = 
+                            (tempStatesMapData[stateSigla].classificationCounts[classification] || 0) + 1;
+                    }
                 }
+                
+                if (riskScore !== null) { 
+                    totalRiskSum += riskScore;
+                    totalValidRiskScoresCount += 1;
+                }
+
+                // >>>>> DEBUG FOCADO PARA 'RIOS EM RISCO CRÍTICO' AQUI <<<<<
+                const classificationValue = String(classification || '').trim(); // O valor da string da coluna, com trim
+                const normalizedForComparison = classificationValue
+                                                    .normalize('NFD')
+                                                    .replace(/[\u0300-\u036f]/g, "")
+                                                    .toUpperCase(); // Adicionado toUpperCase para ignorar caixa
+
+                // Loga SOMENTE se a string se assemelha a "CRITICO" (ignora acento e caixa)
+                if (normalizedForComparison.includes('CRITICO')) {
+                    console.log(`DEBUG_CRITICO_FOCADO: 
+                        Rio: "${item['Nome do Rio'] || 'N/A'}" | 
+                        Classificação Original Lida: "${classificationValue}" |
+                        Classificação Normalizada para Comparação: "${normalizedForComparison}" |
+                        É 'Crítico' (com acento)? ${classificationValue === 'Crítico'} | 
+                        É 'Critico' (sem acento)? ${classificationValue.normalize('NFD').replace(/[\u0300-\u036f]/g, "") === 'Critico'}`);
+                }
+                
+                // Lógica de contagem final: compara com 'Crítico' (com acento), 'Critico' (sem acento) e 'CRÍTICO'/'CRITICO' (tudo maiúsculo)
+                if (classificationValue === 'Crítico' || 
+                    classificationValue.normalize('NFD').replace(/[\u0300-\u036f]/g, "") === 'Critico' ||
+                    classificationValue.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "") === 'CRITICO') { 
+                    criticalRiversCount++;
+                    console.log(`CRÍTICO_CONTADO_SUCESSO: Rio "${item['Nome do Rio'] || 'N/A'}" | Classificação: "${classificationValue}"`);
+                }
+                // >>>>> FIM DO DEBUG FOCADO <<<<<
             });
-            setStatesRiskMap(processedStatesData);
 
-            // CÁLCULO DO NOVO KPI: RIOS CRÍTICOS
-            const criticalRiversCount = riversData.filter(item => {
-                const riskScore = parseFloat(item['Nota_de_Risco']);
-                // Consideramos "Crítico" se a nota for maior ou igual ao mínimo da categoria Crítico na nossa legenda
-                return !isNaN(riskScore) && riskScore >= RISK_LEGEND.Critico.min;
-            }).length;
+            const finalStatesMapData = {};
+            statesWithAnyData.forEach(stateSigla => {
+                const data = tempStatesMapData[stateSigla];
+                let averageRisk = null;
+                if (data.count > 0) {
+                    averageRisk = data.totalRisk / data.count;
+                }
 
-            // Calcula os KPIs para a página pai
+                let predominantClassification = 'Sem Dados / Outros'; 
+                let maxCount = 0;
+                for (const classifKey in RISK_LEGEND_MAP) { 
+                    if (data.classificationCounts[classifKey] && data.classificationCounts[classifKey] > maxCount) {
+                        maxCount = data.classificationCounts[classifKey];
+                        predominantClassification = classifKey;
+                    }
+                }
+                if (maxCount === 0) { 
+                    let anyMaxCount = 0;
+                    for (const classif in data.classificationCounts) {
+                        if (data.classificationCounts[classif] > anyMaxCount) {
+                            anyMaxCount = data.classificationCounts[classif];
+                            predominantClassification = classif; 
+                        }
+                    }
+                }
+
+
+                finalStatesMapData[stateSigla] = { 
+                    averageRisk: averageRisk,
+                    predominantClassification: predominantClassification,
+                    riverCount: data.count 
+                };
+            });
+            setStatesMapData(finalStatesMapData);
+
             if (onDataLoaded) {
-                const nationalAverageRisk = countStatesForAvg > 0 ? (totalRiskSum / countStatesForAvg) : 0;
-                const statesWithData = Object.keys(processedStatesData).length;
-
                 onDataLoaded({
-                    totalRivers: totalRiverRecords, 
-                    nationalAverageRisk: nationalAverageRisk,
-                    statesWithData: statesWithData,
-                    criticalRivers: criticalRiversCount, // NOVO KPI
-                    riversData: riversData // <--- IMPORTANTE: Passar os dados brutos dos rios para os gráficos
+                    totalRivers: riversData.length, 
+                    nationalAverageRisk: totalValidRiskScoresCount > 0 ? (totalRiskSum / totalValidRiskScoresCount) : 0,
+                    statesWithData: statesWithAnyData.size, 
+                    criticalRivers: criticalRiversCount, 
+                    riversData: riversData 
                 });
             }
         }
-    }, [riversData, onDataLoaded]); // Dependências: riversData (quando muda), onDataLoaded (garantir estabilidade)
+    }, [riversData, onDataLoaded]);
 
-
-    // Função para estilizar as features (estados) no mapa com base no risco
-    // Usa useCallback para otimização e estabilidade
     const styleStates = useCallback((feature) => {
-        // VERIFIQUE ESTA CHAVE: Deve corresponder EXATAMENTE à propriedade da sigla no seu GeoJSON.
         const stateSigla = feature.properties.SIGLA; 
-        const risk = statesRiskMap[stateSigla] ? statesRiskMap[stateSigla].averageRisk : null;
+        const mapData = statesMapData[stateSigla];
+        
+        const fillColor = mapData ? getColorForClassification(mapData.predominantClassification) : '#808080'; 
         
         return {
-            fillColor: getColorForRisk(risk),
+            fillColor: fillColor,
             weight: 1,
             opacity: 1,
             color: 'white',
             dashArray: '3',
             fillOpacity: 0.7
         };
-    }, [statesRiskMap]); // Depende de statesRiskMap para atualizar quando os dados de risco mudam
+    }, [statesMapData]);
 
-
-    // Função que será chamada para cada feature (estado) no GeoJSON, configurando popups e interações
-    // Usa useCallback para otimização e estabilidade
     const onEachFeature = useCallback((feature, layer) => {
-        // VERIFIQUE ESTAS CHAVES: Devem corresponder às propriedades no seu GeoJSON.
         const stateSigla = feature.properties.SIGLA; 
-        const stateName = feature.properties.nome_estado; // Exemplo: se o nome completo do estado estiver aqui
+        const stateName = feature.properties.nome_estado || stateSigla; 
 
-        const riskInfo = statesRiskMap[stateSigla];
+        const mapData = statesMapData[stateSigla];
         
-        let popupContent = `<b>Estado: ${stateName || stateSigla} (${stateSigla})</b><br/>`;
-        if (riskInfo && riskInfo.averageRisk !== null) {
-            popupContent += `Risco: ${riskInfo.averageRisk.toFixed(2)}<br/>`;
-            popupContent += `Registros: ${riskInfo.riverCount}`; // Total de registros para este estado
+        let popupContent = `<b>Estado: ${stateName} (${stateSigla})</b><br/>`;
+        if (mapData && mapData.averageRisk !== null) {
+            popupContent += `Risco Médio: ${mapData.averageRisk.toFixed(2)}<br/>`;
+            popupContent += `Classificação Predominante: ${mapData.predominantClassification || 'N/A'}<br/>`;
+            popupContent += `Registros: ${mapData.riverCount.toLocaleString('pt-BR')}`;
         } else {
             popupContent += `Nenhum dado de risco disponível.`;
         }
@@ -174,22 +215,18 @@ const NationalRiskMap = ({ onDataLoaded }) => {
                 layer.bringToFront();
             },
             mouseout: (e) => {
-                // Ação: Ao sair o mouse, resetar o estilo da camada.
-                // Verificação de segurança para garantir que a referência GeoJSON e o elemento Leaflet existem.
                 if (geoJsonRef.current && geoJsonRef.current.leafletElement) {
                     geoJsonRef.current.leafletElement.resetStyle(e.target);
                 } else {
-                    // Se a referência não estiver disponível, aplique o estilo padrão diretamente.
                     e.target.setStyle(styleStates(e.target.feature));
                 }
             },
             click: (e) => {
                 const map = e.target._map;
-                map.fitBounds(e.target.getBounds()); // Zoom no estado clicado
+                map.fitBounds(e.target.getBounds()); 
             }
         });
-    }, [statesRiskMap, styleStates, geoJsonRef]); // Depende de statesRiskMap, styleStates e geoJsonRef
-
+    }, [statesMapData, styleStates, geoJsonRef]);
 
     if (loading) {
         return <div style={{ color: 'var(--text-light)', padding: '20px', textAlign: 'center' }}>Carregando dados do mapa...</div>;
@@ -202,27 +239,26 @@ const NationalRiskMap = ({ onDataLoaded }) => {
     return (
         <div style={{ flexGrow: 1, height: '100%', width: '100%' }}>
             <MapContainer
-                center={[-15.7801, -47.9292]} // Centro do Brasil
+                center={[-15.7801, -47.9292]} 
                 zoom={4}
                 minZoom={3}
                 maxZoom={10}
                 scrollWheelZoom={true}
-                zoomControl={false} // Desabilitado para ter controle manual via ZoomControl
-                style={{ height: '100%', width: '100%', backgroundColor: 'var(--background-dark)' }} // Cor de fundo do mapa
+                zoomControl={false} 
+                style={{ height: '100%', width: '100%', backgroundColor: 'var(--background-dark)' }}
             >
                 <TileLayer
                     attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" // Tema escuro
+                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" 
                 />
                 
-                <ZoomControl position="topleft" /> {/* Controle de zoom no canto superior esquerdo */}
-
+                <ZoomControl position="topleft" />
                 {statesGeoJson && (
                     <GeoJSON
                         data={statesGeoJson}
                         style={styleStates}
                         onEachFeature={onEachFeature}
-                        ref={geoJsonRef} // Atribui a referência
+                        ref={geoJsonRef}
                     />
                 )}
             </MapContainer>

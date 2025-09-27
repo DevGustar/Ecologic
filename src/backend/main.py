@@ -1,23 +1,28 @@
-# Ecologic/src/backend/main.py (VERSÃO FINAL COM ENDPOINTS DE MAPA E DB)
+# Ecologic/src/backend/main.py (VERSÃO COMPLETA E ATUALIZADA - INTEGRADA COM map_data_loader.py)
 
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn # Adicionado para poder rodar o servidor via main.py
+import uvicorn
 from sqlalchemy.orm import Session
-from . import models, database, schemas # schemas já estava, adicionei de novo para clareza
+from . import models, database, schemas
 import uuid
 from datetime import datetime
-from typing import List, Optional # Adicionado Optional para os dados carregados
+from typing import List, Optional
+import json
 
-# Importando funções para buscar clima, elevação e calcular risco (já existentes)
+# Importando funções para buscar clima, elevação e calcular risco
 from .api_connectors import buscar_clima_openweather, fetch_elevation_data
 from .risk_calculator import calculate_daily_risk
 
-# NOVO: Importa o nosso módulo de carregamento de dados de mapa
-from .map_data_loader import load_all_map_data
-import pandas as pd
-import geopandas as gpd
-import json # Para serializar o GeoJSON corretamente
+# Importa o nosso módulo de carregamento de dados de mapa
+from . import map_data_loader # Importa o módulo inteiro
+import pandas as pd # Usado para type hinting de map_rivers_data e map_states_geojson_data
+import geopandas as gpd # Usado para type hinting, já que map_states_geojson_data era GeoDataFrame
+
+# Configuração de logging
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 ### Esta linha diz ao SQLAlchemy para criar a nossa tabela "assets"
@@ -29,9 +34,9 @@ models.Base.metadata.create_all(bind=database.engine)
 app = FastAPI(title="EcoLogic 2.0 API")
 
 # --- Configuração do CORS para o futuro frontend
-# (Esta parte permanece igual)
 origins = [
     "http://localhost:5173",  # A URL do seu frontend
+    "http://172.16.0.1:5173", # IP da máquina local no meu ambiente, pode variar
     "http://127.0.0.1:5173",  # Caso o navegador use 127.0.0.1
     # Adicione outros domínios do frontend aqui
 ]
@@ -45,9 +50,9 @@ app.add_middleware(
 )
 
 # --- Variáveis globais para armazenar os DADOS DO MAPA carregados ---
-# Serão carregados uma vez na inicialização da aplicação.
+# Agora estas variáveis receberão o DataFrame/GeoDataFrame pré-processado do map_data_loader
 map_rivers_data: Optional[pd.DataFrame] = None
-map_states_geojson_data: Optional[gpd.GeoDataFrame] = None
+map_states_geojson_data: Optional[gpd.GeoDataFrame] = None # Mantido como GeoDataFrame, pois é o que gpd.read_file retorna
 
 
 ### Esta função é o nosso "entregador" de ligações à base de dados.
@@ -59,43 +64,44 @@ def get_db():
     finally:
         db.close()
 
-# --- NOVO: Evento de inicialização da API ---
+# --- Evento de inicialização da API ---
 @app.on_event("startup")
 async def startup_event():
     """
     Carrega todos os dados necessários (mapa) quando a API é iniciada.
     """
     global map_rivers_data, map_states_geojson_data
-    print("Iniciando API e carregando dados de mapa...")
+    logger.info("Iniciando API e carregando dados de mapa...")
     
     # Chama a função do nosso módulo para carregar os dados do mapa
-    loaded_map_rivers, loaded_map_states_geojson = load_all_map_data()
+    # map_data_loader.load_all_map_data() já faz o pré-processamento.
+    loaded_map_rivers, loaded_map_states_geojson = map_data_loader.load_all_map_data()
     
     if loaded_map_rivers is not None:
         map_rivers_data = loaded_map_rivers
-        print(f"Dados de rios para mapa carregados. {len(map_rivers_data)} registros.")
+        logger.info(f"Dados de rios para mapa carregados e padronizados. {len(map_rivers_data)} registros.")
     else:
-        print("❌ Falha ao carregar dados de rios para mapa.")
+        logger.error("❌ Falha ao carregar dados de rios para mapa.")
 
     if loaded_map_states_geojson is not None:
         map_states_geojson_data = loaded_map_states_geojson
-        print(f"GeoJSON de estados para mapa carregado. {len(map_states_geojson_data)} estados.")
+        logger.info(f"GeoJSON de estados para mapa carregado. {len(map_states_geojson_data)} estados.")
     else:
-        print("❌ Falha ao carregar GeoJSON de estados para mapa.")
+        logger.error("❌ Falha ao carregar GeoJSON de estados para mapa.")
     
-    print("Carregamento de dados de mapa concluído.")
+    logger.info("Carregamento de dados de mapa concluído.")
 
 
 # --- Endpoints da API ---
 
-# Endpoint de Teste (Raiz) - Mantido
+# Endpoint de Teste (Raiz)
 @app.get("/")
 async def read_root():
-    return {"message": "API EcoLogic 2.0 está a funcionar\! Acesse /docs para a documentação."}
+    return {"message": "API EcoLogic 2.0 está a funcionar! Acesse /docs para a documentação."}
 
 
-# CRIAÇÃO DE ATIVOS - Mantido (com pequenas melhorias na resposta e type hints)
-@app.post("/assets", response_model=schemas.Asset) # Adicionado response_model para melhor documentação
+# CRIAÇÃO DE ATIVOS
+@app.post("/assets", response_model=schemas.Asset)
 def create_asset(asset: schemas.AssetCreate, db: Session = Depends(get_db)): 
     """
     Endpoint para criar um ativo, recebe um objeto JSON com nome, latitude e longitude
@@ -115,21 +121,21 @@ def create_asset(asset: schemas.AssetCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_asset_model)
     
-    print(f"Ativo criado e salvo no banco de dados: {new_asset_model.name}")
+    logger.info(f"Ativo criado e salvo no banco de dados: {new_asset_model.name}")
     return new_asset_model
 
-# --------------------- ROTA PARA PUXAR TODOS OS ATIVOS --------------------- - Mantido
+# ROTA PARA PUXAR TODOS OS ATIVOS
 @app.get("/assets", response_model=List[schemas.Asset])
 def read_assets(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """
     Endpoint para ler uma lista de todos os ativos da base de dados.
     """
     assets = db.query(models.Asset).offset(skip).limit(limit).all()
-    print(f"Encontrados {len(assets)} ativos na base de dados.")
+    logger.info(f"Encontrados {len(assets)} ativos na base de dados.")
     return assets
 
-# DADOS ESTRUTURAIS DO ATIVO - Mantido
-@app.get("/assets/{asset_uuid}", response_model=schemas.Asset) # Adicionado response_model
+# DADOS ESTRUTURAIS DO ATIVO
+@app.get("/assets/{asset_uuid}", response_model=schemas.Asset)
 def get_asset_info(asset_uuid: str, db: Session = Depends(get_db)):
     """
     Retorna os dados estruturais de um único ativo que já foi criado.
@@ -140,8 +146,7 @@ def get_asset_info(asset_uuid: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Ativo não encontrado")
     return asset
 
-# ------------------------------------------------------
-# DADOS CLIMATICOS PROCESSADOS (ANÁLISE DE RISCO) - Mantido
+# DADOS CLIMATICOS PROCESSADOS (ANÁLISE DE RISCO)
 @app.get("/assets/{asset_id}/risk_analysis")
 def get_asset_risk_analysis(asset_id: str, db: Session = Depends(get_db)):
     """
@@ -190,30 +195,30 @@ def get_asset_risk_analysis(asset_id: str, db: Session = Depends(get_db)):
 @app.get("/map_data/rivers")
 async def get_map_rivers_data():
     """
-    Retorna os dados brutos dos rios (do arquivo CSV) para uso no mapa do frontend.
+    Retorna os dados dos rios (do arquivo CSV, pré-processados) para uso no mapa do frontend.
     """
     if map_rivers_data is None:
+        logger.warning("Dados de rios para mapa ainda não foram carregados ou falharam. Retornando lista vazia.")
         raise HTTPException(status_code=503, detail="Dados de rios para mapa ainda não foram carregados.")
     
     # Converte o DataFrame para uma lista de dicionários, fácil de consumir em JS.
+    # O pré-processamento já garantiu que as strings de classificação estão corretas.
     return map_rivers_data.to_dict(orient='records')
 
 @app.get("/map_data/states_geojson")
 async def get_map_states_geojson():
     """
-    Retorna o GeoJSON bruto dos estados do Brasil para uso no mapa do frontend.
+    Retorna o GeoJSON dos estados do Brasil para uso no mapa do frontend.
     """
     if map_states_geojson_data is None:
+        logger.warning("GeoJSON de estados para mapa ainda não foi carregado ou falhou. Retornando objeto vazio.")
         raise HTTPException(status_code=503, detail="GeoJSON de estados para mapa ainda não foi carregado.")
     
     # geopandas.to_json() retorna uma string JSON. Para FastAPI retornar como um objeto JSON,
     # precisamos parsear essa string de volta para um objeto Python (dict).
-    # O "name" na raiz do GeoJSON é um detalhe, o importante é o "features"
     geojson_dict = json.loads(map_states_geojson_data.to_json())
     return geojson_dict
 
 # --- Bloco para rodar a aplicação com Uvicorn ---
-# Isso permite que você execute 'python main.py' diretamente.
-# Em produção, você usaria 'uvicorn main:app --host 0.0.0.0 --port 8000'
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
