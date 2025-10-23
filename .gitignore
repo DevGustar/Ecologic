@@ -1,19 +1,44 @@
-# Ficheiro .gitignore para projetos Python
+# Arquivo .gitignore para o projeto Ecologic
+
+# === Python / Backend ===
 
 # Ambientes Virtuais
+.venv/
 venv/
-/venv
-.venv
+env/
 
-# Ficheiros de cache do Python
+# Cache do Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# Ficheiros de configuração do VS Code
+# Bases de dados SQLite
+*.db
+*.sqlite3
+
+# === Node.js / Frontend ===
+
+# Dependências (A PASTA GIGANTE QUE ESTÁ A CAUSAR O PROBLEMA)
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build de produção
+dist/
+build/
+.next/
+
+# Ficheiros de ambiente (manter segredos fora do Git)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# === Configuração de IDEs ===
 .vscode/
-
-# Ficheiros de sistema
-.DS_Store
-
-# Base de Dados SQLite
-ecologic.db
+.idea/

@@ -1,4 +1,4 @@
-// src/frontend/src/pages/NationalRiskPage.jsx (LEGENDA AGORA COM APENAS 4 NÍVEIS)
+// src/frontend/src/pages/NationalRiskPage.jsx
 
 import React, { useState, useCallback } from 'react';
 import NationalRiskMap from '../components/dashboard/NationalRiskMap';
@@ -8,7 +8,6 @@ import TopRiversChart from '../components/dashboard/TopRiversChart';
 
 import './NationalRiskPage.css';
 
-// --- LEGENDA DE RISCO: AGORA COM APENAS AS 4 CLASSIFICAÇÕES DEFINIDAS PELO USUÁRIO ---
 const RISK_LEGEND = {
     'Baixo': { color: '#8BC34A', text: 'Baixo' },      
     'Moderado': { color: '#FFEB3B', text: 'Moderado' }, 
@@ -18,10 +17,10 @@ const RISK_LEGEND = {
 
 const NationalRiskPage = () => {
     const [kpis, setKpis] = useState({
-        nationalAverageRisk: null, 
+        nationalAverageRisk: null,
         totalRivers: null,
         statesWithData: null,
-        criticalRivers: null, 
+        criticalRivers: null,
         riversData: [], 
     });
 
@@ -31,11 +30,11 @@ const NationalRiskPage = () => {
 
     return (
         <div className="national-risk-page-container">
+            {/* Sidebar da Esquerda: KPIs e Legenda */}
             <div className="sidebar sidebar-left">
                 <div className="header-kpi">
                     <h2>Visão Nacional de Risco</h2>
                 </div>
-
                 <KpiCard
                     title="Risco Nacional Médio"
                     value={kpis.nationalAverageRisk !== null ? kpis.nationalAverageRisk.toFixed(2) : '...'}
@@ -48,13 +47,11 @@ const NationalRiskPage = () => {
                     title="Estados com Dados"
                     value={kpis.statesWithData !== null ? kpis.statesWithData : '...'}
                 />
-                
                 <KpiCard
                     title="Rios em Risco Crítico"
                     value={kpis.criticalRivers !== null ? kpis.criticalRivers.toLocaleString('pt-BR') : '...'}
                     isCritical={kpis.criticalRivers > 0} 
                 />
-
                 <div className="risk-legend-container">
                     <h3>Legenda de Risco</h3>
                     {Object.entries(RISK_LEGEND).map(([key, item]) => (
@@ -70,18 +67,24 @@ const NationalRiskPage = () => {
                 </div>
             </div>
 
+            {/* Área Central: Mapa */}
             <div className="main-content-area">
                 <NationalRiskMap onDataLoaded={handleDataLoaded} />
             </div>
 
+            {/* Sidebar da Direita: Gráficos */}
             <div className="sidebar sidebar-right">
                 <div className="chart-panel">
                     <h3>Risco por Nível</h3>
-                    <RiskLevelsDonut riversData={kpis.riversData} /> 
+                    <div className="chart-content-wrapper">
+                        <RiskLevelsDonut riversData={kpis.riversData} /> 
+                    </div>
                 </div>
                 <div className="chart-panel">
                     <h3>Top Rios por Risco</h3>
-                    <TopRiversChart riversData={kpis.riversData} /> 
+                    <div className="chart-content-wrapper">
+                        <TopRiversChart riversData={kpis.riversData} /> 
+                    </div>
                 </div>
             </div>
         </div>
