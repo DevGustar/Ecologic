@@ -1,0 +1,77 @@
+/* src/components/dashboard/RiskBreakdown.css */
+
+.risk-breakdown-container {
+  /* Posicionamento como Popover */
+  position: absolute;
+  bottom: 110%; /* Posiciona acima do seu container pai (o kpi-panel) */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100; /* Garante que fique por cima de outros elementos */
+
+  /* Estilo do Popover */
+  width: 320px;
+  background-color: var(--fundo-secundario); /* Cor de fundo escura */
+  border: 1px solid var(--borda-sutil);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); /* Sombra mais pronunciada */
+  text-align: left;
+  color: var(--texto-principal);
+  
+  /* Animação de entrada */
+  animation: fadeIn 0.2s ease-out;
+}
+
+.risk-breakdown-title {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1rem;
+  color: var(--acento-primario); /* Cor de destaque para o título */
+  border-bottom: 1px solid var(--borda-sutil);
+  padding-bottom: 8px;
+}
+
+.risk-breakdown-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px; /* Pequeno espaço entre os itens */
+}
+
+.risk-factor-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  padding: 8px 4px;
+}
+
+.risk-factor-item:not(:last-child) {
+  border-bottom: 1px solid var(--fundo-terciario); /* Linha separadora sutil */
+}
+
+.factor-name {
+  color: var(--texto-secundario);
+  flex-shrink: 0; /* Evita que o nome quebre linha facilmente */
+  margin-right: 16px;
+}
+
+.factor-details {
+  display: flex;
+  gap: 16px; /* Espaço entre 'Score' e 'Peso' */
+  white-space: nowrap; /* Evita que os números quebrem linha */
+}
+
+/* Animação simples de fade-in */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}

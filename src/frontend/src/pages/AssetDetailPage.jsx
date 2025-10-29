@@ -7,9 +7,16 @@ import AssetListModal from '../components/modals/AssetListModal';
 import RiskTrendChart from '../components/charts/RiskTrendChart';
 import RiskForecastChart from '../components/dashboard/RiskForecastChart';
 
-import './AssetDetailPage.css'; // Importa o CSS específico desta página
+// NOVO: Importa o componente que vai exibir a explicação
+import RiskBreakdown from '../components/dashboard/RiskBreakdown'; 
 
-// A função de cores agora vive aqui para ser partilhada
+// NOVO (BOA PRÁTICA): Assumindo que a função de cor foi movida para um utilitário
+// Se ainda não o fez, recomendo criar o ficheiro 'src/utils/riskUtils.js'
+// import { getRiskColor } from '../utils/riskUtils';
+
+import './AssetDetailPage.css';
+
+// MUDANÇA: Por agora, mantemos a função aqui como no seu original
 const getRiskColor = (risk) => {
   if (risk >= 8) return 'var(--cor-critica)';
   if (risk >= 6) return 'var(--cor-alerta)';
@@ -28,7 +35,12 @@ function AssetDetailPage() {
   const [isAssetListModalOpen, setIsAssetListModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('principal');
 
-  // Busca a lista de todos os ativos para o modal
+  // NOVO: Estados para controlar a visibilidade e os dados da explicação do risco
+  const [riskExplanation, setRiskExplanation] = useState(null);
+  const [isExplanationVisible, setIsExplanationVisible] = useState(false);
+  const [isFetchingExplanation, setIsFetchingExplanation] = useState(false);
+
+  // ... (useEffect para fetchAllAssets permanece o mesmo) ...
   useEffect(() => {
     const fetchAllAssets = async () => {
       try {
@@ -43,12 +55,15 @@ function AssetDetailPage() {
     fetchAllAssets();
   }, []);
 
-  // Busca a análise de risco do ativo selecionado
+  // ... (useEffect para fetchRiskAnalysis permanece o mesmo) ...
   useEffect(() => {
     if (assetId) {
       const fetchRiskAnalysis = async () => {
         setIsLoading(true);
         setRiskAnalysis(null);
+        // NOVO: Reseta a explicação ao mudar de ativo
+        setRiskExplanation(null);
+        setIsExplanationVisible(false);
         try {
           const apiUrl = `http://127.0.0.1:8000/assets/${assetId}/risk_analysis`;
           const response = await fetch(apiUrl);
@@ -66,10 +81,35 @@ function AssetDetailPage() {
     }
   }, [assetId]);
 
-  // Função para ser chamada pelo modal para navegar para um novo ativo
   const handleAssetSelect = (newAssetId) => {
     navigate(`/asset/${newAssetId}`);
     setIsAssetListModalOpen(false);
+  };
+
+  // NOVO: Função para buscar os dados da explicação do risco sob demanda
+  const handleKpiInteraction = async () => {
+    if (isFetchingExplanation) return; // Evita cliques duplos
+
+    if (isExplanationVisible) {
+      setIsExplanationVisible(false);
+      return;
+    }
+
+    if (!riskExplanation) {
+      setIsFetchingExplanation(true);
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/assets/${assetId}/risk_explanation`);
+        if (!response.ok) throw new Error('Falha ao buscar a explicação do risco');
+        const data = await response.json();
+        setRiskExplanation(data.fatores_contribuintes);
+      } catch (error) {
+        console.error("Erro ao buscar explicação do risco:", error);
+        setRiskExplanation([{ nome: 'Erro ao carregar dados', score_atribuido: 0, peso_no_calculo: 0, valor_raw: '' }]);
+      } finally {
+        setIsFetchingExplanation(false);
+      }
+    }
+    setIsExplanationVisible(true);
   };
 
   const currentAsset = allAssets.find(asset => asset.asset_uuid === assetId);
@@ -86,19 +126,22 @@ function AssetDetailPage() {
       </header>
 
       <main className="analysis-layout-wrapper">
-        {/* Coluna da Esquerda: O centro de toda a análise */}
         <aside className="analysis-sidebar-main">
           {isLoading ? (
-            <div className="kpi-panel">
-                <span className="kpi-title">Carregando KPIs...</span>
-            </div>
+            <div className="kpi-panel"><span className="kpi-title">Carregando KPIs...</span></div>
           ) : todayForecast ? (
             <>
-              <div className="kpi-panel">
+              {/* MUDANÇA: O painel do KPI agora é um container interativo */}
+              <div className="kpi-panel kpi-panel-interactive" onClick={handleKpiInteraction}>
                 <span className="kpi-title">Nota de Risco (Hoje)</span>
                 <span className="kpi-value" style={{ color: getRiskColor(todayForecast.nota_de_risco) }}>
                   {todayForecast.nota_de_risco.toFixed(2)}
                 </span>
+
+                {/* NOVO: Renderização condicional do popover com a explicação do risco */}
+                {isExplanationVisible && riskExplanation && (
+                  <RiskBreakdown factors={riskExplanation} />
+                )}
               </div>
               
               <nav className="analysis-tabs">
@@ -116,7 +159,6 @@ function AssetDetailPage() {
                 </button>
               </nav>
 
-              {/* Conteúdo Dinâmico DENTRO da Sidebar */}
               <div className="sidebar-tab-content">
                 {activeTab === 'principal' && (
                   <>
@@ -152,7 +194,6 @@ function AssetDetailPage() {
           )}
         </aside>
 
-        {/* Coluna da Direita: Apenas o mapa, como um detalhe visual */}
         <div className="analysis-map-area">
           {currentAsset && (
             <AssetLocationMap 
