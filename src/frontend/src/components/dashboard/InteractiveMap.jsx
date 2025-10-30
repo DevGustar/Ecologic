@@ -1,4 +1,4 @@
-// src/components/dashboard/InteractiveMap.jsx
+// src/components/dashboard/InteractiveMap.jsx (VERSÃO COMPLETA E CORRIGIDA)
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, GeoJSON, Marker, Popup } from 'react-leaflet';
@@ -8,7 +8,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
-import inside from 'point-in-polygon'; // Importa a biblioteca aqui
+import inside from 'point-in-polygon';
 
 let DefaultIcon = L.icon({
     iconUrl: icon,
@@ -34,6 +34,7 @@ function InteractiveMap({ assets, riskData, viewMode, geoJsonData }) {
     }
   };
 
+  // ... (o restante do seu código, como 'assetMunicipalityIds', 'getRiskColor', 'geoJsonStyle', 'onEachFeature', permanece o mesmo)
   const assetMunicipalityIds = useMemo(() => {
     if (!assets || !geoJsonData) return new Set();
     const ids = new Set();
@@ -55,7 +56,7 @@ function InteractiveMap({ assets, riskData, viewMode, geoJsonData }) {
             for (const polygonCoords of polygonsToCheck) {
                 if (inside(assetPoint, polygonCoords)) {
                     ids.add(feature.properties.id);
-                    return; // Sai do loop de features assim que encontra o município
+                    return; 
                 }
             }
         }
@@ -93,7 +94,7 @@ function InteractiveMap({ assets, riskData, viewMode, geoJsonData }) {
     const municipalityId = feature.properties.id;
     const municipalityName = feature.properties.name;
     if (municipalityName && riskData) {
-      const risk = riskData[municipalityId] !== undefined ? riskData[municipalityId].toFixed(2) : 'Não calculado';
+      const risk = riskData[municipalityId] !== undefined ? Number(riskData[municipalityId]).toFixed(2) : 'Não calculado';
       layer.bindPopup(`<strong>${municipalityName}</strong><br/>Nota de Risco: ${risk}`);
       layer.on({
         mouseover: (e) => e.target.setStyle({ weight: 2, color: '#FFFFFF', fillOpacity: 1 }),
@@ -132,8 +133,12 @@ function InteractiveMap({ assets, riskData, viewMode, geoJsonData }) {
                     <p className="popup-error">Erro: {popupContent.error}</p>
                   ) : popupContent.data ? (
                     <>
-                      <p>Nota de Risco: <strong>{popupContent.data.daily_forecast_with_risk[0].nota_de_risco.toFixed(2)}</strong></p>
-                      <p>Elevação: {popupContent.data.asset_info.elevation_m.toFixed(2)}m</p>
+                      {/* MUDANÇA: Convertemos o valor para Número ANTES de usar .toFixed() */}
+                      <p>Nota de Risco: <strong>{Number(popupContent.data.daily_forecast_with_risk[0].nota_de_risco).toFixed(2)}</strong></p>
+                      
+                      {/* MUDANÇA (BOA PRÁTICA): Fazemos o mesmo para a elevação, por segurança */}
+                      <p>Elevação: {Number(popupContent.data.asset_info.elevation_m).toFixed(2)}m</p>
+                      
                       <Link to={`/asset/${asset.asset_uuid}`} className="popup-details-link">Ver mais detalhes &rarr;</Link>
                     </>
                   ) : (
