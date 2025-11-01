@@ -1,49 +1,64 @@
-// src/components/dashboard/RiskForecastChart.jsx (V.2.0)
+// src/components/dashboard/RiskForecastChart.jsx (VERSÃO COMPLETA E ATUALIZADA)
 
-import React from 'react';
+import React, { useState } from 'react';
+import './RiskForecastChart.css'; // Vamos criar este ficheiro para o estilo
 
-// Nova função para obter cores de risco mais fortes
-const getRiskColor = (risk) => {
-  if (risk >= 8) return 'var(--cor-critica)';     // Vermelho escuro/marrom para risco muito alto
-  if (risk >= 6) return 'var(--cor-alerta)';      // Laranja para risco alto
-  if (risk >= 4) return 'var(--cor-cuidado)';     // Amarelo para risco moderado (como o 5.0)
-  if (risk >= 2) return 'var(--cor-sucesso)';     // Verde claro para risco baixo
-  return 'var(--cor-neutra)';                    // Azul claro para risco muito baixo
-};
+function RiskForecastChart({ dailyForecastWithRisk, getRiskColor }) {
+  // NOVO: Estado para controlar qual item da lista está com o mouse em cima
+  const [hoveredIndex, setHoveredIndex] = useState(null);
 
-function RiskForecastChart({ dailyForecastWithRisk }) {
-  // Mostramos a partir do segundo dia (o primeiro já está no KPI principal)
-  // E agora mostramos TODOS os dias restantes que o backend envia (geralmente 6)
-  const futureForecasts = dailyForecastWithRisk.slice(1); 
-
-  if (!futureForecasts || futureForecasts.length === 0) {
-    return null; // Ou uma mensagem tipo "Nenhuma previsão futura disponível"
+  if (!dailyForecastWithRisk || dailyForecastWithRisk.length === 0) {
+    return <p>Previsão indisponível.</p>;
   }
 
   return (
-    <div className="risk-forecast-chart-panel">
+    <div className="risk-forecast-list">
       <h4>Previsão de Risco Futura</h4>
-      <div className="forecast-items-container">
-        {futureForecasts.map((day, index) => (
-          <div key={index} className="forecast-item-card">
-            <span className="forecast-date">
-              {new Date(day.dt * 1000).toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'numeric' })}
-            </span>
-            <div className="risk-bar-wrapper"> {/* Novo wrapper para a barra */}
-              <div 
-                className="risk-bar" 
-                style={{ 
-                  width: `${(day.nota_de_risco / 10) * 100}%`,
-                  backgroundColor: getRiskColor(day.nota_de_risco) 
-                }}
-              ></div>
-            </div>
-            <span className="forecast-risk-value" style={{ color: getRiskColor(day.nota_de_risco) }}>
-              {day.nota_de_risco.toFixed(2)}
-            </span>
-          </div>
-        ))}
-      </div>
+      <ul>
+        {dailyForecastWithRisk.map((forecast, index) => {
+          const riskScore = forecast.nota_de_risco;
+          const riskColor = getRiskColor(riskScore);
+          const date = new Date(forecast.dt * 1000);
+          const dayName = date.toLocaleDateString('pt-BR', { weekday: 'short' });
+          const dayAndMonth = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+
+          return (
+            <li 
+              key={index} 
+              className="forecast-item"
+              // NOVO: Eventos para ligar e desligar o tooltip
+              onMouseEnter={() => setHoveredIndex(index)}
+              onMouseLeave={() => setHoveredIndex(null)}
+            >
+              <span className="forecast-day">{dayName}, {dayAndMonth}</span>
+              <div className="forecast-bar-container">
+                <div 
+                  className="forecast-bar" 
+                  style={{ width: `${riskScore * 10}%`, backgroundColor: riskColor }}
+                ></div>
+              </div>
+              <span className="forecast-score" style={{ color: riskColor }}>
+                {riskScore.toFixed(2)}
+              </span>
+
+              {/* NOVO: Renderização condicional do Tooltip (a "caixa suspensa") */}
+              {hoveredIndex === index && forecast.explicacao_risco && (
+                <div className="risk-explanation-tooltip">
+                  <h5>Composição do Risco</h5>
+                  <ul className="tooltip-factor-list">
+                    {forecast.explicacao_risco.map((factor, fIndex) => (
+                      <li key={fIndex}>
+                        <span>{factor.nome}:</span>
+                        <strong>{factor.valor_raw}</strong>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

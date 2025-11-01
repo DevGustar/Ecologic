@@ -2,13 +2,13 @@
 :root {
   /* ... suas variáveis existentes ... */
 
-  --cor-critica: #C02E2E;   /* Vermelho escuro/vinho para risco EXTREMO */
+  --cor-critica: #e62d2d;   /* Vermelho escuro/vinho para risco EXTREMO */
   --cor-alerta: #FF7B00;    /* Laranja brilhante para risco ALTO */
   --cor-cuidado: #FFCC00;   /* Amarelo dourado para risco MODERADO */
   --cor-sucesso: #4CAF50;   /* Verde para risco BAIXO */
   --cor-neutra: #1E90FF;    /* Azul claro/dodger blue para risco MUITO BAIXO/Mínimo */
     --borda-clara: #4A5568; /* Uma cor de borda um pouco mais clara para as linhas do grid do gráfico */
-
+    /* C02E2E */
 }
 
 
