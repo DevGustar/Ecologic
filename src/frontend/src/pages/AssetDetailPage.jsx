@@ -1,4 +1,4 @@
-// src/pages/AssetDetailPage.jsx (VERSÃO FINAL SEM ABAS E COM LAYOUT UNIFICADO)
+// src/pages/AssetDetailPage.jsx (VERSÃO FINAL COM LISTA DE PREVISÃO HORÁRIA)
 
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
@@ -7,6 +7,9 @@ import AssetListModal from '../components/modals/AssetListModal';
 import RiskTrendChart from '../components/charts/RiskTrendChart';
 import RiskForecastChart from '../components/dashboard/RiskForecastChart';
 import RiskBreakdown from '../components/dashboard/RiskBreakdown'; 
+import HourlyRiskChart from '../components/charts/HourlyRiskChart';
+// NOVO: Importamos nosso novo componente de lista horária
+import HourlyForecastList from '../components/dashboard/HourlyForecastList';
 
 import './AssetDetailPage.css';
 
@@ -29,6 +32,9 @@ function AssetDetailPage() {
   const [riskExplanation, setRiskExplanation] = useState(null);
   const [isExplanationVisible, setIsExplanationVisible] = useState(false);
   const [isFetchingExplanation, setIsFetchingExplanation] = useState(false);
+  const [activeTab, setActiveTab] = useState('diaria');
+  const [hourlyRiskAnalysis, setHourlyRiskAnalysis] = useState(null);
+  const [isFetchingHourly, setIsFetchingHourly] = useState(false);
 
   useEffect(() => {
     const fetchAllAssets = async () => {
@@ -51,6 +57,9 @@ function AssetDetailPage() {
         setRiskAnalysis(null);
         setRiskExplanation(null);
         setIsExplanationVisible(false);
+        // Reseta os dados horários ao mudar de ativo
+        setHourlyRiskAnalysis(null); 
+        setActiveTab('diaria'); // Sempre volta para a aba diária
         try {
           const apiUrl = `http://127.0.0.1:8000/assets/${assetId}/risk_analysis`;
           const response = await fetch(apiUrl);
@@ -67,6 +76,26 @@ function AssetDetailPage() {
       fetchRiskAnalysis();
     }
   }, [assetId]);
+
+  useEffect(() => {
+    if (activeTab === 'horaria' && !hourlyRiskAnalysis && assetId) {
+      const fetchHourlyRisk = async () => {
+        setIsFetchingHourly(true);
+        try {
+          const apiUrl = `http://127.0.0.1:8000/assets/${assetId}/hourly_risk_analysis`;
+          const response = await fetch(apiUrl);
+          if (!response.ok) throw new Error('Falha ao buscar a análise horária');
+          const data = await response.json();
+          setHourlyRiskAnalysis(data.hourly_forecast_with_risk);
+        } catch (error) {
+          console.error("Erro ao buscar análise horária:", error);
+        } finally {
+          setIsFetchingHourly(false);
+        }
+      };
+      fetchHourlyRisk();
+    }
+  }, [activeTab, assetId, hourlyRiskAnalysis]);
 
   const handleAssetSelect = (newAssetId) => {
     navigate(`/asset/${newAssetId}`);
@@ -120,36 +149,66 @@ function AssetDetailPage() {
                 <span className="kpi-value" style={{ color: getRiskColor(todayForecast.nota_de_risco) }}>
                   {todayForecast.nota_de_risco.toFixed(2)}
                 </span>
-                {isExplanationVisible && riskExplanation && (
-                  <RiskBreakdown factors={riskExplanation} />
-                )}
+                {isExplanationVisible && riskExplanation && ( <RiskBreakdown factors={riskExplanation} /> )}
               </div>
               
+              <nav className="analysis-tabs">
+                <button className={`tab-button ${activeTab === 'diaria' ? 'active' : ''}`} onClick={() => setActiveTab('diaria')}>
+                  Análise Diária
+                </button>
+                <button className={`tab-button ${activeTab === 'horaria' ? 'active' : ''}`} onClick={() => setActiveTab('horaria')}>
+                  Análise por Hora
+                </button>
+              </nav>
+
               <div className="sidebar-tab-content">
-                <div className="analysis-grid-content">
-                  <div className="details-panel">
-                    <h4>Previsão para {new Date(todayForecast.dt * 1000).toLocaleDateString('pt-BR')}</h4>
-                    <p className="forecast-summary">{todayForecast.summary}</p>
-                    <div className="weather-details">
-                      <span>Temp. Máxima: <strong>{todayForecast.temp.max.toFixed(1)}°C</strong></span>
-                      <span>Chuva: <strong>{todayForecast.rain || 0} mm</strong></span>
-                      <span>Clima: <strong>{todayForecast.weather[0].description}</strong></span>
+                {activeTab === 'diaria' && (
+                  <>
+                    <div className="analysis-grid-content">
+                      <div className="details-panel">
+                        <h4>Previsão para {new Date(todayForecast.dt * 1000).toLocaleDateString('pt-BR')}</h4>
+                        <p className="forecast-summary">{todayForecast.summary}</p>
+                        <div className="weather-details">
+                          <span>Temp. Máxima: <strong>{todayForecast.temp.max.toFixed(1)}°C</strong></span>
+                          <span>Chuva: <strong>{todayForecast.rain || 0} mm</strong></span>
+                          <span>Clima: <strong>{todayForecast.weather[0].description}</strong></span>
+                        </div>
+                      </div>
+                      <div className="risk-forecast-panel">
+                        <RiskForecastChart 
+                          dailyForecastWithRisk={riskAnalysis.daily_forecast_with_risk}
+                          getRiskColor={getRiskColor}
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <div className="risk-forecast-panel">
-                    <RiskForecastChart 
-                      dailyForecastWithRisk={riskAnalysis.daily_forecast_with_risk}
-                      getRiskColor={getRiskColor}
-                    />
-                  </div>
-                </div>
+                    <div className="tendencia-analysis-panel">
+                      <RiskTrendChart 
+                        forecastData={riskAnalysis.daily_forecast_with_risk}
+                        getRiskColor={getRiskColor}
+                      />
+                    </div>
+                  </>
+                )}
                 
-                <div className="tendencia-analysis-panel">
-                  <RiskTrendChart 
-                    forecastData={riskAnalysis.daily_forecast_with_risk}
-                    getRiskColor={getRiskColor}
-                  />
-                </div>
+                {activeTab === 'horaria' && (
+                  <div className="hourly-analysis-panel">
+                    {isFetchingHourly ? ( <p>Carregando análise horária...</p> ) 
+                    : hourlyRiskAnalysis ? ( 
+                      <>
+                        <HourlyRiskChart 
+                          forecastData={hourlyRiskAnalysis} 
+                          getRiskColor={getRiskColor}
+                        />
+                        {/* NOVO: Renderiza a lista de previsão horária abaixo do gráfico */}
+                        <HourlyForecastList 
+                          hourlyData={hourlyRiskAnalysis} 
+                          getRiskColor={getRiskColor}
+                        />
+                      </>
+                    ) 
+                    : ( <p>Não foi possível carregar os dados horários.</p> )}
+                  </div>
+                )}
               </div>
             </>
           ) : (

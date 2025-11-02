@@ -1,0 +1,83 @@
+/* src/components/dashboard/HourlyForecastList.css (VERSÃO FINAL COM TOOLTIP FLUTUANTE) */
+
+/* O painel principal agora é a nossa âncora de posicionamento */
+.hourly-forecast-panel {
+  position: relative; /* ESSENCIAL para o tooltip flutuante */
+  background-color: var(--fundo-secundario);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.hourly-forecast-panel h4 {
+  margin: 0 0 1rem 0;
+  font-family: var(--fonte-titulo);
+  font-size: 1.2rem;
+  border-bottom: 1px solid var(--borda);
+  padding-bottom: 0.8rem;
+}
+
+/* A lista com a "jaula" do overflow */
+.hourly-list-container {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 250px; 
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.hourly-item {
+  display: grid;
+  grid-template-columns: 60px 1fr 50px;
+  align-items: center;
+  gap: 1rem;
+  padding: 10px 5px;
+  border-bottom: 1px solid var(--fundo-terciario);
+  transition: background-color 0.2s ease;
+}
+.hourly-item:last-child {
+  border-bottom: none;
+}
+.hourly-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+
+.hourly-time { font-weight: bold; color: var(--texto-principal); }
+.hourly-desc { color: var(--texto-secundario); font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hourly-score { font-size: 1.1rem; text-align: right; }
+
+/* O tooltip agora é posicionado de forma absoluta dentro do .hourly-forecast-panel */
+.risk-explanation-tooltip {
+    position: absolute;
+    right: 1.5rem; /* Alinha com o padding do painel */
+    z-index: 100;
+    width: 280px;
+    background-color: var(--fundo-secundario);
+    border: 1px solid var(--borda-sutil);
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
+    pointer-events: none;
+    animation: fadeInTooltip 0.2s ease-out;
+}
+
+.risk-explanation-tooltip h5 { margin: 0 0 8px 0; font-size: 0.9rem; color: var(--acento-primario); border-bottom: 1px solid var(--borda-sutil); padding-bottom: 6px; }
+.tooltip-factor-list { list-style: none; padding: 0; margin: 0; font-size: 0.8rem; display: flex; flex-direction: column; gap: 4px; }
+.tooltip-factor-list li { display: flex; justify-content: space-between; align-items: center; }
+.factor-info { display: flex; flex-direction: column; align-items: flex-start; }
+.factor-info-name { color: var(--texto-secundario); }
+.factor-info-weight { font-size: 0.7rem; color: var(--acento-secundario); opacity: 0.8; }
+.severity-crítico { color: var(--cor-critica); }
+.severity-alto { color: var(--cor-alerta); }
+.severity-moderado { color: var(--cor-cuidado); }
+.severity-baixo { color: var(--cor-sucesso); }
+
+@keyframes fadeInTooltip {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

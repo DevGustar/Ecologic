@@ -135,3 +135,10 @@
 .chart-labels {
   display: none;
 }
+
+.hourly-analysis-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* Espaço entre o gráfico e a nova lista */
+}
+

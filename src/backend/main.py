@@ -1,4 +1,4 @@
-# Ecologic/src/backend/main.py (VERSÃO COMPLETA E CORRIGIDA)
+# Ecologic/src/backend/main.py (VERSÃO FINAL COM ENDPOINT HORÁRIO CORRIGIDO)
 
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,33 +6,26 @@ import uvicorn
 from sqlalchemy.orm import Session
 from . import models, database, schemas
 import uuid
-from datetime import datetime
 from typing import List, Optional
 import json
 
-# Importando funções para buscar clima, elevação e calcular risco
+# Importamos as duas funções de cálculo do risk_calculator
 from .api_connectors import buscar_clima_openweather, fetch_elevation_data
-from .risk_calculator import calculate_daily_risk
+from .risk_calculator import calculate_daily_risk, calculate_hourly_risk
 
-# Importa o nosso módulo de carregamento de dados de mapa
 from . import map_data_loader
 import pandas as pd
 import geopandas as gpd
 
-# Configuração de logging
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-# --- Criação da Tabela no Banco de Dados (se não existir) ---
 models.Base.metadata.create_all(bind=database.engine)
 
-
-# --- Criação da Aplicação ---
 app = FastAPI(title="EcoLogic 2.0 API")
 
-# --- Configuração do CORS para o frontend ---
 origins = [
     "http://localhost:5173",
     "http://172.16.0.1:5173",
@@ -47,12 +40,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- Variáveis globais para armazenar os DADOS DO MAPA carregados ---
 map_rivers_data: Optional[pd.DataFrame] = None
 map_states_geojson_data: Optional[gpd.GeoDataFrame] = None
 
-
-# --- Dependência para Sessão do Banco de Dados ---
 def get_db():
     db = database.SessionLocal()
     try:
@@ -60,185 +50,128 @@ def get_db():
     finally:
         db.close()
 
-# --- Evento de inicialização da API ---
 @app.on_event("startup")
 async def startup_event():
-    """
-    Carrega todos os dados necessários (mapa) quando a API é iniciada.
-    """
     global map_rivers_data, map_states_geojson_data
     logger.info("Iniciando API e carregando dados de mapa...")
-    
     loaded_map_rivers, loaded_map_states_geojson = map_data_loader.load_all_map_data()
-    
     if loaded_map_rivers is not None:
         map_rivers_data = loaded_map_rivers
-        logger.info(f"Dados de rios para mapa carregados e padronizados. {len(map_rivers_data)} registros.")
-    else:
-        logger.error("❌ Falha ao carregar dados de rios para mapa.")
-
+        logger.info(f"Dados de rios para mapa carregados. {len(map_rivers_data)} registros.")
     if loaded_map_states_geojson is not None:
         map_states_geojson_data = loaded_map_states_geojson
         logger.info(f"GeoJSON de estados para mapa carregado. {len(map_states_geojson_data)} estados.")
-    else:
-        logger.error("❌ Falha ao carregar GeoJSON de estados para mapa.")
-    
     logger.info("Carregamento de dados de mapa concluído.")
 
-
-# --- Endpoints da API ---
+# --- Endpoints da API (Inalterados) ---
 
 @app.get("/")
 async def read_root():
     return {"message": "API EcoLogic 2.0 está a funcionar! Acesse /docs para a documentação."}
 
-
 @app.post("/assets", response_model=schemas.Asset)
 def create_asset(asset: schemas.AssetCreate, db: Session = Depends(get_db)): 
-    """
-    Endpoint para criar um ativo, recebe um objeto JSON com nome, latitude e longitude
-    """
     asset_id = str(uuid.uuid4())
     elevation = fetch_elevation_data(asset.latitude, asset.longitude)
-
-    new_asset_model = models.Asset(
-        asset_uuid=asset_id,
-        name=asset.name,
-        latitude=asset.latitude,
-        longitude=asset.longitude,
-        elevation_m=elevation
-    )
-
+    new_asset_model = models.Asset(asset_uuid=asset_id, name=asset.name, latitude=asset.latitude, longitude=asset.longitude, elevation_m=elevation)
     db.add(new_asset_model)
     db.commit()
     db.refresh(new_asset_model)
-    
-    logger.info(f"Ativo criado e salvo no banco de dados: {new_asset_model.name}")
+    logger.info(f"Ativo criado: {new_asset_model.name}")
     return new_asset_model
-
 
 @app.get("/assets", response_model=List[schemas.Asset])
 def read_assets(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """
-    Endpoint para ler uma lista de todos os ativos da base de dados.
-    """
     assets = db.query(models.Asset).offset(skip).limit(limit).all()
-    logger.info(f"Encontrados {len(assets)} ativos na base de dados.")
     return assets
-
 
 @app.get("/assets/{asset_uuid}", response_model=schemas.Asset)
 def get_asset_info(asset_uuid: str, db: Session = Depends(get_db)):
-    """
-    Retorna os dados estruturais de um único ativo que já foi criado.
-    """
     asset = db.query(models.Asset).filter(models.Asset.asset_uuid == asset_uuid).first()
-
-    if asset is None:
-        raise HTTPException(status_code=404, detail="Ativo não encontrado")
+    if asset is None: raise HTTPException(status_code=404, detail="Ativo não encontrado")
     return asset
-
 
 @app.get("/assets/{asset_id}/risk_analysis")
 def get_asset_risk_analysis(asset_id: str, db: Session = Depends(get_db)):
-    """
-    (VERSÃO FINAL) Busca os dados do clima e anexa tanto a nota de risco
-    quanto a EXPLICAÇÃO DETALHADA para cada dia da previsão.
-    """
     asset = db.query(models.Asset).filter(models.Asset.asset_uuid == asset_id).first()
-    if asset is None:
-        raise HTTPException(status_code=404, detail="Ativo não encontrado")
-    
+    if asset is None: raise HTTPException(status_code=404, detail="Ativo não encontrado")
     dados_brutos_clima = buscar_clima_openweather(lat=asset.latitude, lon=asset.longitude)
-    if not dados_brutos_clima or "error" in dados_brutos_clima:
-        raise HTTPException(status_code=503, detail="Falha ao contatar a API de clima.")
-
+    if not dados_brutos_clima or "error" in dados_brutos_clima: raise HTTPException(status_code=503, detail="Falha na API de clima.")
     dados_estruturais_ativo = {"elevation_m": asset.elevation_m}
     previsao_enriquecida = []
     lista_previsao_bruta = dados_brutos_clima.get('daily', [])
-
     for previsao_um_dia in lista_previsao_bruta:
-        dados_climaticos_dia = {
-            "volume_chuva_mm": previsao_um_dia.get('rain', 0),
-            "prob_chuva_%": previsao_um_dia.get('pop', 0) * 100,
-            "rajadas_kmh": previsao_um_dia.get('wind_gust', 0) * 3.6,
-            "pressao_hpa": previsao_um_dia.get('pressure', 1013),
-            "umidade_%": previsao_um_dia.get('humidity', 50)
-        }
-        if dados_climaticos_dia["volume_chuva_mm"] is None:
-            dados_climaticos_dia["volume_chuva_mm"] = 0
-
-        # MUDANÇA PRINCIPAL: Agora guardamos a análise completa
-        analise_detalhada_dia = calculate_daily_risk(
-            climate_data=dados_climaticos_dia,
-            structural_data=dados_estruturais_ativo
-        )
-
-        # Anexamos AMBOS os dados que o frontend precisa
+        dados_climaticos_dia = {"volume_chuva_mm": previsao_um_dia.get('rain', 0), "prob_chuva_%": previsao_um_dia.get('pop', 0) * 100, "rajadas_kmh": previsao_um_dia.get('wind_gust', 0) * 3.6, "pressao_hpa": previsao_um_dia.get('pressure', 1013), "umidade_%": previsao_um_dia.get('humidity', 50)}
+        if dados_climaticos_dia["volume_chuva_mm"] is None: dados_climaticos_dia["volume_chuva_mm"] = 0
+        analise_detalhada_dia = calculate_daily_risk(climate_data=dados_climaticos_dia, structural_data=dados_estruturais_ativo)
         previsao_um_dia['nota_de_risco'] = analise_detalhada_dia['score_final']
         previsao_um_dia['explicacao_risco'] = analise_detalhada_dia['fatores_contribuintes']
-        
         previsao_enriquecida.append(previsao_um_dia)
-
-    return {
-        "asset_info": asset,
-        "daily_forecast_with_risk": previsao_enriquecida
-    }
-
+    return {"asset_info": asset, "daily_forecast_with_risk": previsao_enriquecida}
 
 @app.get("/assets/{asset_id}/risk_explanation")
 def get_asset_risk_explanation(asset_id: str, db: Session = Depends(get_db)):
+    asset = db.query(models.Asset).filter(models.Asset.asset_uuid == asset_id).first()
+    if asset is None: raise HTTPException(status_code=404, detail="Ativo não encontrado")
+    dados_brutos_clima = buscar_clima_openweather(lat=asset.latitude, lon=asset.longitude)
+    if not dados_brutos_clima or "daily" not in dados_brutos_clima or not dados_brutos_clima["daily"]: raise HTTPException(status_code=503, detail="Previsão de hoje indisponível.")
+    previsao_hoje = dados_brutos_clima['daily'][0]
+    dados_climaticos_hoje = {"volume_chuva_mm": previsao_hoje.get('rain', 0), "prob_chuva_%": previsao_hoje.get('pop', 0) * 100, "rajadas_kmh": previsao_hoje.get('wind_gust', 0) * 3.6, "pressao_hpa": previsao_hoje.get('pressure', 1013), "umidade_%": previsao_hoje.get('humidity', 50)}
+    if dados_climaticos_hoje["volume_chuva_mm"] is None: dados_climaticos_hoje["volume_chuva_mm"] = 0
+    dados_estruturais_ativo = {"elevation_m": asset.elevation_m}
+    analise_detalhada = calculate_daily_risk(climate_data=dados_climaticos_hoje, structural_data=dados_estruturais_ativo)
+    return analise_detalhada
+
+# --- ENDPOINT HORÁRIO (CORRIGIDO) ---
+@app.get("/assets/{asset_id}/hourly_risk_analysis")
+def get_asset_hourly_risk(asset_id: str, db: Session = Depends(get_db)):
     """
-    NOVO ENDPOINT: Retorna a explicação detalhada de como a nota de risco
-    do dia atual (hoje) foi calculada.
+    (VERSÃO CORRIGIDA) Busca a previsão horária, calcula o risco e anexa a
+    nota final E a explicação detalhada para cada hora.
     """
     asset = db.query(models.Asset).filter(models.Asset.asset_uuid == asset_id).first()
     if asset is None:
         raise HTTPException(status_code=404, detail="Ativo não encontrado")
     
     dados_brutos_clima = buscar_clima_openweather(lat=asset.latitude, lon=asset.longitude)
-    if not dados_brutos_clima or "daily" not in dados_brutos_clima or not dados_brutos_clima["daily"]:
-        raise HTTPException(status_code=503, detail="Não foi possível obter a previsão de hoje da API de clima.")
-    
-    previsao_hoje = dados_brutos_clima['daily'][0]
-
-    dados_climaticos_hoje = {
-        "volume_chuva_mm": previsao_hoje.get('rain', 0),
-        "prob_chuva_%": previsao_hoje.get('pop', 0) * 100,
-        "rajadas_kmh": previsao_hoje.get('wind_gust', 0) * 3.6,
-        "pressao_hpa": previsao_hoje.get('pressure', 1013),
-        "umidade_%": previsao_hoje.get('humidity', 50)
-    }
-    if dados_climaticos_hoje["volume_chuva_mm"] is None:
-        dados_climaticos_hoje["volume_chuva_mm"] = 0
+    if not dados_brutos_clima or "hourly" not in dados_brutos_clima:
+        raise HTTPException(status_code=503, detail="Previsão horária não disponível na API de clima.")
 
     dados_estruturais_ativo = {"elevation_m": asset.elevation_m}
+    
+    previsao_horaria_enriquecida = []
+    lista_previsao_horaria = dados_brutos_clima.get('hourly', [])[:24]
 
-    analise_detalhada = calculate_daily_risk(
-        climate_data=dados_climaticos_hoje,
-        structural_data=dados_estruturais_ativo
-    )
+    for previsao_uma_hora in lista_previsao_horaria:
+        # Chama a função de cálculo horário que agora retorna a explicação completa
+        analise_detalhada_hora = calculate_hourly_risk(
+            hourly_climate_data=previsao_uma_hora,
+            structural_data=dados_estruturais_ativo
+        )
+        
+        # Anexa AMBAS as chaves que o frontend precisa para o tooltip
+        previsao_uma_hora['nota_de_risco'] = analise_detalhada_hora['score_final']
+        previsao_uma_hora['explicacao_risco'] = analise_detalhada_hora['fatores_contribuintes']
 
-    return analise_detalhada
+        previsao_horaria_enriquecida.append(previsao_uma_hora)
+
+    return {
+        "asset_info": asset,
+        "hourly_forecast_with_risk": previsao_horaria_enriquecida
+    }
 
 
-# --- Endpoints para Dados do Mapa ---
-
+# Endpoints de Mapa (Inalterados)
 @app.get("/map_data/rivers")
 async def get_map_rivers_data():
-    if map_rivers_data is None:
-        raise HTTPException(status_code=503, detail="Dados de rios para mapa ainda não foram carregados.")
+    if map_rivers_data is None: raise HTTPException(status_code=503, detail="Dados de rios não carregados.")
     return map_rivers_data.to_dict(orient='records')
-
 
 @app.get("/map_data/states_geojson")
 async def get_map_states_geojson():
-    if map_states_geojson_data is None:
-        raise HTTPException(status_code=503, detail="GeoJSON de estados para mapa ainda não foi carregado.")
-    geojson_dict = json.loads(map_states_geojson_data.to_json())
-    return geojson_dict
+    if map_states_geojson_data is None: raise HTTPException(status_code=503, detail="GeoJSON de estados não carregado.")
+    return json.loads(map_states_geojson_data.to_json())
 
-
-# --- Bloco para rodar a aplicação com Uvicorn ---
+# --- Bloco para rodar a aplicação ---
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
