@@ -1,10 +1,15 @@
-// src/components/dashboard/RiskForecastChart.jsx (VERSÃO COMPLETA E ATUALIZADA)
+// src/components/dashboard/RiskForecastChart.jsx (VERSÃO FINAL COM CORES NO TOOLTIP)
 
 import React, { useState } from 'react';
-import './RiskForecastChart.css'; // Vamos criar este ficheiro para o estilo
+import './RiskForecastChart.css';
+
+// NOVO: Função de utilitário para converter a severidade em uma classe CSS
+const getSeverityClass = (severity) => {
+  if (!severity) return '';
+  return `severity-${severity.toLowerCase()}`;
+};
 
 function RiskForecastChart({ dailyForecastWithRisk, getRiskColor }) {
-  // NOVO: Estado para controlar qual item da lista está com o mouse em cima
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
   if (!dailyForecastWithRisk || dailyForecastWithRisk.length === 0) {
@@ -26,7 +31,6 @@ function RiskForecastChart({ dailyForecastWithRisk, getRiskColor }) {
             <li 
               key={index} 
               className="forecast-item"
-              // NOVO: Eventos para ligar e desligar o tooltip
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}
             >
@@ -41,15 +45,24 @@ function RiskForecastChart({ dailyForecastWithRisk, getRiskColor }) {
                 {riskScore.toFixed(2)}
               </span>
 
-              {/* NOVO: Renderização condicional do Tooltip (a "caixa suspensa") */}
               {hoveredIndex === index && forecast.explicacao_risco && (
                 <div className="risk-explanation-tooltip">
                   <h5>Composição do Risco</h5>
                   <ul className="tooltip-factor-list">
                     {forecast.explicacao_risco.map((factor, fIndex) => (
                       <li key={fIndex}>
-                        <span>{factor.nome}:</span>
-                        <strong>{factor.valor_raw}</strong>
+                        <div className="factor-info">
+                          <span className="factor-info-name">{factor.nome}</span>
+                          {factor.peso_no_calculo > 0 && (
+                            <span className="factor-info-weight">
+                              Peso: {(factor.peso_no_calculo * 100).toFixed(0)}%
+                            </span>
+                          )}
+                        </div>
+                        {/* MUDANÇA: O valor bruto agora tem uma classe CSS dinâmica para a cor */}
+                        <strong className={getSeverityClass(factor.severidade)}>
+                          {factor.valor_raw}
+                        </strong>
                       </li>
                     ))}
                   </ul>

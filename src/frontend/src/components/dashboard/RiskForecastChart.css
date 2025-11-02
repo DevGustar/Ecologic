@@ -1,98 +1,130 @@
-/* src/components/dashboard/RiskForecastChart.css */
+/* src/components/dashboard/RiskForecastChart.css (VERSÃO FINAL COM TOOLTIP CORRIGIDO) */
 
 .risk-forecast-list h4 {
-    margin-top: 0;
-    margin-bottom: 1rem;
-    font-size: 1rem;
-  }
-  
-  .risk-forecast-list ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  
-  .forecast-item {
-    position: relative; /* Essencial para o posicionamento do tooltip */
-    display: grid;
-    grid-template-columns: 80px 1fr 50px;
-    align-items: center;
-    gap: 12px;
-    font-size: 0.9rem;
-  }
-  
-  .forecast-day {
-    color: var(--texto-secundario);
-    text-transform: capitalize;
-  }
-  
-  .forecast-bar-container {
-    width: 100%;
-    background-color: var(--fundo-terciario);
-    border-radius: 4px;
-    height: 10px;
-  }
-  
-  .forecast-bar {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 0.3s ease-in-out;
-  }
-  
-  .forecast-score {
-    font-weight: bold;
-    text-align: right;
-  }
-  
-/* Estilo do Tooltip ("Caixa Suspensa") - CORRIGIDO */
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.risk-forecast-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.forecast-item {
+  position: relative; 
+  display: grid;
+  grid-template-columns: 80px 1fr 50px;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+
+.forecast-day {
+  color: var(--texto-secundario);
+  text-transform: capitalize;
+}
+
+.forecast-bar-container {
+  width: 100%;
+  background-color: var(--fundo-terciario);
+  border-radius: 4px;
+  height: 10px;
+}
+
+.forecast-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease-in-out;
+}
+
+.forecast-score {
+  font-weight: bold;
+  text-align: right;
+}
+
+/* MUDANÇA PRINCIPAL: Posicionamento do Tooltip corrigido */
 .risk-explanation-tooltip {
-    position: absolute;
-    left: 80px; 
-    bottom: 120%; 
-    z-index: 100;
+  position: absolute;
+  /* ANCORAGEM: Ancoramos o lado DIREITO do tooltip a 0px do lado direito do item da lista */
+  right: 0; 
+  /* REMOÇÃO: Removemos a ancoragem pela esquerda */
+  /* left: 80px; */ 
   
-    width: 280px;
-    /* MUDANÇA: Usamos a variável de fundo secundário, que deve ser sólida */
-    background-color: var(--fundo-secundario); 
-    border: 1px solid var(--borda-sutil);
-    border-radius: 8px;
-    padding: 12px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
-    pointer-events: none; 
-    animation: fadeInTooltip 0.2s ease-out;
-  }
-  
-  .risk-explanation-tooltip h5 {
-    margin: 0 0 8px 0;
-    font-size: 0.9rem;
-    color: var(--acento-primario);
-    border-bottom: 1px solid var(--borda-sutil);
-    padding-bottom: 6px;
-  }
-  
-  .tooltip-factor-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    font-size: 0.8rem;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  
-  .tooltip-factor-list li {
-    display: flex;
-    justify-content: space-between;
-  }
-  
-  .tooltip-factor-list li span {
-    color: var(--texto-secundario);
-  }
-  
-  @keyframes fadeInTooltip {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+  bottom: 120%; 
+  z-index: 100;
+
+  width: 280px;
+  background-color: var(--fundo-secundario); 
+  border: 1px solid var(--borda-sutil);
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  pointer-events: none; 
+  animation: fadeInTooltip 0.2s ease-out;
+}
+
+/* Regra de posicionamento inteligente para os primeiros itens */
+.forecast-item:nth-child(1) .risk-explanation-tooltip,
+.forecast-item:nth-child(2) .risk-explanation-tooltip,
+.forecast-item:nth-child(3) .risk-explanation-tooltip {
+  top: 100%;
+  bottom: auto;
+  margin-top: 8px;
+}
+
+
+.risk-explanation-tooltip h5 {
+  margin: 0 0 8px 0;
+  font-size: 0.9rem;
+  color: var(--acento-primario);
+  border-bottom: 1px solid var(--borda-sutil);
+  padding-bottom: 6px;
+}
+
+.tooltip-factor-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tooltip-factor-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.factor-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.factor-info-name {
+  color: var(--texto-secundario);
+}
+
+.factor-info-weight {
+  font-size: 0.7rem;
+  color: var(--acento-secundario);
+  opacity: 0.8;
+}
+
+/* Classes de cor para os valores */
+.severity-crítico { color: var(--cor-critica); }
+.severity-alto { color: var(--cor-alerta); }
+.severity-moderado { color: var(--cor-cuidado); }
+.severity-baixo { color: var(--cor-sucesso); }
+
+@keyframes fadeInTooltip {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
