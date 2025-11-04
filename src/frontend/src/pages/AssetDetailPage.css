@@ -1,6 +1,4 @@
-/* src/pages/AssetDetailPage.css (VERSÃO COMPLETA E FINALMENTE CORRIGIDA) */
-
-/* === LAYOUT E ESTILOS DA PÁGINA DE DETALHES === */
+/* src/pages/AssetDetailPage.css (VERSÃO FINAL COMPLETA E REFINADA) */
 
 .asset-detail-page-container {
   height: 100vh;
@@ -24,7 +22,6 @@
 .back-link { color: var(--texto-secundario); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; }
 .back-link:hover { color: var(--texto-principal); }
 
-/* --- Layout Principal Proporcional --- */
 .analysis-layout-wrapper {
   flex-grow: 1;
   display: grid;
@@ -34,16 +31,15 @@
   overflow: hidden;
 }
 
-/* MUDANÇA CRÍTICA: Permite que o filho (sidebar-tab-content) calcule sua altura e habilite o scroll */
 .analysis-sidebar-main {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
   min-width: 450px;
-  min-height: 0; /* ESSENCIAL para a rolagem funcionar em layouts flex/grid */
+  min-height: 0;
 }
 
-/* --- KPI Compacto --- */
+/* KPI Compacto */
 .kpi-panel {
   background-color: var(--fundo-secundario);
   border: 1px solid var(--borda);
@@ -57,27 +53,54 @@
 .kpi-panel-interactive { position: relative; cursor: pointer; transition: background-color 0.2s ease; }
 .kpi-panel-interactive:hover { background-color: rgba(255, 255, 255, 0.05); }
 
-/* --- Container do Conteúdo com Scroll --- */
-/* MUDANÇA CRÍTICA: Este é o container que vai rolar */
+/* Estilo "Pill" moderno para as abas */
+.analysis-tabs {
+  display: flex;
+  background-color: var(--fundo-secundario);
+  border-radius: 10px;
+  padding: 4px;
+  border: 1px solid var(--borda);
+}
+.tab-button {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  background-color: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--texto-secundario);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+.tab-button:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--texto-principal);
+}
+.tab-button.active {
+  background-color: var(--acento-primario);
+  color: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
 .sidebar-tab-content {
-  flex-grow: 1; /* Ocupa todo o espaço vertical disponível na sidebar */
-  min-height: 0; /* "Truque" do Flexbox para habilitar o overflow */
-  overflow-y: auto; /* A barra de rolagem aparecerá aqui! */
+  flex-grow: 1;
+  min-height: 0;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
   padding-right: 10px;
 }
 
-/* Grid interno das 2 colunas */
 .analysis-grid-content {
   display: flex;
-  gap: 1.5rem;
+  gap: 1rem;
   align-items: flex-start;
 }
 
-/* --- Painéis de Conteúdo --- */
-.details-panel, .risk-forecast-panel, .tendencia-analysis-panel {
+/* Painéis de Conteúdo */
+.details-panel, .risk-forecast-panel, .tendencia-analysis-panel, .current-weather-panel {
   background-color: var(--fundo-secundario);
   border: 1px solid var(--borda);
   border-radius: 12px;
@@ -87,7 +110,7 @@
 
 .details-panel, .risk-forecast-panel { flex: 1; }
 
-.details-panel h4, .risk-forecast-panel h4, .tendencia-analysis-panel h4 {
+.details-panel h4, .risk-forecast-panel h4, .tendencia-analysis-panel h4, .current-weather-panel h4 {
   margin: 0 0 1rem 0;
   font-family: var(--fonte-titulo);
   font-size: 1.2rem;
@@ -95,16 +118,25 @@
   padding-bottom: 0.8rem;
 }
 
-.forecast-summary { font-style: italic; color: var(--texto-secundario); margin-bottom: 1rem; }
+/* Classe para o novo resumo em português */
+.forecast-summary {
+  font-style: italic;
+  color: var(--texto-secundario);
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
 .weather-details { display: flex; flex-direction: column; gap: 0.8rem; border-top: 1px solid var(--borda); padding-top: 1rem; }
 .weather-details span { display: flex; justify-content: space-between; }
 
-.tendencia-analysis-panel {
+.hourly-analysis-panel, .tendencia-analysis-panel {
   display: flex;
   flex-direction: column;
+  gap: 1.5rem;
 }
 
-/* --- Área do Mapa --- */
+/* Área do Mapa */
 .analysis-map-area {
   border-radius: 12px;
   overflow: hidden;
@@ -112,33 +144,25 @@
   border: 1px solid var(--borda);
 }
 
-/* --- Estilos do Gráfico (mantidos da sua base) --- */
+/* Estilos dos Gráficos (mantido do original) */
 .risk-trend-chart-content {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
-
 .risk-trend-chart-content h4 {
-  margin: 0 0 2rem 0;
+  margin: 0 0 1rem 0;
   font-family: var(--fonte-titulo);
-  font-size: 1.35rem;
+  font-size: 1.2rem;
   color: var(--texto-principal);
+  border-bottom: 1px solid var(--borda);
+  padding-bottom: 0.8rem;
 }
-
 .risk-trend-chart-content svg {
   width: 100%;
   flex-grow: 1;
   overflow: visible;
 }
-
 .chart-labels {
   display: none;
 }
-
-.hourly-analysis-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem; /* Espaço entre o gráfico e a nova lista */
-}
-

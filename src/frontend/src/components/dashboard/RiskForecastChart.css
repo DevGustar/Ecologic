@@ -1,4 +1,4 @@
-/* src/components/dashboard/RiskForecastChart.css (VERSÃO FINAL COM TOOLTIP CORRIGIDO) */
+/* src/components/dashboard/RiskForecastChart.css (VERSÃO FINAL COM EFEITO HOVER) */
 
 .risk-forecast-list h4 {
   margin-top: 0;
@@ -22,6 +22,15 @@
   align-items: center;
   gap: 12px;
   font-size: 0.9rem;
+  /* MUDANÇA: Adiciona padding para o highlight ter espaço e uma transição suave */
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease-out;
+}
+
+/* MUDANÇA: A nova regra que cria o "efeito iluminado" */
+.forecast-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .forecast-day {
@@ -47,15 +56,12 @@
   text-align: right;
 }
 
-/* MUDANÇA PRINCIPAL: Posicionamento do Tooltip corrigido */
+/* O tooltip agora SEMPRE abre PARA BAIXO */
 .risk-explanation-tooltip {
   position: absolute;
-  /* ANCORAGEM: Ancoramos o lado DIREITO do tooltip a 0px do lado direito do item da lista */
-  right: 0; 
-  /* REMOÇÃO: Removemos a ancoragem pela esquerda */
-  /* left: 80px; */ 
-  
-  bottom: 120%; 
+  left: 80px; 
+  top: 100%;
+  margin-top: 8px;
   z-index: 100;
 
   width: 280px;
@@ -68,16 +74,6 @@
   animation: fadeInTooltip 0.2s ease-out;
 }
 
-/* Regra de posicionamento inteligente para os primeiros itens */
-.forecast-item:nth-child(1) .risk-explanation-tooltip,
-.forecast-item:nth-child(2) .risk-explanation-tooltip,
-.forecast-item:nth-child(3) .risk-explanation-tooltip {
-  top: 100%;
-  bottom: auto;
-  margin-top: 8px;
-}
-
-
 .risk-explanation-tooltip h5 {
   margin: 0 0 8px 0;
   font-size: 0.9rem;
@@ -86,45 +82,17 @@
   padding-bottom: 6px;
 }
 
-.tooltip-factor-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  font-size: 0.8rem;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.tooltip-factor-list li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.factor-info {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.factor-info-name {
-  color: var(--texto-secundario);
-}
-
-.factor-info-weight {
-  font-size: 0.7rem;
-  color: var(--acento-secundario);
-  opacity: 0.8;
-}
-
-/* Classes de cor para os valores */
+.tooltip-factor-list { list-style: none; padding: 0; margin: 0; font-size: 0.8rem; display: flex; flex-direction: column; gap: 4px; }
+.tooltip-factor-list li { display: flex; justify-content: space-between; align-items: center; }
+.factor-info { display: flex; flex-direction: column; align-items: flex-start; }
+.factor-info-name { color: var(--texto-secundario); }
+.factor-info-weight { font-size: 0.7rem; color: var(--acento-secundario); opacity: 0.8; }
 .severity-crítico { color: var(--cor-critica); }
 .severity-alto { color: var(--cor-alerta); }
 .severity-moderado { color: var(--cor-cuidado); }
 .severity-baixo { color: var(--cor-sucesso); }
 
 @keyframes fadeInTooltip {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
 }

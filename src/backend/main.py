@@ -1,4 +1,4 @@
-# Ecologic/src/backend/main.py (VERSÃO FINAL COM ENDPOINT HORÁRIO CORRIGIDO)
+# Ecologic/src/backend/main.py (VERSÃO FINAL COMPLETA E CORRIGIDA)
 
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -63,7 +63,7 @@ async def startup_event():
         logger.info(f"GeoJSON de estados para mapa carregado. {len(map_states_geojson_data)} estados.")
     logger.info("Carregamento de dados de mapa concluído.")
 
-# --- Endpoints da API (Inalterados) ---
+# --- Endpoints da API ---
 
 @app.get("/")
 async def read_root():
@@ -122,46 +122,82 @@ def get_asset_risk_explanation(asset_id: str, db: Session = Depends(get_db)):
     analise_detalhada = calculate_daily_risk(climate_data=dados_climaticos_hoje, structural_data=dados_estruturais_ativo)
     return analise_detalhada
 
-# --- ENDPOINT HORÁRIO (CORRIGIDO) ---
-@app.get("/assets/{asset_id}/hourly_risk_analysis")
-def get_asset_hourly_risk(asset_id: str, db: Session = Depends(get_db)):
+# --- ENDPOINT DE RISCO EM TEMPO REAL (CORRIGIDO) ---
+@app.get("/assets/{asset_id}/current_risk")
+def get_asset_current_risk(asset_id: str, db: Session = Depends(get_db)):
     """
-    (VERSÃO CORRIGIDA) Busca a previsão horária, calcula o risco e anexa a
-    nota final E a explicação detalhada para cada hora.
+    (VERSÃO CORRIGIDA) Busca o clima atual, TRADUZ os dados para o formato
+    esperado e calcula o risco para o momento.
     """
     asset = db.query(models.Asset).filter(models.Asset.asset_uuid == asset_id).first()
     if asset is None:
         raise HTTPException(status_code=404, detail="Ativo não encontrado")
     
     dados_brutos_clima = buscar_clima_openweather(lat=asset.latitude, lon=asset.longitude)
-    if not dados_brutos_clima or "hourly" not in dados_brutos_clima:
-        raise HTTPException(status_code=503, detail="Previsão horária não disponível na API de clima.")
+    if not dados_brutos_clima or "current" not in dados_brutos_clima:
+        raise HTTPException(status_code=503, detail="Dados de clima atual não disponíveis.")
+
+    clima_atual = dados_brutos_clima.get('current', {})
+    dados_estruturais_ativo = {"elevation_m": asset.elevation_m}
+
+    if 'rain' in clima_atual and isinstance(clima_atual['rain'], (int, float)):
+        clima_atual['rain'] = {'1h': clima_atual['rain']}
+        
+    analise_detalhada_atual = calculate_hourly_risk(
+        hourly_climate_data=clima_atual,
+        structural_data=dados_estruturais_ativo
+    )
+    
+    return {"current_risk_score": analise_detalhada_atual['score_final']}
+
+
+# --- ENDPOINT HORÁRIO (CORRIGIDO PARA TER CONSISTÊNCIA) ---
+@app.get("/assets/{asset_id}/hourly_risk_analysis")
+def get_asset_hourly_risk(asset_id: str, db: Session = Depends(get_db)):
+    """
+    (VERSÃO CORRIGIDA) Garante que o primeiro ponto da previsão horária
+    seja o dado em tempo real, para consistência com o KPI.
+    """
+    asset = db.query(models.Asset).filter(models.Asset.asset_uuid == asset_id).first()
+    if asset is None: raise HTTPException(status_code=404, detail="Ativo não encontrado")
+    
+    dados_brutos_clima = buscar_clima_openweather(lat=asset.latitude, lon=asset.longitude)
+    if not dados_brutos_clima or "hourly" not in dados_brutos_clima or "current" not in dados_brutos_clima:
+        raise HTTPException(status_code=503, detail="Dados de previsão incompletos.")
 
     dados_estruturais_ativo = {"elevation_m": asset.elevation_m}
     
+    clima_atual = dados_brutos_clima.get('current', {})
+    if 'rain' in clima_atual and isinstance(clima_atual['rain'], (int, float)):
+        clima_atual['rain'] = {'1h': clima_atual['rain']}
+    
+    analise_atual = calculate_hourly_risk(
+        hourly_climate_data=clima_atual,
+        structural_data=dados_estruturais_ativo
+    )
+    clima_atual['nota_de_risco'] = analise_atual['score_final']
+    clima_atual['explicacao_risco'] = analise_atual['fatores_contribuintes']
+
     previsao_horaria_enriquecida = []
-    lista_previsao_horaria = dados_brutos_clima.get('hourly', [])[:24]
+    lista_previsao_horaria = dados_brutos_clima.get('hourly', [])[1:24]
 
     for previsao_uma_hora in lista_previsao_horaria:
-        # Chama a função de cálculo horário que agora retorna a explicação completa
         analise_detalhada_hora = calculate_hourly_risk(
             hourly_climate_data=previsao_uma_hora,
             structural_data=dados_estruturais_ativo
         )
-        
-        # Anexa AMBAS as chaves que o frontend precisa para o tooltip
         previsao_uma_hora['nota_de_risco'] = analise_detalhada_hora['score_final']
         previsao_uma_hora['explicacao_risco'] = analise_detalhada_hora['fatores_contribuintes']
-
         previsao_horaria_enriquecida.append(previsao_uma_hora)
+
+    dados_finais = [clima_atual] + previsao_horaria_enriquecida
 
     return {
         "asset_info": asset,
-        "hourly_forecast_with_risk": previsao_horaria_enriquecida
+        "hourly_forecast_with_risk": dados_finais
     }
 
-
-# Endpoints de Mapa (Inalterados)
+# --- Endpoints de Mapa (Inalterados) ---
 @app.get("/map_data/rivers")
 async def get_map_rivers_data():
     if map_rivers_data is None: raise HTTPException(status_code=503, detail="Dados de rios não carregados.")

@@ -1,4 +1,4 @@
-# --- risk_calculator.py --- (VERSÃO FINAL COM EXPLICAÇÃO HORÁRIA CORRIGIDA)
+# --- risk_calculator.py --- (VERSÃO FINAL COM CALIBRAGEM E CORREÇÃO DE COR)
 
 # --- FUNÇÕES DE CLASSIFICAÇÃO DE SEVERIDADE (DIÁRIA) ---
 def classify_rain_severity(volume_mm):
@@ -19,7 +19,14 @@ def classify_elevation_severity(elevation_m):
     if elevation_m < 800: return "Moderado"
     return "Baixo"
 
-# --- NOVAS FUNÇÕES DE CLASSIFICAÇÃO DE SEVERIDADE (HORÁRIA) ---
+# NOVO: Função para classificar a severidade da probabilidade de chuva
+def classify_prob_severity(prob_percent):
+    if prob_percent > 95: return "Alto" # Certeza de chuva é um alerta
+    if prob_percent > 70: return "Moderado"
+    return "Baixo"
+
+
+# --- FUNÇÕES DE CLASSIFICAÇÃO DE SEVERIDADE (HORÁRIA) ---
 def classify_hourly_rain_severity(volume_mm):
     if volume_mm > 10: return "Crítico" # Acima de 10mm/h é chuva torrencial
     if volume_mm > 5: return "Alto"
@@ -27,13 +34,14 @@ def classify_hourly_rain_severity(volume_mm):
     return "Baixo"
 
 def classify_hourly_wind_severity(speed_kmh):
+    # Usa a mesma escala da diária, pois a medição é instantânea (km/h)
     return classify_wind_severity(speed_kmh)
 
 
-# --- FERRAMENTA DE CÁLCULO DIÁRIO (Inalterada) ---
+# --- FERRAMENTA DE CÁLCULO DIÁRIO (RECALIBRADA) ---
 def calculate_daily_risk(climate_data: dict, structural_data: dict) -> dict:
     """
-    Calcula uma nota de risco diária (v2.2) e retorna a explicação detalhada com a severidade de cada fator.
+    (VERSÃO RECALIBRADA) Calcula uma nota de risco diária com pesos mais realistas.
     """
     rain_volume = climate_data.get("volume_chuva_mm", 0)
     rain_prob = climate_data.get("prob_chuva_%", 0)
@@ -42,11 +50,18 @@ def calculate_daily_risk(climate_data: dict, structural_data: dict) -> dict:
     humidity = climate_data.get("umidade_%", 50)
     elevation = structural_data.get("elevation_m", 500)
     fatores = []
-    peso_chuva = 0.5; peso_prob = 0.05; peso_vento = 0.08
+
+    peso_chuva = 0.30
+    peso_prob = 0.005
+    peso_vento = 0.07
+    
     base_hazard_score = (rain_volume * peso_chuva) + (rain_prob * peso_prob) + (wind_gust_kmh * peso_vento)
+    
     fatores.append({"nome": "Volume de Chuva", "valor_raw": f"{rain_volume:.2f} mm", "score_atribuido": rain_volume, "peso_no_calculo": peso_chuva, "severidade": classify_rain_severity(rain_volume)})
-    fatores.append({"nome": "Prob. de Chuva", "valor_raw": f"{rain_prob:.0f}%", "score_atribuido": rain_prob, "peso_no_calculo": peso_prob, "severidade": "Baixo"})
+    # MUDANÇA: Usa a nova função de classificação para a cor da probabilidade
+    fatores.append({"nome": "Prob. de Chuva", "valor_raw": f"{rain_prob:.0f}%", "score_atribuido": rain_prob, "peso_no_calculo": peso_prob, "severidade": classify_prob_severity(rain_prob)})
     fatores.append({"nome": "Rajadas de Vento", "valor_raw": f"{wind_gust_kmh:.1f} km/h", "score_atribuido": wind_gust_kmh, "peso_no_calculo": peso_vento, "severidade": classify_wind_severity(wind_gust_kmh)})
+    
     if pressure_hpa < 1005: pressure_factor = 1.2
     elif pressure_hpa < 1012: pressure_factor = 1.1
     else: pressure_factor = 1.0
@@ -61,52 +76,50 @@ def calculate_daily_risk(climate_data: dict, structural_data: dict) -> dict:
     else: vulnerability_factor = 0.8
     risk_score_bruto = hazard_score * vulnerability_factor
     fatores.append({"nome": "Fator Vulnerab. (Elevação)", "valor_raw": f"{elevation:.0f} m (x{vulnerability_factor})", "score_atribuido": vulnerability_factor, "peso_no_calculo": 0, "severidade": classify_elevation_severity(elevation)})
+    
     final_score = min(max(risk_score_bruto, 0), 10)
+    
     return { "score_final": round(final_score, 2), "fatores_contribuintes": fatores }
 
 
-# --- FERRAMENTA DE CÁLCULO HORÁRIO (ATUALIZADA) ---
+# --- CÁLCULO HORÁRIO (ATUALIZADO, CALIBRADO E COMPLETO) ---
 def calculate_hourly_risk(hourly_climate_data: dict, structural_data: dict) -> dict:
     """
-    Calcula uma nota de risco para uma única hora e retorna a explicação detalhada.
+    (VERSÃO CALIBRADA) Calcula uma nota de risco para uma única hora e retorna a explicação detalhada.
     """
-    # --- Coleta dos Dados Brutos da Hora ---
     rain_1h = hourly_climate_data.get("rain", {}).get("1h", 0)
     wind_speed_kmh = hourly_climate_data.get("wind_speed", 0) * 3.6
     prob_precip = hourly_climate_data.get("pop", 0) * 100
     pressure_hpa = hourly_climate_data.get("pressure", 1013)
     humidity = hourly_climate_data.get("humidity", 50)
     elevation = structural_data.get("elevation_m", 500)
-
     fatores = []
 
-    # --- Cálculo com pesos ajustados para a escala horária ---
-    peso_chuva_hora = 2.0
-    peso_vento_hora = 0.1
+    peso_chuva_hora = 1.2
+    peso_vento_hora = 0.15
     peso_prob_hora = 0.05
     
     base_hazard_score = (rain_1h * peso_chuva_hora) + (wind_speed_kmh * peso_vento_hora) + (prob_precip * peso_prob_hora)
     
-    # Adiciona os fatores à explicação
     fatores.append({"nome": "Chuva (1h)", "valor_raw": f"{rain_1h:.2f} mm", "score_atribuido": rain_1h, "peso_no_calculo": peso_chuva_hora, "severidade": classify_hourly_rain_severity(rain_1h)})
     fatores.append({"nome": "Vento", "valor_raw": f"{wind_speed_kmh:.1f} km/h", "score_atribuido": wind_speed_kmh, "peso_no_calculo": peso_vento_hora, "severidade": classify_hourly_wind_severity(wind_speed_kmh)})
-    fatores.append({"nome": "Prob. de Chuva", "valor_raw": f"{prob_precip:.0f}%", "score_atribuido": prob_precip, "peso_no_calculo": peso_prob_hora, "severidade": "Baixo"})
-    
-    # --- Multiplicadores (Lógica reutilizada) ---
+    # MUDANÇA: Usa a nova função de classificação para a cor da probabilidade
+    fatores.append({"nome": "Prob. de Chuva", "valor_raw": f"{prob_precip:.0f}%", "score_atribuido": prob_precip, "peso_no_calculo": peso_prob_hora, "severidade": classify_prob_severity(prob_precip)})
+
     if pressure_hpa < 1005: pressure_factor = 1.2
     elif pressure_hpa < 1012: pressure_factor = 1.1
     else: pressure_factor = 1.0
-    
     if humidity > 85: humidity_factor = 1.1
     else: humidity_factor = 1.0
-
     hazard_score = base_hazard_score * pressure_factor * humidity_factor
-        
+    
+    fatores.append({"nome": "Fator Pressão Atmosf.", "valor_raw": f"{pressure_hpa:.0f} hPa (x{pressure_factor})", "score_atribuido": pressure_factor, "peso_no_calculo": 0, "severidade": "Moderado" if pressure_factor > 1.0 else "Baixo"})
+    fatores.append({"nome": "Fator Umidade", "valor_raw": f"{humidity:.0f}% (x{humidity_factor})", "score_atribuido": humidity_factor, "peso_no_calculo": 0, "severidade": "Moderado" if humidity_factor > 1.0 else "Baixo"})
+    
     if elevation < 50: vulnerability_factor = 1.5
     elif elevation < 400: vulnerability_factor = 1.2
     elif elevation < 800: vulnerability_factor = 1.0
     else: vulnerability_factor = 0.8
-        
     risk_score_bruto = hazard_score * vulnerability_factor
 
     fatores.append({"nome": "Fator Vulnerab. (Elevação)", "valor_raw": f"{elevation:.0f} m (x{vulnerability_factor})", "score_atribuido": vulnerability_factor, "peso_no_calculo": 0, "severidade": classify_elevation_severity(elevation)})
@@ -118,7 +131,7 @@ def calculate_hourly_risk(hourly_climate_data: dict, structural_data: dict) -> d
         "fatores_contribuintes": fatores
     }
 
-# --- 2. O Bloco de Teste (Permanece inalterado, como você mandou) ---
+# --- Bloco de Teste (Inalterado) ---
 if __name__ == "__main__":
     import requests
     import sys

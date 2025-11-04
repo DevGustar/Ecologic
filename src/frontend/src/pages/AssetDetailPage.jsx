@@ -1,4 +1,4 @@
-// src/pages/AssetDetailPage.jsx (VERSÃO FINAL COM LISTA DE PREVISÃO HORÁRIA)
+// src/pages/AssetDetailPage.jsx (VERSÃO FINAL COM LAYOUT DIÁRIO ESPELHADO)
 
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
@@ -8,7 +8,6 @@ import RiskTrendChart from '../components/charts/RiskTrendChart';
 import RiskForecastChart from '../components/dashboard/RiskForecastChart';
 import RiskBreakdown from '../components/dashboard/RiskBreakdown'; 
 import HourlyRiskChart from '../components/charts/HourlyRiskChart';
-// NOVO: Importamos nosso novo componente de lista horária
 import HourlyForecastList from '../components/dashboard/HourlyForecastList';
 
 import './AssetDetailPage.css';
@@ -20,6 +19,48 @@ const getRiskColor = (risk) => {
   if (risk >= 2) return 'var(--cor-sucesso)';
   return 'var(--cor-neutra)';
 };
+
+// Função para gerar o resumo INTELIGENTE das próximas horas
+const generateHourlySummaryPT = (forecastData) => {
+  if (!forecastData || forecastData.length === 0) return '';
+  const next6Hours = forecastData.slice(0, 6);
+  const maxRiskInNext6Hours = Math.max(...next6Hours.map(h => h.nota_de_risco));
+  const maxRiskHour = next6Hours.find(h => h.nota_de_risco === maxRiskInNext6Hours);
+  const firstRainHour = next6Hours.find(h => h.rain && h.rain['1h'] > 0.5);
+  if (maxRiskInNext6Hours > 7.5) {
+    const time = new Date(maxRiskHour.dt * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    return `Atenção: pico de risco esperado nas próximas horas, atingindo ${maxRiskInNext6Hours.toFixed(2)} por volta das ${time}.`;
+  }
+  if (firstRainHour) {
+    const time = new Date(firstRainHour.dt * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const rainDesc = firstRainHour.weather[0].description;
+    return `Previsão de tempo estável, com início de ${rainDesc} a partir das ${time}.`;
+  }
+  return 'O risco permanecerá baixo e estável nas próximas horas, sem previsão de chuva significativa.';
+};
+
+// Função para gerar o resumo INTELIGENTE da semana
+const generateDailySummaryPT = (forecastData) => {
+  if (!forecastData || forecastData.length < 2) return 'Sem previsão para os próximos dias.';
+
+  const futureDays = forecastData.slice(1);
+  const maxRisk = Math.max(...futureDays.map(d => d.nota_de_risco));
+  const maxRiskDay = futureDays.find(d => d.nota_de_risco === maxRisk);
+  
+  const highRiskDays = futureDays.filter(d => d.nota_de_risco >= 6).length;
+
+  if (maxRisk > 7.5) {
+    const date = new Date(maxRiskDay.dt * 1000).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' });
+    return `Atenção: pico de risco para os próximos dias é esperado para ${date}, com nota ${maxRisk.toFixed(2)}.`;
+  }
+
+  if (highRiskDays > 0) {
+    return `Alerta: ${highRiskDays} dia(s) com risco elevado (${highRiskDays > 1 ? 'níveis Alto ou Crítico' : 'nível Alto ou Crítico'}) nos próximos dias. Monitore a tendência.`;
+  }
+
+  return 'O risco permanecerá baixo a moderado nos próximos dias, sem picos de alerta significativos.';
+};
+
 
 function AssetDetailPage() {
   const { assetId } = useParams();
@@ -35,6 +76,7 @@ function AssetDetailPage() {
   const [activeTab, setActiveTab] = useState('diaria');
   const [hourlyRiskAnalysis, setHourlyRiskAnalysis] = useState(null);
   const [isFetchingHourly, setIsFetchingHourly] = useState(false);
+  const [currentRiskScore, setCurrentRiskScore] = useState(null);
 
   useEffect(() => {
     const fetchAllAssets = async () => {
@@ -52,28 +94,32 @@ function AssetDetailPage() {
 
   useEffect(() => {
     if (assetId) {
-      const fetchRiskAnalysis = async () => {
+      const fetchAllRiskData = async () => {
         setIsLoading(true);
         setRiskAnalysis(null);
         setRiskExplanation(null);
         setIsExplanationVisible(false);
-        // Reseta os dados horários ao mudar de ativo
-        setHourlyRiskAnalysis(null); 
-        setActiveTab('diaria'); // Sempre volta para a aba diária
+        setHourlyRiskAnalysis(null);
+        setCurrentRiskScore(null);
+        setActiveTab('diaria');
         try {
-          const apiUrl = `http://127.0.0.1:8000/assets/${assetId}/risk_analysis`;
-          const response = await fetch(apiUrl);
-          if (!response.ok) throw new Error('Falha ao buscar a análise de risco');
-          const data = await response.json();
-          setRiskAnalysis(data);
+          const dailyAnalysisPromise = fetch(`http://127.0.0.1:8000/assets/${assetId}/risk_analysis`);
+          const currentRiskPromise = fetch(`http://127.0.0.1:8000/assets/${assetId}/current_risk`);
+          const [dailyResponse, currentResponse] = await Promise.all([ dailyAnalysisPromise, currentRiskPromise ]);
+          if (!dailyResponse.ok) throw new Error('Falha ao buscar a análise de risco diária');
+          if (!currentResponse.ok) throw new Error('Falha ao buscar o risco atual');
+          const dailyData = await dailyResponse.json();
+          const currentData = await currentResponse.json();
+          setRiskAnalysis(dailyData);
+          setCurrentRiskScore(currentData.current_risk_score);
         } catch (error) {
-          console.error("Erro ao buscar análise de risco:", error);
+          console.error("Erro ao buscar dados de risco:", error);
           setRiskAnalysis({ error: error.message });
         } finally {
           setIsLoading(false);
         }
       };
-      fetchRiskAnalysis();
+      fetchAllRiskData();
     }
   }, [assetId]);
 
@@ -127,15 +173,14 @@ function AssetDetailPage() {
 
   const currentAsset = allAssets.find(asset => asset.asset_uuid === assetId);
   const todayForecast = riskAnalysis?.daily_forecast_with_risk?.[0];
+  const currentWeather = hourlyRiskAnalysis?.[0];
 
   return (
     <div className="asset-detail-page-container">
       <header className="asset-detail-header">
         <Link to="/" className="back-link">&larr; Voltar ao Dashboard</Link>
         <h1>Análise: <span style={{ color: 'var(--acento-primario)' }}>{currentAsset?.name || 'Carregando...'}</span></h1>
-        <button onClick={() => setIsAssetListModalOpen(true)} className="button-secondary">
-          Mudar Ativo
-        </button>
+        <button onClick={() => setIsAssetListModalOpen(true)} className="button-secondary"> Mudar Ativo </button>
       </header>
 
       <main className="analysis-layout-wrapper">
@@ -145,20 +190,16 @@ function AssetDetailPage() {
           ) : todayForecast ? (
             <>
               <div className="kpi-panel kpi-panel-interactive" onClick={handleKpiInteraction}>
-                <span className="kpi-title">Nota de Risco (Hoje)</span>
-                <span className="kpi-value" style={{ color: getRiskColor(todayForecast.nota_de_risco) }}>
-                  {todayForecast.nota_de_risco.toFixed(2)}
+                <span className="kpi-title">Nota de Risco (Agora)</span>
+                <span className="kpi-value" style={{ color: getRiskColor(currentRiskScore) }}>
+                  {currentRiskScore !== null ? currentRiskScore.toFixed(2) : '...'}
                 </span>
                 {isExplanationVisible && riskExplanation && ( <RiskBreakdown factors={riskExplanation} /> )}
               </div>
               
               <nav className="analysis-tabs">
-                <button className={`tab-button ${activeTab === 'diaria' ? 'active' : ''}`} onClick={() => setActiveTab('diaria')}>
-                  Análise Diária
-                </button>
-                <button className={`tab-button ${activeTab === 'horaria' ? 'active' : ''}`} onClick={() => setActiveTab('horaria')}>
-                  Análise por Hora
-                </button>
+                <button className={`tab-button ${activeTab === 'diaria' ? 'active' : ''}`} onClick={() => setActiveTab('diaria')}> Análise Diária </button>
+                <button className={`tab-button ${activeTab === 'horaria' ? 'active' : ''}`} onClick={() => setActiveTab('horaria')}> Análise por Hora </button>
               </nav>
 
               <div className="sidebar-tab-content">
@@ -166,20 +207,24 @@ function AssetDetailPage() {
                   <>
                     <div className="analysis-grid-content">
                       <div className="details-panel">
-                        <h4>Previsão para {new Date(todayForecast.dt * 1000).toLocaleDateString('pt-BR')}</h4>
-                        <p className="forecast-summary">{todayForecast.summary}</p>
+                        <h4>Previsão para Hoje</h4>
                         <div className="weather-details">
                           <span>Temp. Máxima: <strong>{todayForecast.temp.max.toFixed(1)}°C</strong></span>
                           <span>Chuva: <strong>{todayForecast.rain || 0} mm</strong></span>
                           <span>Clima: <strong>{todayForecast.weather[0].description}</strong></span>
                         </div>
                       </div>
-                      <div className="risk-forecast-panel">
-                        <RiskForecastChart 
-                          dailyForecastWithRisk={riskAnalysis.daily_forecast_with_risk}
-                          getRiskColor={getRiskColor}
-                        />
+                      <div className="details-panel forecast-summary-panel">
+                        <h4>Resumo Próximos Dias</h4>
+                        <p className="forecast-summary">{generateDailySummaryPT(riskAnalysis.daily_forecast_with_risk)}</p>
                       </div>
+                    </div>
+                    
+                    <div className="risk-forecast-panel">
+                      <RiskForecastChart 
+                        dailyForecastWithRisk={riskAnalysis.daily_forecast_with_risk}
+                        getRiskColor={getRiskColor}
+                      />
                     </div>
                     <div className="tendencia-analysis-panel">
                       <RiskTrendChart 
@@ -195,15 +240,34 @@ function AssetDetailPage() {
                     {isFetchingHourly ? ( <p>Carregando análise horária...</p> ) 
                     : hourlyRiskAnalysis ? ( 
                       <>
-                        <HourlyRiskChart 
-                          forecastData={hourlyRiskAnalysis} 
-                          getRiskColor={getRiskColor}
-                        />
-                        {/* NOVO: Renderiza a lista de previsão horária abaixo do gráfico */}
-                        <HourlyForecastList 
-                          hourlyData={hourlyRiskAnalysis} 
-                          getRiskColor={getRiskColor}
-                        />
+                        <div className="analysis-grid-content">
+                            <div className="details-panel current-weather-panel">
+                                <h4>Condições Atuais</h4>
+                                <div className="weather-details">
+                                    <span>Temperatura: <strong>{currentWeather?.temp.toFixed(1)}°C</strong></span>
+                                    <span>Umidade: <strong>{currentWeather?.humidity}%</strong></span>
+                                    <span>Clima: <strong>{currentWeather?.weather[0].description}</strong></span>
+                                </div>
+                            </div>
+                            <div className="details-panel forecast-summary-panel">
+                                <h4>Resumo Próximas Horas</h4>
+                                <p className="forecast-summary">{generateHourlySummaryPT(hourlyRiskAnalysis)}</p>
+                            </div>
+                        </div>
+
+                        <div className="tendencia-analysis-panel">
+                            <HourlyRiskChart 
+                                forecastData={hourlyRiskAnalysis} 
+                                getRiskColor={getRiskColor}
+                            />
+                        </div>
+
+                        <div className="risk-forecast-panel hourly-list-panel">
+                            <HourlyForecastList 
+                                hourlyData={hourlyRiskAnalysis} 
+                                getRiskColor={getRiskColor}
+                            />
+                        </div>
                       </>
                     ) 
                     : ( <p>Não foi possível carregar os dados horários.</p> )}
@@ -222,7 +286,7 @@ function AssetDetailPage() {
               latitude={currentAsset.latitude} 
               longitude={currentAsset.longitude} 
               assetName={currentAsset.name} 
-              riskColor={todayForecast ? getRiskColor(todayForecast.nota_de_risco) : 'var(--cor-neutra)'}
+              riskColor={currentRiskScore !== null ? getRiskColor(currentRiskScore) : 'var(--cor-neutra)'}
             />
           )}
         </div>
