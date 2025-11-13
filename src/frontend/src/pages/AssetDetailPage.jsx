@@ -1,4 +1,4 @@
-// src/pages/AssetDetailPage.jsx (VERSÃO FINAL COM LAYOUT DIÁRIO ESPELHADO)
+// src/pages/AssetDetailPage.jsx (VERSÃO FINAL COM ORDEM DA ABA HORÁRIA CORRIGIDA)
 
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
@@ -20,6 +20,23 @@ const getRiskColor = (risk) => {
   return 'var(--cor-neutra)';
 };
 
+// Função para gerar o resumo DIÁRIO
+const generateWeatherSummaryPT = (forecast) => {
+  if (!forecast || !forecast.weather || !forecast.temp) return 'Dados de previsão indisponíveis.';
+  const clima = forecast.weather[0].description;
+  const tempMax = forecast.temp.max.toFixed(1);
+  const chuva = forecast.rain || 0;
+  let summary = `Previsão de ${clima}, com máxima de ${tempMax}°C.`;
+  if (chuva > 10) {
+    summary += ` Atenção ao volume de chuva esperado de ${chuva.toFixed(2)} mm.`;
+  } else if (chuva > 0) {
+    summary += ` Volume de chuva esperado de ${chuva.toFixed(2)} mm.`;
+  } else {
+    summary += " Sem previsão de chuva significativa.";
+  }
+  return summary;
+};
+
 // Função para gerar o resumo INTELIGENTE das próximas horas
 const generateHourlySummaryPT = (forecastData) => {
   if (!forecastData || forecastData.length === 0) return '';
@@ -38,29 +55,6 @@ const generateHourlySummaryPT = (forecastData) => {
   }
   return 'O risco permanecerá baixo e estável nas próximas horas, sem previsão de chuva significativa.';
 };
-
-// Função para gerar o resumo INTELIGENTE da semana
-const generateDailySummaryPT = (forecastData) => {
-  if (!forecastData || forecastData.length < 2) return 'Sem previsão para os próximos dias.';
-
-  const futureDays = forecastData.slice(1);
-  const maxRisk = Math.max(...futureDays.map(d => d.nota_de_risco));
-  const maxRiskDay = futureDays.find(d => d.nota_de_risco === maxRisk);
-  
-  const highRiskDays = futureDays.filter(d => d.nota_de_risco >= 6).length;
-
-  if (maxRisk > 7.5) {
-    const date = new Date(maxRiskDay.dt * 1000).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' });
-    return `Atenção: pico de risco para os próximos dias é esperado para ${date}, com nota ${maxRisk.toFixed(2)}.`;
-  }
-
-  if (highRiskDays > 0) {
-    return `Alerta: ${highRiskDays} dia(s) com risco elevado (${highRiskDays > 1 ? 'níveis Alto ou Crítico' : 'nível Alto ou Crítico'}) nos próximos dias. Monitore a tendência.`;
-  }
-
-  return 'O risco permanecerá baixo a moderado nos próximos dias, sem picos de alerta significativos.';
-};
-
 
 function AssetDetailPage() {
   const { assetId } = useParams();
@@ -208,11 +202,7 @@ function AssetDetailPage() {
                     <div className="analysis-grid-content">
                       <div className="details-panel">
                         <h4>Previsão para Hoje</h4>
-                        <div className="weather-details">
-                          <span>Temp. Máxima: <strong>{todayForecast.temp.max.toFixed(1)}°C</strong></span>
-                          <span>Chuva: <strong>{todayForecast.rain || 0} mm</strong></span>
-                          <span>Clima: <strong>{todayForecast.weather[0].description}</strong></span>
-                        </div>
+                        <p className="forecast-summary">{generateWeatherSummaryPT(todayForecast)}</p>
                       </div>
                       <div className="details-panel forecast-summary-panel">
                         <h4>Resumo Próximos Dias</h4>
@@ -255,16 +245,17 @@ function AssetDetailPage() {
                             </div>
                         </div>
 
-                        <div className="tendencia-analysis-panel">
-                            <HourlyRiskChart 
-                                forecastData={hourlyRiskAnalysis} 
+                        {/* MUDANÇA CRÍTICA: A LISTA AGORA VEM ANTES DO GRÁFICO */}
+                        <div className="risk-forecast-panel hourly-list-panel">
+                            <HourlyForecastList 
+                                hourlyData={hourlyRiskAnalysis} 
                                 getRiskColor={getRiskColor}
                             />
                         </div>
 
-                        <div className="risk-forecast-panel hourly-list-panel">
-                            <HourlyForecastList 
-                                hourlyData={hourlyRiskAnalysis} 
+                        <div className="tendencia-analysis-panel">
+                            <HourlyRiskChart 
+                                forecastData={hourlyRiskAnalysis} 
                                 getRiskColor={getRiskColor}
                             />
                         </div>
