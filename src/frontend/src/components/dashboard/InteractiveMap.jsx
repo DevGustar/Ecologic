@@ -1,6 +1,6 @@
-// src/components/dashboard/InteractiveMap.jsx (VERSÃO COMPLETA E CORRIGIDA)
+// src/components/dashboard/InteractiveMap.jsx (VERSÃO FINAL COM RISCO ATUAL NO POPUP)
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { MapContainer, TileLayer, GeoJSON, Marker, Popup } from 'react-leaflet';
 import { Link } from 'react-router-dom';
 import MapLegend from './MapLegend';
@@ -21,20 +21,29 @@ L.Marker.prototype.options.icon = DefaultIcon;
 function InteractiveMap({ assets, riskData, viewMode, geoJsonData }) {
   const [popupContent, setPopupContent] = useState({ isLoading: false, data: null, error: null });
 
+  // MUDANÇA CRÍTICA: A função de cor agora vive aqui para ser usada no popup
+  const getRiskColor = (risk) => {
+    if (risk >= 8) return 'var(--cor-critica)';
+    if (risk >= 6) return 'var(--cor-alerta)';
+    if (risk >= 4) return 'var(--cor-cuidado)';
+    if (risk >= 2) return 'var(--cor-sucesso)';
+    return 'var(--cor-neutra)';
+  };
+
   const handleMarkerClick = async (asset) => {
     setPopupContent({ isLoading: true, data: null, error: null });
     try {
-      const apiUrl = `http://127.0.0.1:8000/assets/${asset.asset_uuid}/risk_analysis`;
+      // MUDANÇA: Apontamos para o novo endpoint de risco atual
+      const apiUrl = `http://127.0.0.1:8000/assets/${asset.asset_uuid}/current_risk`;
       const response = await fetch(apiUrl);
-      if (!response.ok) throw new Error('Falha ao buscar análise de risco');
-      const analysisData = await response.json();
-      setPopupContent({ isLoading: false, data: analysisData, error: null });
+      if (!response.ok) throw new Error('Falha ao buscar o risco atual');
+      const currentRiskData = await response.json();
+      setPopupContent({ isLoading: false, data: currentRiskData, error: null });
     } catch (err) {
       setPopupContent({ isLoading: false, data: null, error: err.message });
     }
   };
 
-  // ... (o restante do seu código, como 'assetMunicipalityIds', 'getRiskColor', 'geoJsonStyle', 'onEachFeature', permanece o mesmo)
   const assetMunicipalityIds = useMemo(() => {
     if (!assets || !geoJsonData) return new Set();
     const ids = new Set();
@@ -44,7 +53,6 @@ function InteractiveMap({ assets, riskData, viewMode, geoJsonData }) {
         if (feature.geometry && feature.geometry.coordinates) {
             const geometryType = feature.geometry.type;
             let polygonsToCheck = [];
-
             if (geometryType === 'Polygon') {
                 polygonsToCheck.push(feature.geometry.coordinates[0]);
             } else if (geometryType === 'MultiPolygon') {
@@ -52,7 +60,6 @@ function InteractiveMap({ assets, riskData, viewMode, geoJsonData }) {
                     polygonsToCheck.push(polygon[0]);
                 }
             }
-
             for (const polygonCoords of polygonsToCheck) {
                 if (inside(assetPoint, polygonCoords)) {
                     ids.add(feature.properties.id);
@@ -65,22 +72,12 @@ function InteractiveMap({ assets, riskData, viewMode, geoJsonData }) {
     return ids;
   }, [assets, geoJsonData]);
 
-  const getRiskColor = (risk) => {
-    if (risk > 8) return 'var(--cor-critica)';
-    if (risk > 6) return 'var(--cor-alerta)';
-    if (risk > 4) return 'var(--cor-cuidado)';
-    if (risk > 2) return 'var(--cor-sucesso)';
-    return 'var(--cor-neutra)';
-  };
-
   const geoJsonStyle = (feature) => {
     const municipalityId = feature.properties.id;
     const risk = riskData && riskData[municipalityId] !== undefined ? riskData[municipalityId] : 0;
-
     if (viewMode === 'assets' && !assetMunicipalityIds.has(municipalityId)) {
       return { fillColor: 'transparent', color: 'var(--borda)', weight: 0.1, fillOpacity: 0.1 };
     }
-
     return {
       fillColor: getRiskColor(risk),
       weight: 0.2,
@@ -133,11 +130,10 @@ function InteractiveMap({ assets, riskData, viewMode, geoJsonData }) {
                     <p className="popup-error">Erro: {popupContent.error}</p>
                   ) : popupContent.data ? (
                     <>
-                      {/* MUDANÇA: Convertemos o valor para Número ANTES de usar .toFixed() */}
-                      <p>Nota de Risco: <strong>{Number(popupContent.data.daily_forecast_with_risk[0].nota_de_risco).toFixed(2)}</strong></p>
+                      {/* MUDANÇA: Lemos a nova estrutura e aplicamos a cor */}
+                      <p>Nota de Risco (Agora): <strong style={{color: getRiskColor(popupContent.data.current_risk_score)}}>{Number(popupContent.data.current_risk_score).toFixed(2)}</strong></p>
                       
-                      {/* MUDANÇA (BOA PRÁTICA): Fazemos o mesmo para a elevação, por segurança */}
-                      <p>Elevação: {Number(popupContent.data.asset_info.elevation_m).toFixed(2)}m</p>
+                      <p>Elevação: {Number(asset.elevation_m).toFixed(2)}m</p>
                       
                       <Link to={`/asset/${asset.asset_uuid}`} className="popup-details-link">Ver mais detalhes &rarr;</Link>
                     </>

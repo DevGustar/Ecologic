@@ -62,6 +62,7 @@ const HourlyForecastList = ({ hourlyData, getRiskColor }) => {
       {hoveredItem && (
         <div 
           className="risk-explanation-tooltip" 
+          // A posição agora é controlada dinamicamente pelo 'style'
           style={{ top: `${hoveredItem.top}px` }}
         >
           <h5>Composição do Risco ({new Date(hoveredItem.data.dt * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})</h5>

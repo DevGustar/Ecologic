@@ -4,7 +4,7 @@ from sqlalchemy import Column, Integer, String, Float
 from .database import Base 
 
 # criando uma classe para representar a tabela que vai ser transformada em SQL através do Base
-class Asset(Base):  
+class Asset(Base): 
     # __tablename__ é o nome oficial que a nossa tabela terá no banco de dados
     __tablename__ = "assets"
 
@@ -24,3 +24,7 @@ class Asset(Base):
     elevation_m = Column(Float)
     # vão ser guardados em valores decimais
     
+    # --- MUDANÇA DA "FUSÃO MESTRA" ---
+    # Esta coluna vai guardar a vulnerabilidade que vem do Ecologic 1.0 (Risco de Rio)
+    # Começa com 1.0 (sem impacto) como padrão para ativos existentes.
+    river_risk_factor = Column(Float, default=1.0)

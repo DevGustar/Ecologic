@@ -56,7 +56,7 @@
     position: absolute;
     right: 1.5rem; /* Alinha com o padding do painel */
     z-index: 100;
-    width: 280px;
+    width: 350px;
     background-color: var(--fundo-secundario);
     border: 1px solid var(--borda-sutil);
     border-radius: 8px;
@@ -70,8 +70,8 @@
 .tooltip-factor-list { list-style: none; padding: 0; margin: 0; font-size: 0.8rem; display: flex; flex-direction: column; gap: 4px; }
 .tooltip-factor-list li { display: flex; justify-content: space-between; align-items: center; }
 .factor-info { display: flex; flex-direction: column; align-items: flex-start; }
-.factor-info-name { color: var(--texto-secundario); }
-.factor-info-weight { font-size: 0.7rem; color: var(--acento-secundario); opacity: 0.8; }
+.factor-info-name { color: #ffffffd0; }
+.factor-info-weight { font-size: 0.7rem; color: var(--acento-secundario); opacity: 0.4; }
 .severity-crítico { color: var(--cor-critica); }
 .severity-alto { color: var(--cor-alerta); }
 .severity-moderado { color: var(--cor-cuidado); }

@@ -56,6 +56,24 @@ const generateHourlySummaryPT = (forecastData) => {
   return 'O risco permanecerá baixo e estável nas próximas horas, sem previsão de chuva significativa.';
 };
 
+// Função para gerar o resumo INTELIGENTE da semana
+const generateDailySummaryPT = (forecastData) => {
+  if (!forecastData || forecastData.length < 2) return 'Sem previsão para os próximos dias.';
+  const futureDays = forecastData.slice(1);
+  const maxRisk = Math.max(...futureDays.map(d => d.nota_de_risco));
+  const maxRiskDay = futureDays.find(d => d.nota_de_risco === maxRisk);
+  const highRiskDays = futureDays.filter(d => d.nota_de_risco >= 6).length;
+  if (maxRisk > 7.5) {
+    const date = new Date(maxRiskDay.dt * 1000).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' });
+    return `Atenção: pico de risco para os próximos dias é esperado para ${date}, com nota ${maxRisk.toFixed(2)}.`;
+  }
+  if (highRiskDays > 0) {
+    return `Alerta: ${highRiskDays} dia(s) com risco elevado (${highRiskDays > 1 ? 'níveis Alto ou Crítico' : 'nível Alto ou Crítico'}) nos próximos dias. Monitore a tendência.`;
+  }
+  return 'O risco permanecerá baixo a moderado nos próximos dias, sem picos de alerta significativos.';
+};
+
+
 function AssetDetailPage() {
   const { assetId } = useParams();
   const navigate = useNavigate();
@@ -202,7 +220,11 @@ function AssetDetailPage() {
                     <div className="analysis-grid-content">
                       <div className="details-panel">
                         <h4>Previsão para Hoje</h4>
-                        <p className="forecast-summary">{generateWeatherSummaryPT(todayForecast)}</p>
+                        <div className="weather-details">
+                          <span>Temp. Máxima: <strong>{todayForecast.temp.max.toFixed(1)}°C</strong></span>
+                          <span>Chuva: <strong>{todayForecast.rain || 0} mm</strong></span>
+                          <span>Clima: <strong>{todayForecast.weather[0].description}</strong></span>
+                        </div>
                       </div>
                       <div className="details-panel forecast-summary-panel">
                         <h4>Resumo Próximos Dias</h4>
@@ -244,7 +266,7 @@ function AssetDetailPage() {
                                 <p className="forecast-summary">{generateHourlySummaryPT(hourlyRiskAnalysis)}</p>
                             </div>
                         </div>
-
+                        
                         {/* MUDANÇA CRÍTICA: A LISTA AGORA VEM ANTES DO GRÁFICO */}
                         <div className="risk-forecast-panel hourly-list-panel">
                             <HourlyForecastList 
