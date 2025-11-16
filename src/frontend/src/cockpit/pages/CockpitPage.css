@@ -1,0 +1,15 @@
+/* src/cockpit/pages/CockpitPage.css (VERSÃO ATUALIZADA COM 3 COLUNAS) */
+
+.cockpit-page-container {
+  display: grid; /* MUDANÇA: Usamos Grid para 3 colunas */
+  grid-template-columns: 380px 1fr 380px; /* Sidebar | Mapa | Sidebar */
+  height: 100vh;
+  width: 100vw;
+  background-color: var(--fundo-principal);
+  color: var(--texto-principal);
+}
+
+.cockpit-map-area {
+  height: 100vh;
+  /* O mapa agora é a coluna do meio e ocupa o espaço restante */
+}

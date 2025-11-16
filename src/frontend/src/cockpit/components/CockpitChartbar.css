@@ -1,0 +1,126 @@
+/* src/cockpit/components/CockpitChartbar.css (VERSÃO FINAL COM ESTILO DE TOOLTIP) */
+
+.cockpit-chartbar {
+  border-left: 1px solid var(--borda);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: .5rem 1rem;
+  box-sizing: border-box;
+  background-color: var(--fundo-secundario);
+}
+
+.cockpit-chartbar .cockpit-sidebar-content {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-right: 10px;
+  padding-top: 2.5rem;
+}
+
+/* --- Estilo dos Gráficos --- */
+.grafico-section {
+  background-color: var(--fundo-principal);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  padding: 1.5rem 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.grafico-section h4 {
+  margin: 0 0 1.5rem 0;
+  font-family: var(--fonte-titulo);
+  font-size: 1.2rem;
+  border-bottom: 1px solid var(--borda-sutil);
+  padding-bottom: 0.8rem;
+  text-align: center;
+}
+
+/* --- Legenda do Donut --- */
+.grafico-donut-legenda {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.legenda-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+}
+.legenda-cor {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  margin-right: 0.5rem;
+  flex-shrink: 0;
+}
+.legenda-nome {
+  color: var(--texto-secundario);
+  flex-grow: 1;
+}
+.legenda-valor {
+  font-weight: 600;
+  color: var(--texto-principal);
+}
+
+
+/* --- Estilos Recharts --- */
+.recharts-wrapper {
+  font-size: 0.8rem;
+}
+.recharts-text, .recharts-label, .recharts-cartesian-axis-tick-value {
+  fill: var(--texto-secundario);
+}
+.recharts-tooltip-cursor {
+  fill: rgba(255, 255, 255, 0.1);
+}
+
+.loading-text, .error-text {
+  color: var(--texto-secundario);
+  font-style: italic;
+  text-align: center;
+  padding-top: 4rem;
+}
+
+/* --- Estilos para os Tooltips Customizados --- */
+.custom-tooltip-donut, .custom-tooltip-bar {
+  background-color: #202A37;
+  border: 1px solid var(--borda-sutil);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.custom-tooltip-donut {
+  text-align: center;
+}
+.tooltip-label-donut {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--texto-principal);
+  display: block;
+}
+.tooltip-value-donut {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--acento-primario);
+  display: block;
+  margin: 2px 0;
+}
+.tooltip-count-donut {
+  font-size: 0.8rem;
+  color: var(--texto-secundario);
+  display: block;
+}
+
+.custom-tooltip-bar .tooltip-label-bar {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--texto-principal);
+  margin: 0 0 0.25rem 0;
+}
+.custom-tooltip-bar .tooltip-value-bar {
+  font-size: 0.9rem;
+  color: var(--acento-primario);
+  margin: 0;
+}

@@ -1,0 +1,53 @@
+/* src/cockpit/components/CockpitMapLegend.css */
+
+.legend-container {
+  /* Posicionamento flutuante */
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000; /* Garante que fique por cima do mapa */
+  
+  /* Estilo do painel */
+  background-color: var(--fundo-secundario-transparente, rgba(30, 42, 59, 0.8));
+  backdrop-filter: blur(5px);
+  border: 1px solid var(--borda-sutil);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.legend-container h4 {
+  font-family: var(--fonte-titulo);
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  color: var(--texto-principal);
+  border-bottom: 1px solid var(--borda-sutil);
+  padding-bottom: 0.2rem;
+}
+
+.legend-container ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+}
+
+.legend-color-box {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  margin-right: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.legend-label {
+  font-size: 0.85rem;
+  color: var(--texto-secundario);
+}

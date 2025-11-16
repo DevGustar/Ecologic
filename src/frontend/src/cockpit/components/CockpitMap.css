@@ -1,0 +1,48 @@
+/* src/cockpit/components/CockpitMap.css */
+
+.cockpit-map-container {
+  height: 100%;
+  width: 100%;
+  background-color: #1a1a1a; 
+}
+
+.map-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  font-size: 1.5rem;
+  color: var(--texto-secundario);
+}
+
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  background-color: var(--fundo-principal); /* Garante que não haja "flash" branco */
+}
+
+/* --- Estilo do Popup do Mapa --- */
+.leaflet-popup-content-wrapper {
+  background-color: var(--fundo-secundario);
+  color: var(--texto-principal);
+  border: 1px solid var(--borda-sutil);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.leaflet-popup-content {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 13px 19px; /* Ajuste de padding interno */
+}
+
+.leaflet-popup-tip {
+  background-color: var(--fundo-secundario);
+}
+
+.leaflet-popup-content strong {
+  color: var(--acento-primario);
+  font-size: 1rem;
+  display: block;
+  margin-bottom: 4px;
+}

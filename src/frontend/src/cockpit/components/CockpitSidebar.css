@@ -1,0 +1,141 @@
+/* src/cockpit/components/CockpitSidebar.css (VERSÃO FINAL COM CORREÇÃO DE SCROLL) */
+
+.cockpit-sidebar {
+  width: auto;
+  flex-shrink: 0;
+  border-right: 1px solid var(--borda);
+  flex-direction: column;
+  height: 100vh;
+  padding: 1.5rem;
+  box-sizing: border-box;
+}
+
+.cockpit-sidebar-header {
+  border-bottom: 1px solid var(--borda-sutil);
+  flex-shrink: 0; /* Não encolhe */
+}
+
+.cockpit-title {
+  font-family: var(--fonte-titulo);
+  color: var(--acento-primario);
+  margin: 0 0 1rem 0;
+  font-size: 2.5rem;
+}
+
+/* --- Estilo dos Toggles --- */
+.toggle-section {
+  padding: 1.2rem 0;
+  flex-shrink: 0; /* Não encolhe */
+}
+.toggle-title {
+  font-size: 0.9rem;
+  color: var(--texto-secundario);
+  margin: 0 0 0.75rem 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.toggle-group {
+  display: flex;
+  background-color: var(--fundo-principal);
+  border-radius: 8px;
+  padding: 4px;
+  border: 1px solid var(--borda);
+}
+.toggle-button {
+  flex: 1;
+  padding: 0.6rem 0.5rem;
+  background-color: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--texto-secundario);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+.toggle-button:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+.toggle-button.active {
+  background-color: var(--acento-primario);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-group-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.toggle-button-large {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: var(--fundo-principal);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  color: var(--texto-secundario);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease-in-out;
+}
+.toggle-button-large:hover {
+  background-color: var(--fundo-secundario);
+  border-color: var(--borda-sutil);
+}
+.toggle-button-large.active {
+  background-color: var(--fundo-secundario);
+  color: var(--acento-primario);
+  border-color: var(--acento-primario);
+}
+/* --- Fim dos Toggles --- */
+
+.cockpit-sidebar-content {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--borda-sutil);
+  min-height: 0;
+}
+
+/* --- Estilo dos KPIs --- */
+.kpi-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.kpi-section-title {
+  grid-column: 1 / -1;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: var(--texto-principal);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.cockpit-kpi-card {
+  background-color: var(--fundo-principal);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  padding: 1rem;
+}
+.cockpit-kpi-card .kpi-title {
+  font-size: 0.8rem;
+  color: var(--texto-secundario);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.cockpit-kpi-card .kpi-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-family: var(--fonte-titulo);
+  color: var(--acento-primario);
+  display: block;
+}
+
+.loading-text, .error-text {
+  color: var(--texto-secundario);
+  font-style: italic;
+  text-align: center;
+  padding-top: 2rem;
+}
