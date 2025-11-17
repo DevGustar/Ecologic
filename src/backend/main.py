@@ -75,11 +75,14 @@ async def read_root(): return {"message": "API EcoLogic 2.0 está a funcionar!"}
 
 # --- NOVOS ENDPOINTS MESTRES (MACRO ANÁLISE PARA O "COCKPIT") ---
 
+# Em src/backend/main.py
+
 @app.get("/macro/grc/kpis")
 def get_grc_kpi_data():
     """
-    (VERSÃO CORRIGIDA) Endpoint mestre para os KPIs do Cenário 1.
-    O Donut agora usa a MESMA lógica de 5 NÍVEIS do mapa.
+    (VERSÃO FINAL REFINADA) Endpoint mestre para os KPIs do Cenário 1.
+    - O Donut usa a lógica correta (5 níveis).
+    - O Top 10 filtra "sem nome", remove duplicados, e envia dados GRC.
     """
     logger.info("Calculando KPIs e Gráficos para o Dashboard GRC (Rios)...")
     
@@ -88,18 +91,14 @@ def get_grc_kpi_data():
 
     df_rios = map_rivers_data
     
-    # --- 1. Calcular KPIs (da base de rios) ---
+    # --- 1. Calcular KPIs ---
     kpi_risco_medio = df_rios['Nota_de_Risco'].mean()
-    # Usamos a coluna de texto original para este KPI
-    kpi_rios_criticos_count = df_rios[df_rios['Classificacao_Risco'] == 'Crítico'].shape[0] 
+    kpi_rios_criticos_count = df_rios[df_rios['Classificacao_Risco'] == 'Crítico'].shape[0]
     kpi_municipios_mapeados = len(municipal_river_risk_map)
     kpi_total_rios = len(df_rios)
 
-    # --- 2. MUDANÇA: Calcular Gráfico Donut (pela Nota Numérica) ---
-    # Classifica cada um dos 5.414 rios usando a nossa nova lógica de 5 NÍVEIS
+    # --- 2. Calcular Gráfico Donut (pela Nota Numérica) ---
     df_rios['Classificacao_Risco_Nova'] = df_rios['Nota_de_Risco'].apply(get_risk_classification_from_note)
-    
-    # Filtra para não incluir "Sem Dados" (rios com nota 0)
     df_rios_com_dados = df_rios[df_rios['Classificacao_Risco_Nova'] != 'Sem Dados']
     
     donut_pct = df_rios_com_dados['Classificacao_Risco_Nova'].value_counts(normalize=True).mul(100)
@@ -108,31 +107,41 @@ def get_grc_kpi_data():
     donut_data_final = []
     for nivel, pct in donut_pct.items():
         count = donut_count.get(nivel, 0)
-        donut_data_final.append({
-            "name": nivel,
-            "value": float(pct),
-            "count": int(count)
-        })
+        donut_data_final.append({ "name": nivel, "value": float(pct), "count": int(count) })
 
-    # --- 3. Calcular Gráfico Top 10 Rios (da base de rios) ---
+    # --- 3. Calcular Gráfico Top 10 Rios (LIMPO, ÚNICO E RICO) ---
     coluna_nome_rio = 'NORIOCOMP' if 'NORIOCOMP' in df_rios.columns else 'Nome do Rio'
     coluna_municipio = 'NM_MUN_PADRONIZADO'
+    
+    # Colunas GRC (baseado no que você me disse)
+    coluna_frequencia = "Frequencia"
+    coluna_vulnerabilidade = "Vulnerabilidade"
+    coluna_impacto = "Impacto"
 
     if coluna_nome_rio not in df_rios.columns or coluna_municipio not in df_rios.columns:
         top_rios_data = []
     else:
-        # Filtra rios "sem nome" ANTES de pegar o Top 10
+        # Filtra rios "sem nome"
         df_rios_com_nome = df_rios[
             (df_rios[coluna_nome_rio].notna()) & 
             (df_rios[coluna_nome_rio].str.lower() != 'sem nome') &
             (df_rios[coluna_nome_rio].str.lower() != 'rio desconhecido')
         ]
-        top_rios_df = df_rios_com_nome.nlargest(10, 'Nota_de_Risco')
         
+        # MUDANÇA: Ordena por Risco, DEPOIS remove os nomes duplicados (mantendo só o de maior risco)
+        df_rios_unicos = df_rios_com_nome.sort_values(by='Nota_de_Risco', ascending=False)
+        df_rios_unicos = df_rios_unicos.drop_duplicates(subset=[coluna_nome_rio], keep='first')
+        
+        top_rios_df = df_rios_unicos.head(10)
+        
+        # Envia os dados GRC completos
         top_rios_data = top_rios_df.apply(
             lambda row: {
                 "nome": f"{row.get(coluna_nome_rio)} ({row.get(coluna_municipio, 'N/A')})",
-                "nota": row.get('Nota_de_Risco', 0)
+                "nota": row.get('Nota_de_Risco', 0),
+                "frequencia": row.get(coluna_frequencia, 'N/A'),
+                "vulnerabilidade": row.get(coluna_vulnerabilidade, 'N/A'),
+                "impacto": row.get(coluna_impacto, 'N/A')
             },
             axis=1
         ).tolist()

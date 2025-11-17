@@ -1,20 +1,19 @@
-/* src/cockpit/components/CockpitChartbar.css (VERSÃO FINAL COM ESTILO DE TOOLTIP) */
+/* src/cockpit/components/CockpitChartbar.css (VERSÃO FINAL COM TOOLTIP CORRIGIDO) */
 
 .cockpit-chartbar {
   border-left: 1px solid var(--borda);
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  padding: .5rem 1rem;
+  height: auto;
+  padding: 0rem 1rem;
   box-sizing: border-box;
-  background-color: var(--fundo-secundario);
 }
 
 .cockpit-chartbar .cockpit-sidebar-content {
   flex-grow: 1;
-  overflow-y: auto;
-  padding-right: 10px;
-  padding-top: 2.5rem;
+  overflow-y: auto; 
+  padding-right: 5px;
+  padding-top: 1rem;
 }
 
 /* --- Estilo dos Gráficos --- */
@@ -22,34 +21,33 @@
   background-color: var(--fundo-principal);
   border: 1px solid var(--borda);
   border-radius: 8px;
-  padding: 1.5rem 1rem;
-  margin-bottom: 1.5rem;
+  padding: .6rem 0.5rem;
+  margin-bottom: .5rem;
 }
 
 .grafico-section h4 {
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 1rem 0;
   font-family: var(--fonte-titulo);
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   border-bottom: 1px solid var(--borda-sutil);
-  padding-bottom: 0.8rem;
   text-align: center;
 }
 
 /* --- Legenda do Donut --- */
 .grafico-donut-legenda {
-  margin-top: 1rem;
+  margin-top: 0.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
 }
 .legenda-item {
   display: flex;
   align-items: center;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 .legenda-cor {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 3px;
   margin-right: 0.5rem;
   flex-shrink: 0;
@@ -62,7 +60,6 @@
   font-weight: 600;
   color: var(--texto-principal);
 }
-
 
 /* --- Estilos Recharts --- */
 .recharts-wrapper {
@@ -89,6 +86,8 @@
   padding: 0.75rem 1rem;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  /* MUDANÇA: Removemos o 'white-space: nowrap' */
+  /* Isso vai deixar o nome do rio quebrar a linha se for muito longo */
 }
 
 .custom-tooltip-donut {
@@ -113,14 +112,46 @@
   display: block;
 }
 
+/* --- Estilos para o Tooltip de Barras ENRIQUECIDO --- */
 .custom-tooltip-bar .tooltip-label-bar {
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--texto-principal);
-  margin: 0 0 0.25rem 0;
+  margin: 0 0 0.5rem 0;
+  /* MUDANÇA: Permite que o nome do rio quebre a linha */
+  white-space: normal;
+  max-width: 250px; /* Limita a largura do tooltip */
 }
 .custom-tooltip-bar .tooltip-value-bar {
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: var(--acento-primario);
   margin: 0;
+  font-weight: 600;
+}
+
+/* --- NOVO: Estilo para o "Raio-X" GRC no Tooltip --- */
+.tooltip-grc-breakdown {
+  border-top: 1px solid var(--borda-sutil);
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.tooltip-grc-breakdown span {
+  font-size: 0.8rem;
+  color: var(--texto-secundario);
+}
+.tooltip-grc-breakdown strong {
+  color: var(--texto-principal);
+  font-weight: 600;
+}
+
+/* --- MUDANÇA: Removemos o CSS "na marra" que estava a fixar o tooltip --- */
+.recharts-tooltip-wrapper {
+  /* Removemos o 'left: auto !important' e 'right: 10px !important' */
+  /* Deixa o Recharts fazer o seu trabalho de posicionamento */
+  transform: translateY(0) !important; 
+  pointer-events: none;
+  z-index: 1000;
 }
