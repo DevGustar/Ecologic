@@ -75,14 +75,11 @@ async def read_root(): return {"message": "API EcoLogic 2.0 está a funcionar!"}
 
 # --- NOVOS ENDPOINTS MESTRES (MACRO ANÁLISE PARA O "COCKPIT") ---
 
-# Em src/backend/main.py
-
 @app.get("/macro/grc/kpis")
 def get_grc_kpi_data():
     """
-    (VERSÃO FINAL REFINADA) Endpoint mestre para os KPIs do Cenário 1.
-    - O Donut usa a lógica correta (5 níveis).
-    - O Top 10 filtra "sem nome", remove duplicados, e envia dados GRC.
+    (VERSÃO REFINADA) Endpoint mestre para os KPIs do Cenário 1.
+    O Donut usa a lógica correta (5 níveis) e o Top 10 filtra rios duplicados.
     """
     logger.info("Calculando KPIs e Gráficos para o Dashboard GRC (Rios)...")
     
@@ -109,14 +106,9 @@ def get_grc_kpi_data():
         count = donut_count.get(nivel, 0)
         donut_data_final.append({ "name": nivel, "value": float(pct), "count": int(count) })
 
-    # --- 3. Calcular Gráfico Top 10 Rios (LIMPO, ÚNICO E RICO) ---
+    # --- 3. Calcular Gráfico Top 10 Rios (LIMPO E SEM REPETIÇÃO) ---
     coluna_nome_rio = 'NORIOCOMP' if 'NORIOCOMP' in df_rios.columns else 'Nome do Rio'
     coluna_municipio = 'NM_MUN_PADRONIZADO'
-    
-    # Colunas GRC (baseado no que você me disse)
-    coluna_frequencia = "Frequencia"
-    coluna_vulnerabilidade = "Vulnerabilidade"
-    coluna_impacto = "Impacto"
 
     if coluna_nome_rio not in df_rios.columns or coluna_municipio not in df_rios.columns:
         top_rios_data = []
@@ -128,20 +120,17 @@ def get_grc_kpi_data():
             (df_rios[coluna_nome_rio].str.lower() != 'rio desconhecido')
         ]
         
-        # MUDANÇA: Ordena por Risco, DEPOIS remove os nomes duplicados (mantendo só o de maior risco)
+        # MUDANÇA: Ordena por Risco, remove os nomes duplicados (mantendo só o de maior risco)
         df_rios_unicos = df_rios_com_nome.sort_values(by='Nota_de_Risco', ascending=False)
         df_rios_unicos = df_rios_unicos.drop_duplicates(subset=[coluna_nome_rio], keep='first')
         
+        # Pega os 10 maiores
         top_rios_df = df_rios_unicos.head(10)
         
-        # Envia os dados GRC completos
         top_rios_data = top_rios_df.apply(
             lambda row: {
                 "nome": f"{row.get(coluna_nome_rio)} ({row.get(coluna_municipio, 'N/A')})",
-                "nota": row.get('Nota_de_Risco', 0),
-                "frequencia": row.get(coluna_frequencia, 'N/A'),
-                "vulnerabilidade": row.get(coluna_vulnerabilidade, 'N/A'),
-                "impacto": row.get(coluna_impacto, 'N/A')
+                "nota": row.get('Nota_de_Risco', 0)
             },
             axis=1
         ).tolist()

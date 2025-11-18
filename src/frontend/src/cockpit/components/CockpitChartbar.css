@@ -1,4 +1,4 @@
-/* src/cockpit/components/CockpitChartbar.css (VERSÃO FINAL COM TOOLTIP CORRIGIDO) */
+/* src/cockpit/components/CockpitChartbar.css (VERSÃO FINAL COM FILTRO E TOOLTIP) */
 
 .cockpit-chartbar {
   border-left: 1px solid var(--borda);
@@ -44,6 +44,16 @@
   display: flex;
   align-items: center;
   font-size: 0.85rem;
+  padding: 2px 4px; /* Adiciona "respiro" para o clique */
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.legenda-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+.legenda-item.inactive {
+  opacity: 0.4; /* "Apaga" os itens não selecionados */
 }
 .legenda-cor {
   width: 10px;
@@ -86,8 +96,7 @@
   padding: 0.75rem 1rem;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  /* MUDANÇA: Removemos o 'white-space: nowrap' */
-  /* Isso vai deixar o nome do rio quebrar a linha se for muito longo */
+  white-space: nowrap; 
 }
 
 .custom-tooltip-donut {
@@ -118,9 +127,8 @@
   font-weight: 600;
   color: var(--texto-principal);
   margin: 0 0 0.5rem 0;
-  /* MUDANÇA: Permite que o nome do rio quebre a linha */
   white-space: normal;
-  max-width: 250px; /* Limita a largura do tooltip */
+  max-width: 250px;
 }
 .custom-tooltip-bar .tooltip-value-bar {
   font-size: 1rem;
@@ -128,8 +136,6 @@
   margin: 0;
   font-weight: 600;
 }
-
-/* --- NOVO: Estilo para o "Raio-X" GRC no Tooltip --- */
 .tooltip-grc-breakdown {
   border-top: 1px solid var(--borda-sutil);
   margin-top: 0.5rem;
@@ -147,10 +153,7 @@
   font-weight: 600;
 }
 
-/* --- MUDANÇA: Removemos o CSS "na marra" que estava a fixar o tooltip --- */
 .recharts-tooltip-wrapper {
-  /* Removemos o 'left: auto !important' e 'right: 10px !important' */
-  /* Deixa o Recharts fazer o seu trabalho de posicionamento */
   transform: translateY(0) !important; 
   pointer-events: none;
   z-index: 1000;

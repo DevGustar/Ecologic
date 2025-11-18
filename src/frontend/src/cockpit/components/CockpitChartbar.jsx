@@ -1,4 +1,4 @@
-// src/cockpit/components/CockpitChartbar.jsx (VERSÃO FINAL COM TOOLTIP CORRIGIDO)
+// src/cockpit/components/CockpitChartbar.jsx (VERSÃO FINAL COM TOOLTIP CORRIGIDO DE VERDADE)
 
 import React from 'react';
 import { 
@@ -32,10 +32,15 @@ const CustomDonutTooltip = ({ active, payload }) => {
 };
 
 // --- Legenda Customizada para o Donut ---
-const CustomDonutLegend = ({ payload }) => (
+const CustomDonutLegend = ({ payload, onFilterChange, activeFilter }) => (
   <div className="grafico-donut-legenda">
     {payload.map((entry, index) => (
-      <div key={`legend-${index}`} className="legenda-item">
+      <div 
+        key={`legend-${index}`} 
+        className={`legenda-item ${activeFilter && activeFilter !== entry.payload.name ? 'inactive' : ''}`}
+        onClick={() => onFilterChange(entry.payload.name)} // Clicável
+        style={{ cursor: 'pointer' }}
+      >
         <span className="legenda-cor" style={{ backgroundColor: entry.color }}></span>
         <span className="legenda-nome">{entry.payload.name}</span>
         <span className="legenda-valor">{entry.payload.value.toFixed(1)}%</span>
@@ -66,45 +71,57 @@ const CustomBarTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-const CockpitChartbar = ({ graficos, isLoading }) => {
+const CockpitChartbar = ({ graficos, isLoading, onFilterChange, activeFilter }) => {
 
-  const donutData = graficos?.riscoPorNivel.sort((a, b) => b.value - a.value) || [];
-  const topRiosData = graficos?.topRiosPorRisco.map(rio => ({
-      ...rio,
-      nomeCurto: rio.nome.split(' (')[0].replace('Rio ', '').replace('Arroio ', '')
-    })) || [];
+  const donutData = graficos?.riscoPorNivel
+    ? [...graficos.riscoPorNivel].sort((a, b) => b.value - a.value)
+    : []; 
+
+  const topRiosData = graficos?.topRiosPorRisco
+    ? graficos.topRiosPorRisco.map(rio => ({
+        ...rio,
+        municipio: rio.nome.substring(rio.nome.indexOf("(") + 1, rio.nome.indexOf(")")),
+        nomeCurto: rio.nome.split(' (')[0].replace('Rio ', '').replace('Arroio ', '')
+      }))
+    : []; 
 
   const renderCharts = () => {
-    if (isLoading) {
-      return <div className="loading-text">Carregando Gráficos...</div>;
-    }
-    if (!graficos) {
-      return <div className="error-text">Erro ao carregar gráficos.</div>;
-    }
+    if (isLoading) { return <div className="loading-text">Carregando Gráficos...</div>; }
+    if (!graficos) { return <div className="error-text">Erro ao carregar gráficos.</div>; }
 
     return (
       <>
         <div className="grafico-section">
-          <h4>Risco por Nível (Rios)</h4>
-          <ResponsiveContainer width="100%" height={290}> 
+          <h4>Risco por Nível (Municípios)</h4>
+          <ResponsiveContainer width="100%" height={310}> 
             <PieChart>
               <Pie
                 data={donutData}
                 cx="50%"
                 cy="45%"
-                innerRadius={55}
-                outerRadius={82}
+                innerRadius={53}
+                outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
                 labelLine={false}
+                onClick={(data) => onFilterChange(data.name)} // Clicável
               >
                 {donutData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[entry.name] || '#8884d8'} />
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={COLORS[entry.name] || '#8884d8'} 
+                    opacity={!activeFilter || activeFilter === entry.name ? 1 : 0.3}
+                    style={{ cursor: 'pointer' }}
+                  />
                 ))}
               </Pie>
               <Tooltip content={<CustomDonutTooltip />} />
               <Legend 
-                content={<CustomDonutLegend payload={donutData.map(entry => ({...entry, color: COLORS[entry.name]}))} />} 
+                content={<CustomDonutLegend 
+                  payload={donutData.map(entry => ({...entry, color: COLORS[entry.name]}))}
+                  onFilterChange={onFilterChange}
+                  activeFilter={activeFilter}
+                />} 
               />
             </PieChart>
           </ResponsiveContainer>
@@ -112,21 +129,24 @@ const CockpitChartbar = ({ graficos, isLoading }) => {
 
         <div className="grafico-section">
           <h4>Top 10 Rios por Risco</h4>
-          <ResponsiveContainer width="100%" height={290}>
+          <ResponsiveContainer width="100%" height={270}>
             <BarChart data={topRiosData} layout="vertical" margin={{ left: 10, right: 30 }} barCategoryGap="25%">
               <CartesianGrid strokeDasharray="3 3" stroke="var(--borda-sutil)" />
               <XAxis type="number" stroke="var(--texto-secundario)" domain={[0, 10]} ticks={[0, 5, 10]} />
-              <YAxis type="category" dataKey="nomeCurto" width={140} stroke="var(--texto-secundario)" fontSize="0.75rem" tickLine={false} axisLine={false} interval={0} />
-              
+              <YAxis type="category" dataKey="nomeCurto" width={140} stroke="var(--texto-secundario)" fontSize="0.8rem" tickLine={false} axisLine={false} interval={0} />
               <Tooltip 
                 cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
                 content={<CustomBarTooltip />}
                 wrapperStyle={{ zIndex: 1000 }}
               />
-              
-              <Bar dataKey="nota" fill="var(--cor-alerta)" fillOpacity={0.7}>
+              <Bar dataKey="nota" fill="var(--cor-alerta)" fillOpacity={0.7} onClick={(data) => onFilterChange(data.municipio)}>
                 {topRiosData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.nota >= 8 ? 'var(--cor-critica)' : (entry.nota >= 6 ? 'var(--cor-alerta)' : 'var(--cor-cuidado)')} />
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={entry.nota >= 8 ? 'var(--cor-critica)' : (entry.nota >= 6 ? 'var(--cor-alerta)' : 'var(--cor-cuidado)')} 
+                    opacity={!activeFilter || activeFilter === entry.municipio ? 1 : 0.3}
+                    style={{ cursor: 'pointer' }}
+                  />
                 ))}
               </Bar>
             </BarChart>
