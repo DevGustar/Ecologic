@@ -1,10 +1,12 @@
-// src/cockpit/components/RiverExplorerMap.jsx (REAÇÃO AO CLIQUE)
+// src/cockpit/components/RiverExplorer/RiverExplorerMap.jsx (COM ZOOM AUTOMÁTICO)
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet'; // Importa useMap
 import 'leaflet/dist/leaflet.css';
 import './RiverExplorerMap.css';
+import L from 'leaflet'; // Importa Leaflet para cálculos
 
+// Função de cor
 const getRiskColor = (risk) => {
   if (risk >= 8) return 'var(--cor-critica)';
   if (risk >= 6) return 'var(--cor-alerta)';
@@ -13,7 +15,35 @@ const getRiskColor = (risk) => {
   return 'var(--cor-neutra)'; 
 };
 
-// Recebe selectedMunicipality
+// --- NOVO COMPONENTE: Responsável por dar o Zoom ---
+const MapUpdater = ({ geoJsonData, selectedMunicipality }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!geoJsonData || !selectedMunicipality) return;
+
+    // Encontra a feature do município selecionado
+    const feature = geoJsonData.features.find(
+      f => f.properties.NM_MUN_PADRONIZADO === selectedMunicipality
+    );
+
+    if (feature) {
+      // Cria um layer temporário para calcular os limites (bounds)
+      const layer = L.geoJSON(feature);
+      const bounds = layer.getBounds();
+      
+      // Faz o mapa "voar" para o município com uma animação suave
+      map.flyToBounds(bounds, {
+        padding: [50, 50], // Um pouco de respiro nas bordas
+        maxZoom: 10,       // Não dá zoom demais
+        duration: 1.5      // Duração da animação em segundos
+      });
+    }
+  }, [geoJsonData, selectedMunicipality, map]);
+
+  return null;
+};
+
 const RiverExplorerMap = ({ rivers, isLoading, selectedMunicipality }) => {
   const [geoJsonData, setGeoJsonData] = useState(null);
 
@@ -50,16 +80,15 @@ const RiverExplorerMap = ({ rivers, isLoading, selectedMunicipality }) => {
     const munName = feature.properties.NM_MUN_PADRONIZADO;
     const activeData = activeMunicipalities[munName];
     
-    // VERIFICAÇÃO DE DESTAQUE
     const isSelected = munName === selectedMunicipality;
 
-    // Se for o município CLICADO na tabela, destaca ele!
+    // ESTILO DE DESTAQUE (AMARELO OURO)
     if (isSelected) {
         return {
-            fillColor: '#FFD700', // Ouro / Amarelo forte
+            fillColor: '#FFD700', 
             fillOpacity: 0.9,
-            weight: 3,         // Borda grossa
-            color: '#FFFFFF',  // Borda branca
+            weight: 3,         
+            color: '#FFFFFF',  
             opacity: 1
         };
     }
@@ -83,7 +112,6 @@ const RiverExplorerMap = ({ rivers, isLoading, selectedMunicipality }) => {
     };
   };
 
-  // (onEachFeature continua o mesmo para hover e popup)
   const onEachFeature = (feature, layer) => {
     const munName = feature.properties.NM_MUN_PADRONIZADO;
     const activeData = activeMunicipalities[munName];
@@ -97,7 +125,6 @@ const RiverExplorerMap = ({ rivers, isLoading, selectedMunicipality }) => {
       layer.on({
         mouseover: (e) => {
           const l = e.target;
-          // Só muda estilo no hover se NÃO for o selecionado (para não perder o destaque amarelo)
           if (munName !== selectedMunicipality) {
               l.setStyle({ weight: 3, color: '#FFFFFF', opacity: 1 });
               l.bringToFront();
@@ -118,13 +145,21 @@ const RiverExplorerMap = ({ rivers, isLoading, selectedMunicipality }) => {
             attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
             url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
           />
-          {/* O key agora inclui selectedMunicipality para forçar a repintura instantânea */}
+          
+          {/* O componente GeoJSON */}
           <GeoJSON 
             key={`${rivers.length}-${selectedMunicipality}`} 
             data={geoJsonData} 
             style={geoJsonStyle} 
             onEachFeature={onEachFeature}
           />
+          
+          {/* NOVO: O componente que faz o zoom automático */}
+          <MapUpdater 
+            geoJsonData={geoJsonData} 
+            selectedMunicipality={selectedMunicipality} 
+          />
+          
         </MapContainer>
       ) : (
         <div className="map-loading">Carregando Mapa...</div>
