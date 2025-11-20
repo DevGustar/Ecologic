@@ -150,10 +150,7 @@ def get_grc_kpi_data():
 
 @app.get("/macro/grc/map")
 def get_grc_map_data():
-    """
-    NOVO: Endpoint mestre para o MAPA do Cenário 1 (Visão GRC de Rios).
-    Retorna o GeoJSON de municípios já "pintado" com o risco de rio.
-    """
+  
     if gdf_municipios_pintado is None:
         raise HTTPException(status_code=500, detail="Mapa GRC (municípios) não inicializado no servidor.")
     
@@ -270,6 +267,61 @@ async def get_map_rivers_data():
 async def get_map_states_geojson():
     if map_states_geojson_data is None: raise HTTPException(status_code=503, detail="GeoJSON de estados não carregado.")
     return json.loads(map_states_geojson_data.to_json())
+
+# Em src/backend/main.py
+
+# --- NOVO ENDPOINT DE EXPLORAÇÃO GRC ---
+@app.get("/macro/rivers/search")
+def search_rivers(
+    estado: Optional[str] = None,
+    municipio: Optional[str] = None,
+    classificacao: Optional[str] = None
+):
+    """
+    Endpoint de Análise Exploratória. Permite filtrar os rios por Estado,
+    Município ou Classificação.
+    """
+    logger.info(f"Busca exploratória iniciada. Filtros: {estado}, {municipio}, {classificacao}")
+
+    if map_rivers_data is None:
+        raise HTTPException(status_code=500, detail="Dados de rios não carregados.")
+
+    df_filtered = map_rivers_data.copy()
+    
+    # 1. Filtro por Estado
+    if estado:
+        # A coluna é 'Sigla do Estado' no seu CSV
+        df_filtered = df_filtered[df_filtered['Sigla do Estado'].str.upper() == estado.upper()]
+        
+    # 2. Filtro por Município
+    if municipio:
+        # A coluna é 'NM_MUN_PADRONIZADO'
+        df_filtered = df_filtered[df_filtered['NM_MUN_PADRONIZADO'].str.upper() == municipio.upper()]
+
+    # 3. Filtro por Classificação
+    if classificacao:
+        # A coluna é 'Classificacao_Risco'
+        df_filtered = df_filtered[df_filtered['Classificacao_Risco'].str.upper() == classificacao.upper()]
+
+    # Colunas essenciais que o frontend espera (incluindo as GRC)
+    colunas_essenciais = [
+        'Sigla do Estado', 'Nome do Rio', 'NM_MUN_PADRONIZADO', 'Classificacao_Risco', 
+        'Nota_de_Risco', 'Impacto', 'Frequencia', 'Vulnerabilidade'
+    ]
+    
+    # Seleciona as colunas, ordenando pelo risco
+    df_result = df_filtered.sort_values(by='Nota_de_Risco', ascending=False)
+    
+    # Limita o resultado (Máximo 100 resultados por busca)
+    df_result = df_result.head(100) 
+    
+    # Preenche NaN com texto para evitar quebras no frontend
+    for col in ['Impacto', 'Frequencia', 'Vulnerabilidade']:
+        if col in df_result.columns:
+            df_result[col] = df_result[col].fillna('N/A')
+
+    # Retorna o resultado como JSON
+    return json.loads(df_result[colunas_essenciais].to_json(orient='records'))
 
 # --- Bloco para rodar a aplicação ---
 if __name__ == "__main__":

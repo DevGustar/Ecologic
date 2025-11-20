@@ -10,27 +10,22 @@
   box-sizing: border-box;
 }
 
-.cockpit-sidebar-header {
-  border-bottom: 1px solid var(--borda-sutil);
-  flex-shrink: 0; /* Não encolhe */
-}
-
 .cockpit-title {
   font-family: var(--fonte-titulo);
   color: var(--acento-primario);
   margin: 0 0 1rem 0;
-  font-size: 2.5rem;
+  font-size: 2rem;
 }
 
 /* --- Estilo dos Toggles --- */
 .toggle-section {
-  padding: 1.2rem 0;
+  padding: .8rem 0;
   flex-shrink: 0; /* Não encolhe */
 }
 .toggle-title {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: var(--texto-secundario);
-  margin: 0 0 0.75rem 0;
+  margin: 0 0 .75rem 0;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -48,7 +43,7 @@
   border: none;
   border-radius: 6px;
   color: var(--texto-secundario);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
@@ -69,12 +64,12 @@
 }
 .toggle-button-large {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.7rem;
   background-color: var(--fundo-principal);
   border: 1px solid var(--borda);
   border-radius: 8px;
   color: var(--texto-secundario);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   text-align: left;
@@ -94,8 +89,7 @@
 .cockpit-sidebar-content {
   flex-grow: 1;
   overflow-y: auto;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--borda-sutil);
+  padding-top: 1rem;
   min-height: 0;
 }
 
@@ -107,11 +101,11 @@
 }
 .kpi-section-title {
   grid-column: 1 / -1;
-  margin: 0 0 0.5rem 0;
-  font-size: 1.1rem;
+  margin: 0 0 .0rem 0;
+  font-size: 1rem;
   color: var(--texto-principal);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
 }
 .cockpit-kpi-card {
   background-color: var(--fundo-principal);
@@ -131,6 +125,53 @@
   font-family: var(--fonte-titulo);
   color: var(--acento-primario);
   display: block;
+}
+
+.loading-text, .error-text {
+  color: var(--texto-secundario);
+  font-style: italic;
+  text-align: center;
+  padding-top: 2rem;
+}
+
+/* --- ESTILO PARA O EXPLORADOR GRC (Link de Auditoria) --- */
+.nav-explorer-section .link-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 2rem;
+    text-align: center;
+    margin: 0 auto;
+    border-radius: 6px;
+    border: 1px solid var(--borda);
+    color: white;
+    background-color: var(--cor-critica);
+    font-weight: 600;
+    font-size: .9rem;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+.nav-explorer-section .link-button:hover {
+    background-color: #3f7b99;
+}
+
+/*  ESTILO PARA BOTÃO CRIAR ATIVO */
+.create-asset-button {
+    display: block;
+    width: 100%;
+    height: 40px;
+    text-align: center;
+    padding: 0.5rem;
+    border-radius: 6px;
+    background-color: var(--cor-sucesso);
+    color: white;
+    font-weight: 600;
+    border: none;
+    margin-top: 0.75rem;
+}
+.create-asset-button:hover {
+    background-color: #3cb87c;
 }
 
 .loading-text, .error-text {

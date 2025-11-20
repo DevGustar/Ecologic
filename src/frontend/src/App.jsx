@@ -1,32 +1,34 @@
-// src/App.jsx (VERSÃO FINAL CORRIGIDA E LIMPA)
+// src/App.jsx (VERSÃO OTIMIZADA COM LAZY LOADING)
 
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
-// 1. Importa a sua página de análise de ativo (que já existe)
-import AssetDetailPage from './pages/AssetDetailPage';
-
-// 2. IMPORTA A NOSSA NOVA PÁGINA MESTRA ("O COCKPIT")
-import CockpitPage from './cockpit/pages/CockpitPage'; 
-
-// 3. (NÃO importamos mais 'NationalRiskPage', pois ela vai ser substituída)
+// MUDANÇA CRÍTICA: Definimos as páginas como lazy-loaded para code splitting
+// A performance inicial da aplicação será muito melhor!
+const CockpitPage = lazy(() => import('./cockpit/pages/CockpitPage'));
+const AssetDetailPage = lazy(() => import('./pages/AssetDetailPage'));
+const RiverExplorerPage = lazy(() => import('./cockpit/pages/RiverExplorerPage')); // Nova localização
 
 // Importa o seu CSS global
 import './App.css'; 
 
 function App() {
   return (
-    // O BrowserRouter PAI, que comanda tudo
     <BrowserRouter>
-      <Routes>
-        {/* Rota principal "/" agora carrega o novo CockpitPage */}
-        <Route path="/" element={<CockpitPage />} /> 
-        
-        {/* A rota da sua página de ativo continua a mesma */}
-        <Route path="/asset/:assetId" element={<AssetDetailPage />} />
-        
-        {/* A rota que estava a dar erro (para NationalRiskPage) foi removida */}
-      </Routes>
+      {/* O Suspense mostra um fallback (ex: loading...) enquanto o código da página é carregado */}
+      <Suspense fallback={<div className="loading-screen">Carregando Ecologic 2.0...</div>}>
+        <Routes>
+          {/* Rota principal "/" agora carrega o CockpitPage */}
+          <Route path="/" element={<CockpitPage />} /> 
+          
+          {/* MUDANÇA: Rota do Explorador GRC na nova localização */}
+          <Route path="/grc-explorer" element={<RiverExplorerPage />} />
+          
+          {/* Rota da sua página de ativo (AssetDetailPage) */}
+          <Route path="/asset/:assetId" element={<AssetDetailPage />} />
+          
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

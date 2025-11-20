@@ -1,0 +1,165 @@
+/* src/frontend/cockpit/components/RiverExplorer/RiverExplorer.css */
+
+/* --- Layout da Página --- */
+.explorer-page-container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  color: var(--texto-principal);
+  background-color: var(--fundo-principal);
+}
+
+.explorer-header {
+  border-bottom: 2px solid var(--borda-sutil);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.explorer-header h1 {
+  font-family: var(--fonte-titulo);
+  color: var(--acento-primario);
+  margin: 0;
+  font-size: 2.5rem;
+}
+
+.explorer-header .subtitle {
+  color: var(--texto-secundario);
+  margin-top: 0.5rem;
+  font-size: 1rem;
+}
+
+.explorer-header .back-link {
+  color: var(--texto-secundario);
+  display: block;
+  margin-bottom: 0.5rem;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+/* --- Painel de Filtros --- */
+.filters-panel {
+  background-color: var(--fundo-secundario);
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.filter-title {
+  font-size: 1.2rem;
+  color: var(--texto-principal);
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--borda-sutil);
+  padding-bottom: 0.5rem;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.filters-grid select, .filters-grid input {
+  padding: 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--borda);
+  background-color: var(--fundo-principal);
+  color: var(--texto-principal);
+}
+
+.filter-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+/* --- Tabela de Resultados --- */
+.explorer-table-container {
+  background-color: var(--fundo-secundario);
+  padding: 1.5rem;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.results-count {
+  font-size: 1.2rem;
+  color: var(--texto-secundario);
+  margin-bottom: 1rem;
+}
+.results-count strong {
+  color: var(--acento-primario);
+}
+
+.rivers-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.rivers-table thead th {
+  background-color: var(--fundo-principal);
+  color: var(--texto-principal);
+  padding: 1rem 0.75rem;
+  text-align: left;
+  border-bottom: 2px solid var(--borda);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.rivers-table tbody td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--borda-sutil);
+  font-size: 0.85rem;
+  color: var(--texto-secundario);
+  white-space: nowrap;
+}
+
+.th-center, .td-center {
+  text-align: center;
+}
+
+/* Estilos de Cores */
+.td-score {
+  font-weight: 700;
+  color: var(--texto-principal);
+}
+.td-score.risk-critico { color: var(--cor-critica); }
+.td-score.risk-alto { color: var(--cor-alerta); }
+.td-score.risk-medio { color: var(--cor-cuidado); }
+.td-score.risk-baixo { color: var(--cor-sucesso); }
+.td-score.risk-minimo { color: var(--cor-neutra); }
+
+
+.table-loading, .table-error, .no-results {
+  text-align: center;
+  padding: 2rem;
+  font-style: italic;
+  color: var(--texto-secundario);
+}
+
+/* --- Botões --- */
+.button-primary, .button-secondary {
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.button-primary {
+  background-color: var(--acento-primario);
+  color: white;
+  border: none;
+}
+.button-primary:hover:not(:disabled) {
+  background-color: var(--acento-secundario);
+}
+
+.button-secondary {
+  background-color: var(--fundo-principal);
+  color: var(--texto-principal);
+  border: 1px solid var(--borda);
+}
+.button-secondary:hover:not(:disabled) {
+  background-color: var(--borda-sutil);
+}
