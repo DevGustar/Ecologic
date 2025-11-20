@@ -1,127 +1,74 @@
-/* src/frontend/cockpit/pages/RiverExplorerPage.css */
+/* src/cockpit/pages/RiverExplorerPage.css */
 
 .explorer-page-container {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  color: var(--texto-principal);
+  display: grid;
+  grid-template-columns: 300px 1fr; /* Coluna 1 (Filtros) | Coluna 2 (Conteúdo) */
+  grid-template-rows: 100vh;        /* Altura total da tela */
+  width: 100%;
   background-color: var(--fundo-principal);
+  color: var(--texto-principal);
+  overflow: hidden; /* Remove rolagem da página inteira */
+}
+
+/* --- ÁREA DA ESQUERDA (SIDEBAR DE FILTROS) --- */
+.explorer-sidebar {
+  background-color: var(--fundo-secundario);
+  border-right: 1px solid var(--borda);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto; /* Scroll só nos filtros se precisar */
+  box-sizing: border-box;
+  z-index: 10;
 }
 
 .explorer-header {
-  border-bottom: 2px solid var(--borda-sutil);
-  padding-bottom: 1rem;
   margin-bottom: 2rem;
-  text-align: center;
+  border-bottom: 1px solid var(--borda-sutil);
+  padding-bottom: 1rem;
 }
 
 .explorer-header h1 {
   font-family: var(--fonte-titulo);
   color: var(--acento-primario);
-  margin: 0;
-  font-size: 2.5rem;
+  font-size: 1.5rem; /* Fonte menor para caber na sidebar */
+  margin: 0 0 0.5rem 0;
+  line-height: 1.2;
 }
 
 .explorer-header .subtitle {
   color: var(--texto-secundario);
-  margin-top: 0.5rem;
-  font-size: 1rem;
+  font-size: 0.8rem;
+  margin: 0;
+  opacity: 0.8;
 }
 
-.explorer-header .back-link {
-  color: var(--texto-secundario);
+.back-link {
   display: block;
-  margin-bottom: 0.5rem;
-  text-decoration: none;
-  font-size: 0.9rem;
-}
-
-/* --- Tabela de Resultados --- */
-.explorer-table-container {
-  background-color: var(--fundo-secundario);
-  padding: 1.5rem;
-  border-radius: 12px;
-  overflow-x: auto;
-}
-
-.results-count {
-  font-size: 1.2rem;
-  color: var(--texto-secundario);
   margin-bottom: 1rem;
-}
-.results-count strong {
-  color: var(--acento-primario);
-}
-
-.rivers-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.rivers-table thead th {
-  background-color: var(--fundo-principal);
-  color: var(--texto-principal);
-  padding: 1rem 0.75rem;
-  text-align: left;
-  border-bottom: 2px solid var(--borda);
-  font-size: 0.9rem;
-  white-space: nowrap;
-}
-
-.rivers-table tbody td {
-  padding: 0.75rem;
-  border-bottom: 1px solid var(--borda-sutil);
+  color: var(--texto-secundario);
+  text-decoration: none;
   font-size: 0.85rem;
-  color: var(--texto-secundario);
-  white-space: nowrap;
-}
-
-.th-center, .td-center {
-  text-align: center;
-}
-
-/* Estilos de Cores */
-.td-score {
-  font-weight: 700;
-  color: var(--texto-principal);
-}
-.td-score.risk-critico { color: var(--cor-critica); }
-.td-score.risk-alto { color: var(--cor-alerta); }
-.td-score.risk-medio { color: var(--cor-cuidado); }
-.td-score.risk-baixo { color: var(--cor-sucesso); }
-.td-score.risk-minimo { color: var(--cor-neutra); }
-
-
-.table-loading, .table-error, .no-results {
-  text-align: center;
-  padding: 2rem;
-  font-style: italic;
-  color: var(--texto-secundario);
-}
-
-.button-primary, .button-secondary {
-  padding: 0.75rem 1.5rem;
-  border-radius: 6px;
-  cursor: pointer;
   font-weight: 600;
-  transition: background-color 0.2s;
+  transition: color 0.2s;
 }
-
-.button-primary {
-  background-color: var(--acento-primario);
-  color: white;
-  border: none;
-}
-.button-primary:hover:not(:disabled) {
-  background-color: var(--acento-secundario);
-}
-
-.button-secondary {
-  background-color: var(--fundo-principal);
+.back-link:hover {
   color: var(--texto-principal);
-  border: 1px solid var(--borda);
-}
-.button-secondary:hover:not(:disabled) {
-  background-color: var(--borda-sutil);
 }
 
+/* --- ÁREA DA DIREITA (MAPA E TABELA) --- */
+.explorer-content {
+  padding: .5rem 2rem;
+  height: 100%;
+  overflow-y: auto; /* Scroll principal aqui */
+  display: flex;
+  flex-direction: column;
+  gap: .0rem;
+}
+
+/* Ajuste do wrapper do mapa para ele não ficar gigante */
+.explorer-map-wrapper {
+  flex-shrink: 0; /* Não deixa o mapa encolher */
+  height: 400px;
+}

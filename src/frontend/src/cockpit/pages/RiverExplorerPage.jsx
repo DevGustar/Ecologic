@@ -1,10 +1,11 @@
-// src/frontend/cockpit/pages/RiverExplorerPage.jsx (A NOVA PÁGINA DE AUDITORIA)
+// src/cockpit/pages/RiverExplorerPage.jsx (LAYOUT TELA DIVIDIDA)
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import RiverExplorerTable from '../components/RiverExplorer/RiverExplorerTable';
 import RiverExplorerFilters from '../components/RiverExplorer/RiverExplorerFilters';
-import './RiverExplorerPage.css'; // O CSS da página
+import RiverExplorerMap from '../components/RiverExplorer/RiverExplorerMap'; 
+import './RiverExplorerPage.css'; 
 
 function RiverExplorerPage() {
   const [filters, setFilters] = useState({
@@ -16,15 +17,11 @@ function RiverExplorerPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Lista de classificações
   const RISK_LEVELS = ['CRÍTICO', 'ALTO', 'MODERADO', 'BAIXO', 'MÍNIMO'];
 
-  // Função para buscar os dados (ela será re-executada sempre que o filtro for aplicado)
   const fetchRivers = async (currentFilters) => {
     setIsLoading(true);
     setError(null);
-    
-    // Converte os filtros para query params
     const queryParams = new URLSearchParams();
     if (currentFilters.estado) queryParams.append('estado', currentFilters.estado);
     if (currentFilters.municipio) queryParams.append('municipio', currentFilters.municipio);
@@ -32,8 +29,7 @@ function RiverExplorerPage() {
 
     try {
       const response = await fetch(`http://127.0.0.1:8000/macro/rivers/search?${queryParams.toString()}`);
-      if (!response.ok) throw new Error('Falha na busca exploratória de rios.');
-      
+      if (!response.ok) throw new Error('Falha na busca exploratória.');
       const data = await response.json();
       setRivers(data);
     } catch (err) {
@@ -44,37 +40,48 @@ function RiverExplorerPage() {
     }
   };
 
-  useEffect(() => {
-    // Busca os rios na inicialização (sem filtros)
-    fetchRivers(filters); 
-  }, [filters]); // NOVO: Refetch sempre que 'filters' for atualizado
+  useEffect(() => { fetchRivers(filters); }, [filters]);
 
   return (
     <div className="explorer-page-container">
-      <header className="explorer-header">
-        <Link to="/" className="back-link">&larr; Voltar ao Cockpit Mestre</Link>
-        <h1>Análise Exploratória GRC (Rios)</h1>
-        <p className="subtitle">Ferramenta de Auditoria do Risco Estrutural (Base ANA)</p>
-      </header>
+      
+      {/* --- COLUNA DA ESQUERDA (SIDEBAR FIXA) --- */}
+      <aside className="explorer-sidebar">
+        <div className="explorer-header">
+          <Link to="/" className="back-link">&larr; Voltar ao Cockpit</Link>
+          <h1>Explorador GRC</h1>
+          <p className="subtitle">Auditoria de Risco Estrutural</p>
+        </div>
 
-      <div className="explorer-content">
+        {/* Os filtros ficam aqui na esquerda */}
         <RiverExplorerFilters 
           filters={filters} 
           setFilters={setFilters} 
           riskLevels={RISK_LEVELS}
-          onSearch={fetchRivers} // Passa a função de busca
+          onSearch={fetchRivers}
           isLoading={isLoading}
         />
+      </aside>
+
+      {/* --- COLUNA DA DIREITA (CONTEÚDO ROLÁVEL) --- */}
+      <main className="explorer-content">
+        {/* O Mapa vem primeiro */}
+        <RiverExplorerMap 
+            rivers={rivers} 
+            isLoading={isLoading} 
+        />
         
+        {/* A Tabela vem depois */}
         <RiverExplorerTable 
           rivers={rivers} 
           isLoading={isLoading}
           error={error}
           totalResults={rivers.length}
         />
-      </div>
+      </main>
+
     </div>
   );
 }
 
-export default RiverExplorerPage;  
+export default RiverExplorerPage;

@@ -2,148 +2,198 @@
 
 /* --- Layout da Página --- */
 .explorer-page-container {
-  padding: 2rem;
-  max-width: 1400px;
+  height: 100vh;
   margin: 0 auto;
   color: var(--texto-principal);
   background-color: var(--fundo-principal);
 }
 
 .explorer-header {
-  border-bottom: 2px solid var(--borda-sutil);
-  padding-bottom: 1rem;
-  margin-bottom: 2rem;
   text-align: center;
 }
 
-.explorer-header h1 {
-  font-family: var(--fonte-titulo);
-  color: var(--acento-primario);
-  margin: 0;
-  font-size: 2.5rem;
-}
-
-.explorer-header .subtitle {
-  color: var(--texto-secundario);
-  margin-top: 0.5rem;
-  font-size: 1rem;
-}
-
 .explorer-header .back-link {
+  padding-bottom: 1.5rem;
+  text-align: start;
   color: var(--texto-secundario);
   display: block;
   margin-bottom: 0.5rem;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
+  transition: color 0.2s;
+}
+.explorer-header .back-link:hover {
+    color: #fff;
 }
 
-/* --- Painel de Filtros --- */
+/* --- Painel de Filtros (ESTILO CORRIGIDO) --- */
 .filters-panel {
-  background-color: var(--fundo-secundario);
-  padding: 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 2rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  /* Removemos o estilo de "card" porque agora ele já está dentro da sidebar */
+  padding: 0;
+  box-shadow: none;
+  margin-bottom: 0;
 }
 
 .filter-title {
-  font-size: 1.2rem;
+  font-size: 0.8rem;
   color: var(--texto-principal);
   margin-bottom: 1rem;
-  border-bottom: 1px solid var(--borda-sutil);
-  padding-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
 }
 
 .filters-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;         /* MUDANÇA: Flexbox Vertical */
+  flex-direction: column;
   gap: 1rem;
 }
 
+/* Inputs ocupam 100% da largura da sidebar */
 .filters-grid select, .filters-grid input {
-  padding: 0.75rem;
+  width: 100%;
+  padding: 0.8rem;
   border-radius: 6px;
   border: 1px solid var(--borda);
   background-color: var(--fundo-principal);
   color: var(--texto-principal);
+  font-size: 0.8rem;
+  outline: none;
+  box-sizing: border-box;
 }
 
 .filter-actions {
   display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
+  flex-direction: column; /* Botões um embaixo do outro */
+  gap: 0.75rem;
+  margin-top: 3.5rem;
 }
 
+.button-primary, .button-secondary {
+  width: 100%;
+  padding: 0.8rem;
+  text-align: center;
+  justify-content: center;
+}
 /* --- Tabela de Resultados --- */
 .explorer-table-container {
   background-color: var(--fundo-secundario);
   padding: 1.5rem;
   border-radius: 12px;
+  border: 1px solid var(--borda);
   overflow-x: auto;
 }
 
+.table-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: .5rem;
+}
+
 .results-count {
-  font-size: 1.2rem;
+  font-size: 1rem;
   color: var(--texto-secundario);
-  margin-bottom: 1rem;
+  margin: 0;
 }
 .results-count strong {
   color: var(--acento-primario);
 }
 
+/* --- Tabela --- */
+.table-scroll {
+    overflow-x: auto;
+}
+
 .rivers-table {
   width: 100%;
   border-collapse: collapse;
+  font-size: .8rem;
 }
 
 .rivers-table thead th {
-  background-color: var(--fundo-principal);
+  background-color: var(--fundo-primario); /* Um pouco mais escuro que o secundário */
   color: var(--texto-principal);
-  padding: 1rem 0.75rem;
+  padding: .8rem;
   text-align: left;
   border-bottom: 2px solid var(--borda);
-  font-size: 0.9rem;
   white-space: nowrap;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
 }
 
 .rivers-table tbody td {
-  padding: 0.75rem;
+  padding: 0.85rem 1rem;
   border-bottom: 1px solid var(--borda-sutil);
-  font-size: 0.85rem;
   color: var(--texto-secundario);
   white-space: nowrap;
 }
 
+.rivers-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.03); /* Hover na linha */
+}
+
+/* --- Alinhamentos --- */
 .th-center, .td-center {
   text-align: center;
 }
 
-/* Estilos de Cores */
-.td-score {
-  font-weight: 700;
-  color: var(--texto-principal);
+.font-bold {
+    font-weight: 700;
 }
-.td-score.risk-critico { color: var(--cor-critica); }
-.td-score.risk-alto { color: var(--cor-alerta); }
-.td-score.risk-medio { color: var(--cor-cuidado); }
-.td-score.risk-baixo { color: var(--cor-sucesso); }
-.td-score.risk-minimo { color: var(--cor-neutra); }
+
+.rio-name {
+    color: #ffffff; /* Branco puro para o nome */
+    font-weight: 500;
+}
+
+/* --- CORES DE RISCO (BLINDADAS) --- */
+/* Usamos !important para garantir que sobrescreve qualquer cor padrão */
+
+/* CRÍTICO (Vermelho) */
+.status-critico, .score-critico { 
+    color: var(--cor-critica) !important; 
+}
+
+/* ALTO (Laranja/Amarelo Escuro) */
+.status-alto, .score-alto { 
+    color: var(--cor-alerta) !important; 
+}
+
+/* MÉDIO/MODERADO (Amarelo) */
+.status-medio, .score-medio { 
+    color: var(--cor-cuidado) !important; 
+}
+
+/* BAIXO (Verde) */
+.status-baixo, .score-baixo { 
+    color: var(--cor-sucesso) !important; 
+}
+
+/* MÍNIMO (Azul) */
+.status-minimo, .score-minimo { 
+    color: var(--cor-neutra) !important; 
+}
 
 
+/* --- Mensagens de Estado --- */
 .table-loading, .table-error, .no-results {
   text-align: center;
-  padding: 2rem;
+  padding: 3rem;
   font-style: italic;
   color: var(--texto-secundario);
 }
 
 /* --- Botões --- */
 .button-primary, .button-secondary {
-  padding: 0.75rem 1.5rem;
+  padding: 0.6rem 1.2rem;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
+  font-size: 0.9rem;
 }
 
 .button-primary {
@@ -153,13 +203,23 @@
 }
 .button-primary:hover:not(:disabled) {
   background-color: var(--acento-secundario);
+  transform: translateY(-1px);
 }
 
 .button-secondary {
-  background-color: var(--fundo-principal);
-  color: var(--texto-principal);
+  background-color: transparent;
+  color: var(--texto-secundario);
   border: 1px solid var(--borda);
 }
 .button-secondary:hover:not(:disabled) {
-  background-color: var(--borda-sutil);
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--texto-principal);
+  border-color: var(--texto-secundario);
+}
+
+/* Destaque da Linha Selecionada na Tabela */
+.rivers-table tbody tr.selected-row td {
+    background-color: rgba(255, 215, 0, 0.15); /* Fundo amarelo suave */
+    border-left: 4px solid #FFD700; /* Barra amarela na esquerda */
+    color: #FFF;
 }

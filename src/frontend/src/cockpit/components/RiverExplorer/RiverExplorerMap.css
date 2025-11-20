@@ -1,0 +1,70 @@
+/* src/cockpit/components/RiverExplorer/RiverExplorerMap.css */
+
+.explorer-map-wrapper {
+  height: 400px; /* Altura fixa para o mapa na página de auditoria */
+  width: 100%;
+  background-color: #1a1a1a;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 2rem; /* Espaço antes da tabela */
+  border: 1px solid var(--borda);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.map-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: var(--texto-secundario);
+  font-style: italic;
+}
+/* ------------------------- */
+
+/* A caixa principal do popup */
+.leaflet-popup-content-wrapper {
+  background-color: var(--fundo-secundario); /* Fundo Escuro */
+  color: var(--texto-principal); /* Texto Claro */
+  border: 1px solid var(--borda-sutil); /* Borda fina */
+  border-radius: 8px; /* Cantos arredondados */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); /* Sombra forte */
+  /* padding: 0; Remove padding padrão */
+}
+
+/* A pontinha do balão (o triângulo) */
+.leaflet-popup-tip {
+  background-color: var(--fundo-secundario);
+  border: 1px solid var(--borda-sutil); /* Opcional: borda na ponta */
+  box-shadow: none;
+}
+
+/* O conteúdo de texto dentro do popup */
+.leaflet-popup-content {
+  /* margin: 12px 16px; */
+  line-height: 1;
+  font-size: 0.9rem;
+}
+
+/* Estilo do texto dentro do popup */
+.leaflet-popup-content strong {
+  color: var(--acento-primario); /* Destaque no Título (Nome do Município) */
+  font-size: .9rem;
+  display: block;
+  padding-right: 5px;
+  /* margin-bottom: 4px; */
+  border-bottom: 1px solid var(--borda-sutil);
+  padding-bottom: 4px;
+}
+
+/* Botão de fechar (o X) */
+.leaflet-container a.leaflet-popup-close-button {
+  color: var(--texto-secundario);
+  padding: 8px;
+  font-size: 1.2rem;
+  top: 0;
+  right: 0;
+}
+
+.leaflet-container a.leaflet-popup-close-button:hover {
+  color: var(--cor-critica); /* Fica vermelho ao passar o mouse */
+}

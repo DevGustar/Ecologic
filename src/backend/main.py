@@ -312,8 +312,8 @@ def search_rivers(
     # Seleciona as colunas, ordenando pelo risco
     df_result = df_filtered.sort_values(by='Nota_de_Risco', ascending=False)
     
-    # Limita o resultado (Máximo 100 resultados por busca)
-    df_result = df_result.head(100) 
+    # Limita o resultado (Máximo 2000 resultados por busca)
+    df_result = df_result.head(2000) 
     
     # Preenche NaN com texto para evitar quebras no frontend
     for col in ['Impacto', 'Frequencia', 'Vulnerabilidade']:
@@ -322,6 +322,34 @@ def search_rivers(
 
     # Retorna o resultado como JSON
     return json.loads(df_result[colunas_essenciais].to_json(orient='records'))
+
+# Em src/backend/main.py
+
+@app.get("/macro/options/municipalities")
+def get_unique_municipalities(estado: Optional[str] = None):
+    """
+    Retorna a lista de municípios.
+    SE um estado for informado (?estado=SP), retorna só os municípios daquele estado.
+    """
+    if map_rivers_data is None:
+        return {"municipalities": []}
+    
+    try:
+        df = map_rivers_data.copy()
+        
+        # FILTRO DE CASCATA: Se veio um estado, filtra o DataFrame antes
+        if estado:
+            # Garante que estamos comparando maiúsculo com maiúsculo
+            df = df[df['Sigla do Estado'].str.upper() == estado.upper()]
+
+        # Pega os valores únicos da coluna padronizada, remove nulos e ordena
+        municipios = df['NM_MUN_PADRONIZADO'].dropna().unique().tolist()
+        municipios.sort()
+        
+        return {"municipalities": municipios}
+    except Exception as e:
+        logger.error(f"Erro ao listar municípios: {e}")
+        return {"municipalities": []}
 
 # --- Bloco para rodar a aplicação ---
 if __name__ == "__main__":
