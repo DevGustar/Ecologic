@@ -1,4 +1,4 @@
-# Ecologic/src/backend/main.py (VERSÃO FINAL COM ENDPOINTS ANTIGOS E NOVOS)
+# Ecologic/src/backend/main.py (VERSÃO ESTÁVEL E CORRIGIDA)
 
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,6 +10,7 @@ from typing import List, Optional
 import json
 import pandas as pd
 import geopandas as gpd
+import os
 
 from .api_connectors import buscar_clima_openweather, fetch_elevation_data, get_municipality_from_coords
 from .risk_calculator import calculate_daily_risk, calculate_hourly_risk
@@ -21,145 +22,175 @@ logger = logging.getLogger(__name__)
 
 models.Base.metadata.create_all(bind=database.engine)
 app = FastAPI(title="EcoLogic 2.0 API")
-origins = [ "http://localhost:5173", "http://172.16.0.1:5173", "http://127.0.0.1:5173" ]
-app.add_middleware( CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"] )
+origins = ["http://localhost:5173", "http://172.16.0.1:5173", "http://127.0.0.1:5173"]
+app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-# --- Nossas variáveis globais para guardar TODOS os dados na memória ---
+# --- VARIÁVEIS GLOBAIS ---
 map_rivers_data: Optional[pd.DataFrame] = None
-gdf_municipios_pintado: Optional[gpd.GeoDataFrame] = None
+map_climate_data: Optional[pd.DataFrame] = None
+gdf_rivers_painted: Optional[gpd.GeoDataFrame] = None
+gdf_climate_painted: Optional[gpd.GeoDataFrame] = None
 municipal_river_risk_map: dict = {}
-map_states_geojson_data: Optional[gpd.GeoDataFrame] = None # Para o endpoint antigo
+map_states_geojson_data: Optional[gpd.GeoDataFrame] = None
 
 def get_risk_classification_from_note(risk_note: float) -> str:
     if risk_note >= 8: return "Crítico"
     if risk_note >= 6: return "Alto"
     if risk_note >= 4: return "Moderado"
     if risk_note >= 2: return "Baixo"
-    if risk_note > 0: return "Mínimo" # <-- O azul para notas baixas
-    return "Sem Dados" # Nota 0
+    if risk_note > 0: return "Mínimo"
+    return "Sem Dados"
 
 def get_db():
     db = database.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    try: yield db
+    finally: db.close()
 
 @app.on_event("startup")
 async def startup_event():
-    global map_rivers_data, gdf_municipios_pintado, municipal_river_risk_map, map_states_geojson_data
-    logger.info("Iniciando API e carregando todos os dados da 'Visão Mestra'...")
+    global map_rivers_data, map_climate_data, gdf_rivers_painted, gdf_climate_painted, municipal_river_risk_map, map_states_geojson_data
+    logger.info("Iniciando API...")
     
-    # A função de loader agora retorna as 4 peças
-    loaded_rivers, loaded_gdf_painted, loaded_risk_map, loaded_states_gdf = map_data_loader.load_all_map_data()
+    # TEM QUE SER 6 VARIÁVEIS AQUI
+    (rivers, climate, gdf_rios, gdf_clima, risk_map, states) = map_data_loader.load_all_map_data()
     
-    if loaded_rivers is not None:
-        map_rivers_data = loaded_rivers
-        logger.info(f"✅ Dados brutos de RIOS carregados. {len(map_rivers_data)} registros.")
-    if loaded_gdf_painted is not None:
-        gdf_municipios_pintado = loaded_gdf_painted
-        logger.info(f"✅ GeoJSON de MUNICÍPIOS (pintado) carregado.")
-    if loaded_risk_map:
-        municipal_river_risk_map = loaded_risk_map
-        logger.info(f"✅ DICIONÁRIO DE RISCO (Fusão Mestra) CARREGADO. {len(municipal_river_risk_map)} municípios.")
-    if loaded_states_gdf is not None:
-        map_states_geojson_data = loaded_states_gdf
-        logger.info(f"✅ GeoJSON de ESTADOS (antigo) carregado.")
-        
-    logger.info("Carregamento de dados de mapa concluído.")
+    map_rivers_data = rivers
+    map_climate_data = climate
+    gdf_rivers_painted = gdf_rios
+    gdf_climate_painted = gdf_clima
+    municipal_river_risk_map = risk_map
+    map_states_geojson_data = states
+    
+    logger.info("Carga concluída.")
 
-# --- Endpoints da API ---
 @app.get("/")
-async def read_root(): return {"message": "API EcoLogic 2.0 está a funcionar!"}
+async def read_root(): return {"message": "API EcoLogic 2.0 Operacional"}
 
-
-# --- NOVOS ENDPOINTS MESTRES (MACRO ANÁLISE PARA O "COCKPIT") ---
-
+# --- KPIS E GRÁFICOS (GRC) ---
 @app.get("/macro/grc/kpis")
 def get_grc_kpi_data():
-    """
-    (VERSÃO REFINADA) Endpoint mestre para os KPIs do Cenário 1.
-    O Donut usa a lógica correta (5 níveis) e o Top 10 filtra rios duplicados.
-    """
-    logger.info("Calculando KPIs e Gráficos para o Dashboard GRC (Rios)...")
+    if map_rivers_data is None: raise HTTPException(status_code=503, detail="Dados indisponíveis.")
+    df = map_rivers_data.copy()
     
-    if map_rivers_data is None:
-        raise HTTPException(status_code=500, detail="Dados GRC (rios) não inicializados no servidor.")
+    # Garante numérico
+    if 'Nota_de_Risco' in df.columns:
+         df['Nota_de_Risco'] = pd.to_numeric(df['Nota_de_Risco'], errors='coerce').fillna(0)
 
-    df_rios = map_rivers_data
+    # 1. KPIs
+    kpi_medio = df['Nota_de_Risco'].mean()
+    kpi_criticos = df[df['Classificacao_Risco'] == 'Crítico'].shape[0]
+    kpi_mapeados = len(municipal_river_risk_map)
+    kpi_total = len(df)
+
+    # 2. Donut (5 Níveis, Sem Dados Filtrado)
+    df['Class_Nova'] = df['Nota_de_Risco'].apply(get_risk_classification_from_note)
+    df_donut = df[df['Class_Nova'] != 'Sem Dados']
+    donut_pct = df_donut['Class_Nova'].value_counts(normalize=True).mul(100)
+    donut_cnt = df_donut['Class_Nova'].value_counts()
+    donut_final = [{"name": k, "value": float(v), "count": int(donut_cnt.get(k, 0))} for k, v in donut_pct.items()]
+
+    # 3. Top 10 Rios (Sem Duplicatas e Com Dados GRC)
+    col_nome = 'NORIOCOMP' if 'NORIOCOMP' in df.columns else 'Nome do Rio'
     
-    # --- 1. Calcular KPIs ---
-    kpi_risco_medio = df_rios['Nota_de_Risco'].mean()
-    kpi_rios_criticos_count = df_rios[df_rios['Classificacao_Risco'] == 'Crítico'].shape[0]
-    kpi_municipios_mapeados = len(municipal_river_risk_map)
-    kpi_total_rios = len(df_rios)
-
-    # --- 2. Calcular Gráfico Donut (pela Nota Numérica) ---
-    df_rios['Classificacao_Risco_Nova'] = df_rios['Nota_de_Risco'].apply(get_risk_classification_from_note)
-    df_rios_com_dados = df_rios[df_rios['Classificacao_Risco_Nova'] != 'Sem Dados']
-    
-    donut_pct = df_rios_com_dados['Classificacao_Risco_Nova'].value_counts(normalize=True).mul(100)
-    donut_count = df_rios_com_dados['Classificacao_Risco_Nova'].value_counts()
-    
-    donut_data_final = []
-    for nivel, pct in donut_pct.items():
-        count = donut_count.get(nivel, 0)
-        donut_data_final.append({ "name": nivel, "value": float(pct), "count": int(count) })
-
-    # --- 3. Calcular Gráfico Top 10 Rios (LIMPO E SEM REPETIÇÃO) ---
-    coluna_nome_rio = 'NORIOCOMP' if 'NORIOCOMP' in df_rios.columns else 'Nome do Rio'
-    coluna_municipio = 'NM_MUN_PADRONIZADO'
-
-    if coluna_nome_rio not in df_rios.columns or coluna_municipio not in df_rios.columns:
-        top_rios_data = []
+    if col_nome in df.columns:
+        # Filtra inválidos
+        df_clean = df[
+            (df[col_nome].notna()) & 
+            (df[col_nome] != '') &
+            (~df[col_nome].astype(str).str.lower().isin(['sem nome', 'rio desconhecido', 'nan']))
+        ].copy()
+        
+        # Ordena e Remove Duplicatas
+        df_clean = df_clean.sort_values('Nota_de_Risco', ascending=False)
+        df_unique = df_clean.drop_duplicates(subset=[col_nome], keep='first')
+        
+        top_10 = df_unique.head(10).apply(lambda r: {
+            "nome": f"{r[col_nome]} ({r.get('NM_MUN_PADRONIZADO', 'N/A')})",
+            "nota": float(r['Nota_de_Risco']),
+            "frequencia": str(r.get('Frequencia', 'N/A')),
+            "vulnerabilidade": str(r.get('Vulnerabilidade', 'N/A')),
+            "impacto": str(r.get('Impacto', 'N/A'))
+        }, axis=1).tolist()
     else:
-        # Filtra rios "sem nome"
-        df_rios_com_nome = df_rios[
-            (df_rios[coluna_nome_rio].notna()) & 
-            (df_rios[coluna_nome_rio].str.lower() != 'sem nome') &
-            (df_rios[coluna_nome_rio].str.lower() != 'rio desconhecido')
-        ]
-        
-        # MUDANÇA: Ordena por Risco, remove os nomes duplicados (mantendo só o de maior risco)
-        df_rios_unicos = df_rios_com_nome.sort_values(by='Nota_de_Risco', ascending=False)
-        df_rios_unicos = df_rios_unicos.drop_duplicates(subset=[coluna_nome_rio], keep='first')
-        
-        # Pega os 10 maiores
-        top_rios_df = df_rios_unicos.head(10)
-        
-        top_rios_data = top_rios_df.apply(
-            lambda row: {
-                "nome": f"{row.get(coluna_nome_rio)} ({row.get(coluna_municipio, 'N/A')})",
-                "nota": row.get('Nota_de_Risco', 0)
-            },
-            axis=1
-        ).tolist()
+        top_10 = []
 
     return {
-        "kpis": {
-            "riscoNacionalMedio": kpi_risco_medio,
-            "riosEmRiscoCritico": kpi_rios_criticos_count,
-            "municipiosMapeadosGRC": kpi_municipios_mapeados,
-            "totalDeRios": kpi_total_rios
-        },
-        "graficos": {
-            "riscoPorNivel": donut_data_final,
-            "topRiosPorRisco": top_rios_data
-        }
+        "kpis": {"riscoNacionalMedio": kpi_medio, "riosEmRiscoCritico": kpi_criticos, "municipiosMapeadosGRC": kpi_mapeados, "totalDeRios": kpi_total},
+        "graficos": {"riscoPorNivel": donut_final, "topRiosPorRisco": top_10}
     }
 
 @app.get("/macro/grc/map")
 def get_grc_map_data():
-  
-    if gdf_municipios_pintado is None:
-        raise HTTPException(status_code=500, detail="Mapa GRC (municípios) não inicializado no servidor.")
+    if gdf_rivers_painted is None: raise HTTPException(status_code=503, detail="Mapa indisponível.")
+    return json.loads(gdf_rivers_painted.to_json())
+
+# --- OUTROS ENDPOINTS (Clima, Explorador, Ativos...) MANTIDOS ---
+# (Para economizar espaço, estou omitindo os outros endpoints que já estão certos e não mudaram.
+# Mantenha o restante do seu arquivo igual.)
+
+@app.get("/macro/clima/kpis")
+def get_clima_kpi_data():
+    if map_climate_data is None: return {} # Retorna vazio se não tiver clima
+    df = map_climate_data.copy()
+    col_nota = 'nota_de_risco' if 'nota_de_risco' in df.columns else 'risk_score'
+    if col_nota not in df.columns: return {}
+    df[col_nota] = pd.to_numeric(df[col_nota], errors='coerce').fillna(0)
     
-    logger.info("Enviando GeoJSON de Risco de Rios (por Município) para o frontend.")
-    return json.loads(gdf_municipios_pintado.to_json())
+    kpi_medio = df[col_nota].mean()
+    kpi_criticos = df[df[col_nota] >= 8].shape[0]
+    kpi_atencao = df[df[col_nota] >= 6].shape[0]
+    
+    df['Class_Clima'] = df[col_nota].apply(get_risk_classification_from_note)
+    donut_pct = df['Class_Clima'].value_counts(normalize=True).mul(100)
+    donut_cnt = df['Class_Clima'].value_counts()
+    donut_final = [{"name": k, "value": float(v), "count": int(donut_cnt.get(k, 0))} for k, v in donut_pct.items()]
 
+    top_10 = df.sort_values(col_nota, ascending=False).head(10).apply(lambda r: {
+        "nome": f"{r.get('municipio', 'N/A')} ({r.get('uf', 'N/A')})",
+        "nota": float(r[col_nota]),
+        "frequencia": "N/A", "vulnerabilidade": "N/A", "impacto": "N/A"
+    }, axis=1).tolist()
 
-# --- Endpoints de Ativos (Micro Análise - 100% Inalterados e Funcionais) ---
+    return {
+        "kpis": {"riscoClimaNacionalMedio": kpi_medio, "municipiosAlertaCritico": kpi_criticos, "municipiosEmAtencao": kpi_atencao},
+        "graficos": {"riscoPorNivel": donut_final, "topRiosPorRisco": top_10}
+    }
 
+@app.get("/macro/clima/map")
+def get_clima_map_data():
+    if gdf_climate_painted is None: raise HTTPException(status_code=503, detail="Mapa indisponível.")
+    return json.loads(gdf_climate_painted.to_json())
+
+@app.get("/macro/rivers/search")
+def search_rivers(estado: Optional[str] = None, municipio: Optional[str] = None, classificacao: Optional[str] = None):
+    if map_rivers_data is None: raise HTTPException(status_code=503, detail="Dados indisponíveis.")
+    df = map_rivers_data.copy()
+    if 'Nota_de_Risco' in df.columns: df['Nota_de_Risco'] = pd.to_numeric(df['Nota_de_Risco'], errors='coerce').fillna(0)
+    
+    if estado: df = df[df['Sigla do Estado'].str.upper() == estado.upper()]
+    if municipio: df = df[df['NM_MUN_PADRONIZADO'].str.upper() == municipio.upper()]
+    
+    df['Classificacao_Calculada'] = df['Nota_de_Risco'].apply(get_risk_classification_from_note)
+    if classificacao: df = df[df['Classificacao_Calculada'].str.upper() == classificacao.upper()]
+
+    df_result = df.sort_values('Nota_de_Risco', ascending=False).head(2000)
+    for col in ['Impacto', 'Frequencia', 'Vulnerabilidade']:
+        if col in df_result.columns: df_result[col] = df_result[col].fillna('N/A')
+        
+    return json.loads(df_result.to_json(orient='records'))
+
+@app.get("/macro/options/municipalities")
+def get_unique_municipalities(estado: Optional[str] = None):
+    if map_rivers_data is None: return {"municipalities": []}
+    try:
+        df = map_rivers_data
+        if estado: df = df[df['Sigla do Estado'].str.upper() == estado.upper()]
+        municipios = df['NM_MUN_PADRONIZADO'].dropna().unique().tolist()
+        municipios.sort()
+        return {"municipalities": municipios}
+    except Exception: return {"municipalities": []}
+
+# --- Endpoints de Ativos ---
 @app.post("/assets", response_model=schemas.Asset)
 def create_asset(asset: schemas.AssetCreate, db: Session = Depends(get_db)): 
     asset_id = str(uuid.uuid4())
@@ -169,13 +200,10 @@ def create_asset(asset: schemas.AssetCreate, db: Session = Depends(get_db)):
     if municipality_name:
         fator_risco_rio = municipal_river_risk_map.get(municipality_name, 1.0)
         logger.info(f"Ativo em '{municipality_name}'. Fator de Risco de Rio aplicado: {fator_risco_rio}")
-    else:
-        logger.warning(f"Não foi possível encontrar o município para o ativo '{asset.name}'. Fator de risco de rio usará o padrão 1.0.")
     new_asset_model = models.Asset( asset_uuid=asset_id, name=asset.name, latitude=asset.latitude, longitude=asset.longitude, elevation_m=elevation, river_risk_factor=fator_risco_rio )
     db.add(new_asset_model)
     db.commit()
     db.refresh(new_asset_model)
-    logger.info(f"Ativo criado: {new_asset_model.name} com Fator de Rio: {fator_risco_rio}")
     return new_asset_model
 
 @app.get("/assets", response_model=List[schemas.Asset])
@@ -214,7 +242,7 @@ def get_asset_risk_explanation(asset_id: str, db: Session = Depends(get_db)):
     dados_brutos_clima = buscar_clima_openweather(lat=asset.latitude, lon=asset.longitude)
     if not dados_brutos_clima or "daily" not in dados_brutos_clima or not dados_brutos_clima["daily"]: raise HTTPException(status_code=503, detail="Previsão de hoje indisponível.")
     previsao_hoje = dados_brutos_clima['daily'][0]
-    dados_climaticos_hoje = {"volume_chuva_mm": previsao_hoje.get('rain', 0), "prob_chuva_%": previsao_um_dia.get('pop', 0) * 100, "rajadas_kmh": previsao_um_dia.get('wind_gust', 0) * 3.6, "pressao_hpa": previsao_um_dia.get('pressure', 1013), "umidade_%": previsao_um_dia.get('humidity', 50)}
+    dados_climaticos_hoje = {"volume_chuva_mm": previsao_hoje.get('rain', 0), "prob_chuva_%": previsao_hoje.get('pop', 0) * 100, "rajadas_kmh": previsao_hoje.get('wind_gust', 0) * 3.6, "pressao_hpa": previsao_hoje.get('pressure', 1013), "umidade_%": previsao_hoje.get('humidity', 50)}
     if dados_climaticos_hoje["volume_chuva_mm"] is None: dados_climaticos_hoje["volume_chuva_mm"] = 0
     dados_estruturais_ativo = {"elevation_m": asset.elevation_m, "river_risk_factor": asset.river_risk_factor}
     analise_detalhada = calculate_daily_risk(climate_data=dados_climaticos_hoje, structural_data=dados_estruturais_ativo)
@@ -257,7 +285,6 @@ def get_asset_hourly_risk(asset_id: str, db: Session = Depends(get_db)):
     dados_finais = [clima_atual] + previsao_horaria_enriquecida
     return {"asset_info": asset, "hourly_forecast_with_risk": dados_finais}
 
-# --- ENDPOINTS ANTIGOS (MANTIDOS PARA NÃO QUEBRAR NADA) ---
 @app.get("/map_data/rivers")
 async def get_map_rivers_data():
     if map_rivers_data is None: raise HTTPException(status_code=503, detail="Dados de rios não carregados.")
@@ -268,89 +295,5 @@ async def get_map_states_geojson():
     if map_states_geojson_data is None: raise HTTPException(status_code=503, detail="GeoJSON de estados não carregado.")
     return json.loads(map_states_geojson_data.to_json())
 
-# Em src/backend/main.py
-
-# --- NOVO ENDPOINT DE EXPLORAÇÃO GRC ---
-@app.get("/macro/rivers/search")
-def search_rivers(
-    estado: Optional[str] = None,
-    municipio: Optional[str] = None,
-    classificacao: Optional[str] = None
-):
-    """
-    Endpoint de Análise Exploratória. Permite filtrar os rios por Estado,
-    Município ou Classificação.
-    """
-    logger.info(f"Busca exploratória iniciada. Filtros: {estado}, {municipio}, {classificacao}")
-
-    if map_rivers_data is None:
-        raise HTTPException(status_code=500, detail="Dados de rios não carregados.")
-
-    df_filtered = map_rivers_data.copy()
-    
-    # 1. Filtro por Estado
-    if estado:
-        # A coluna é 'Sigla do Estado' no seu CSV
-        df_filtered = df_filtered[df_filtered['Sigla do Estado'].str.upper() == estado.upper()]
-        
-    # 2. Filtro por Município
-    if municipio:
-        # A coluna é 'NM_MUN_PADRONIZADO'
-        df_filtered = df_filtered[df_filtered['NM_MUN_PADRONIZADO'].str.upper() == municipio.upper()]
-
-    # 3. Filtro por Classificação
-    if classificacao:
-        # A coluna é 'Classificacao_Risco'
-        df_filtered = df_filtered[df_filtered['Classificacao_Risco'].str.upper() == classificacao.upper()]
-
-    # Colunas essenciais que o frontend espera (incluindo as GRC)
-    colunas_essenciais = [
-        'Sigla do Estado', 'Nome do Rio', 'NM_MUN_PADRONIZADO', 'Classificacao_Risco', 
-        'Nota_de_Risco', 'Impacto', 'Frequencia', 'Vulnerabilidade'
-    ]
-    
-    # Seleciona as colunas, ordenando pelo risco
-    df_result = df_filtered.sort_values(by='Nota_de_Risco', ascending=False)
-    
-    # Limita o resultado (Máximo 2000 resultados por busca)
-    df_result = df_result.head(2000) 
-    
-    # Preenche NaN com texto para evitar quebras no frontend
-    for col in ['Impacto', 'Frequencia', 'Vulnerabilidade']:
-        if col in df_result.columns:
-            df_result[col] = df_result[col].fillna('N/A')
-
-    # Retorna o resultado como JSON
-    return json.loads(df_result[colunas_essenciais].to_json(orient='records'))
-
-# Em src/backend/main.py
-
-@app.get("/macro/options/municipalities")
-def get_unique_municipalities(estado: Optional[str] = None):
-    """
-    Retorna a lista de municípios.
-    SE um estado for informado (?estado=SP), retorna só os municípios daquele estado.
-    """
-    if map_rivers_data is None:
-        return {"municipalities": []}
-    
-    try:
-        df = map_rivers_data.copy()
-        
-        # FILTRO DE CASCATA: Se veio um estado, filtra o DataFrame antes
-        if estado:
-            # Garante que estamos comparando maiúsculo com maiúsculo
-            df = df[df['Sigla do Estado'].str.upper() == estado.upper()]
-
-        # Pega os valores únicos da coluna padronizada, remove nulos e ordena
-        municipios = df['NM_MUN_PADRONIZADO'].dropna().unique().tolist()
-        municipios.sort()
-        
-        return {"municipalities": municipios}
-    except Exception as e:
-        logger.error(f"Erro ao listar municípios: {e}")
-        return {"municipalities": []}
-
-# --- Bloco para rodar a aplicação ---
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
