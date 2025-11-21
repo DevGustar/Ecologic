@@ -1,38 +1,29 @@
-// src/cockpit/components/CockpitSidebar.jsx (VERSÃO FINAL - KPIS COLORIDOS)
+// src/cockpit/components/CockpitSidebar.jsx (VERSÃO FINAL COM MODAL DE ATIVO)
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import CreateAssetModal from './CreateAssetModal'; // <--- IMPORTA O MODAL
 import './CockpitSidebar.css';
 
-// --- 1. Função Auxiliar de Cores para KPIs ---
+// (Funções Auxiliares mantidas...)
 const getKpiColor = (value, type) => {
   const val = parseFloat(value);
   if (isNaN(val)) return 'var(--texto-principal)';
-
-  // Para Notas de Risco (0 a 10)
   if (type === 'score') {
-    if (val >= 8) return 'var(--cor-critica)'; // Vermelho
-    if (val >= 6) return 'var(--cor-alerta)';  // Laranja
-    if (val >= 4) return 'var(--cor-cuidado)'; // Amarelo
-    return 'var(--cor-sucesso)';               // Verde
+    if (val >= 8) return 'var(--cor-critica)'; 
+    if (val >= 6) return 'var(--cor-alerta)';  
+    if (val >= 4) return 'var(--cor-cuidado)'; 
+    return 'var(--cor-sucesso)';               
   }
-
-  // Para Contagens (Alertas)
   if (type === 'count') {
-    if (val > 0) return 'var(--cor-critica)'; // Tem alerta! (Vermelho)
-    return 'var(--cor-sucesso)';              // Zero alertas (Verde)
+    if (val > 0) return 'var(--cor-critica)'; 
+    return 'var(--cor-sucesso)';              
   }
-  
-  // Para Totais (Neutro)
   return 'var(--acento-primario)';
 };
 
-
-// --- 2. Componente KPI Card Atualizado (Recebe cor) ---
 const KpiCard = ({ title, value, unit = "", type = "neutral" }) => {
-  // Calcula a cor baseado no valor e no tipo
   const color = getKpiColor(value, type);
-
   return (
     <div className="cockpit-kpi-card">
       <span className="kpi-title">{title}</span>
@@ -46,68 +37,35 @@ const KpiCard = ({ title, value, unit = "", type = "neutral" }) => {
 
 const CockpitSidebar = ({ kpis, isLoading, activeFocus, setActiveFocus, activeIntel, setActiveIntel }) => {
   
+  // Estado para controlar a abertura do Modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const isGrcExplorerActive = activeFocus === 'nacional' && activeIntel === 'rios'; 
 
   const renderKpis = () => {
     if (isLoading) return <div className="loading-text">Carregando Inteligência...</div>;
     if (!kpis) return <div className="error-text">Aguardando Dados...</div>;
     
-    // --- CENÁRIO 1: RIOS ---
     if (activeIntel === 'rios') {
       return (
         <div className="kpi-section">
           <h3 className="kpi-section-title">Visão GRC (Rios)</h3>
-          
-          <KpiCard 
-            title="Risco Nacional Médio" 
-            value={kpis.riscoNacionalMedio ? kpis.riscoNacionalMedio.toFixed(2) : '--'} 
-            type="score" // Vai colorir de acordo com a nota
-          />
-          <KpiCard 
-            title="Rios em Risco Crítico" 
-            value={kpis.riosEmRiscoCritico || 0} 
-            type="count" // Se tiver > 0, fica vermelho
-          />
-          <KpiCard 
-            title="Municípios Mapeados" 
-            value={kpis.municipiosMapeadosGRC || 0} 
-            type="neutral" // Sempre azul/padrão
-          />
-          <KpiCard 
-            title="Total de Registros" 
-            value={kpis.totalDeRios || 0} 
-            type="neutral"
-          />
+          <KpiCard title="Risco Nacional Médio" value={kpis.riscoNacionalMedio ? kpis.riscoNacionalMedio.toFixed(2) : '--'} type="score" />
+          <KpiCard title="Rios em Risco Crítico" value={kpis.riosEmRiscoCritico || 0} type="count" />
+          <KpiCard title="Municípios Mapeados" value={kpis.municipiosMapeadosGRC || 0} type="neutral" />
+          <KpiCard title="Total de Registros" value={kpis.totalDeRios || 0} type="neutral" />
         </div>
       );
     }
 
-    // --- CENÁRIO 2: CLIMA (AGORA COLORIDO) ---
     if (activeIntel === 'clima') {
       return (
         <div className="kpi-section">
           <h3 className="kpi-section-title" style={{ color: '#3b82f6' }}>Visão Climática (Hoje)</h3>
-          
-          <KpiCard 
-            title="Risco Climático Médio" 
-            value={kpis.riscoClimaNacionalMedio ? kpis.riscoClimaNacionalMedio.toFixed(2) : '--'} 
-            type="score" // Fica Verde/Amarelo/Vermelho dependendo da média
-          />
-          <KpiCard 
-            title="Alertas Críticos (Tempestade)" 
-            value={kpis.municipiosAlertaCritico || 0} 
-            type="count" // Vermelho se tiver alertas
-          />
-          <KpiCard 
-            title="Zonas em Atenção" 
-            value={kpis.municipiosEmAtencao || 0} 
-            type="count" // Vermelho se tiver atenção
-          />
-          <KpiCard 
-            title="Municípios Monitorados" 
-            value="5570" 
-            type="neutral"
-          />
+          <KpiCard title="Risco Climático Médio" value={kpis.riscoClimaNacionalMedio ? kpis.riscoClimaNacionalMedio.toFixed(2) : '--'} type="score" />
+          <KpiCard title="Alertas Críticos (Tempestade)" value={kpis.municipiosAlertaCritico || 0} type="count" />
+          <KpiCard title="Zonas em Atenção" value={kpis.municipiosEmAtencao || 0} type="count" />
+          <KpiCard title="Municípios Monitorados" value="5570" type="neutral" />
         </div>
       );
     }
@@ -121,7 +79,6 @@ const CockpitSidebar = ({ kpis, isLoading, activeFocus, setActiveFocus, activeIn
         <h2 className="cockpit-title">Ecologic 2.0</h2>
       </div>
 
-      {/* Botão Explorador GRC */}
       {isGrcExplorerActive && (
         <div className="toggle-section nav-explorer-section">
           <h4 className="toggle-title">Ferramentas de Auditoria</h4>
@@ -129,19 +86,24 @@ const CockpitSidebar = ({ kpis, isLoading, activeFocus, setActiveFocus, activeIn
         </div>
       )}
 
-      {/* Foco de Análise */}
       <div className="toggle-section">
         <h4 className="toggle-title">Foco de Análise</h4>
         <div className="toggle-group">
           <button className={`toggle-button ${activeFocus === 'nacional' ? 'active' : ''}`} onClick={() => setActiveFocus('nacional')}>Visão Nacional</button>
           <button className={`toggle-button ${activeFocus === 'ativos' ? 'active' : ''}`} onClick={() => setActiveFocus('ativos')}>Meus Ativos</button>
         </div>
+        
+        {/* Botão Criar Ativo - Agora abre o Modal! */}
         {activeFocus === 'ativos' && (
-            <button className="create-asset-button" onClick={() => alert("Em breve: Criação de Ativo")}>+ Criar Novo Ativo</button>
+            <button 
+                className="create-asset-button" 
+                onClick={() => setIsModalOpen(true)} // Abre o modal
+            >
+                + Criar Novo Ativo
+            </button>
         )}
       </div>
       
-      {/* Camada de Inteligência */}
       <div className="toggle-section">
         <h4 className="toggle-title">Camada de Inteligência</h4>
         <div className="toggle-group-vertical">
@@ -151,10 +113,16 @@ const CockpitSidebar = ({ kpis, isLoading, activeFocus, setActiveFocus, activeIn
         </div>
       </div>
 
-      {/* KPIs */}
       <div className="cockpit-sidebar-content">
         {renderKpis()}
       </div>
+
+      {/* Renderiza o Modal aqui */}
+      <CreateAssetModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+      />
+
     </aside>
   );
 };

@@ -76,6 +76,7 @@ function CockpitPage() {
         <CockpitMap 
             mapFilter={mapFilter} 
             activeIntel={activeIntel} 
+            activeFocus={activeFocus}
         />
       </main>
 

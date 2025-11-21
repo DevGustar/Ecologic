@@ -1,0 +1,127 @@
+/* src/cockpit/components/CreateAssetModal.css */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7); /* Fundo escuro transparente */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(3px); /* Efeito de desfoque no fundo */
+}
+
+.modal-container {
+  background-color: var(--fundo-secundario);
+  width: 450px;
+  padding: 2rem;
+  border-radius: 12px;
+  border: 1px solid var(--borda);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  position: relative;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--borda-sutil);
+  padding-bottom: 1rem;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: var(--texto-principal);
+  font-family: var(--fonte-titulo);
+  font-size: 1.5rem;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: var(--texto-secundario);
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.close-button:hover {
+  color: var(--cor-critica);
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--texto-secundario);
+  font-size: 0.9rem;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--borda-sutil);
+  background-color: var(--fundo-principal);
+  color: var(--texto-principal);
+  font-size: 1rem;
+  outline: none;
+  box-sizing: border-box;
+}
+.form-group input:focus {
+  border-color: var(--acento-primario);
+}
+
+.coords-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.btn-cancel {
+  background-color: transparent;
+  border: 1px solid var(--borda-sutil);
+  color: var(--texto-secundario);
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn-cancel:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.btn-save {
+  background-color: var(--acento-primario);
+  border: none;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn-save:hover {
+  background-color: var(--acento-secundario);
+}
+.btn-save:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}

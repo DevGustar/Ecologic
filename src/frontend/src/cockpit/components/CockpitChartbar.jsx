@@ -125,14 +125,14 @@ const CockpitChartbar = ({ graficos, isLoading, onFilterChange, activeFilter, ac
         {/* Donut */}
         <div className="grafico-section">
           <h4>{titleDonut}</h4>
-          <ResponsiveContainer width="100%" height={300}> 
+          <ResponsiveContainer width="100%" height={310}> 
             <PieChart>
               <Pie
                 data={donutData}
                 cx="50%"
                 cy="45%"
-                innerRadius={60}
-                outerRadius={90}
+                innerRadius={50}
+                outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
                 labelLine={false}
@@ -162,11 +162,11 @@ const CockpitChartbar = ({ graficos, isLoading, onFilterChange, activeFilter, ac
         {/* Barra */}
         <div className="grafico-section">
           <h4>{titleBar}</h4>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={270}>
             <BarChart data={topData} layout="vertical" margin={{ left: 10, right: 30 }} barCategoryGap="25%">
               <CartesianGrid strokeDasharray="3 3" stroke="var(--borda-sutil)" />
-              <XAxis type="number" stroke="var(--texto-secundario)" domain={[0, 10]} ticks={[0, 2.5, 5, 7.5, 10]} />
-              <YAxis type="category" dataKey="nomeCurto" width={100} stroke="var(--texto-secundario)" fontSize="0.8rem" tickLine={false} axisLine={false} interval={0} />
+              <XAxis type="number" stroke="var(--texto-secundario)" domain={[0, 10]} ticks={[0, 5, 10]} />
+              <YAxis type="category" dataKey="nomeCurto" width={130} stroke="var(--texto-secundario)" fontSize="0.8rem" tickLine={false} axisLine={false} interval={0} />
               
               <Tooltip 
                 cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
