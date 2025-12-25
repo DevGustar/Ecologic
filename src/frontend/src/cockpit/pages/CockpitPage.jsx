@@ -1,4 +1,4 @@
-// src/cockpit/pages/CockpitPage.jsx (VERSÃO BLINDADA)
+// src/cockpit/pages/CockpitPage.jsx (VERSÃO BLINDADA + FUSÃO MESTRA)
 
 import React, { useState, useEffect } from 'react';
 import CockpitSidebar from '../components/CockpitSidebar';
@@ -8,7 +8,8 @@ import './CockpitPage.css';
 
 function CockpitPage() {
   const [activeFocus, setActiveFocus] = useState('nacional');
-  const [activeIntel, setActiveIntel] = useState('rios'); 
+  // Alterado default para 'mestre' para já iniciar na visão fundida (opcional)
+  const [activeIntel, setActiveIntel] = useState('mestre'); 
   const [mapFilter, setMapFilter] = useState(null);
 
   const [kpis, setKpis] = useState(null);
@@ -24,8 +25,11 @@ function CockpitPage() {
       
       try {
         let urlKpi = '';
+        
+        // --- SELEÇÃO DE ENDPOINT ---
         if (activeIntel === 'rios') urlKpi = 'http://127.0.0.1:8000/macro/grc/kpis';
         else if (activeIntel === 'clima') urlKpi = 'http://127.0.0.1:8000/macro/clima/kpis';
+        else if (activeIntel === 'mestre') urlKpi = 'http://127.0.0.1:8000/macro/mestre/kpis'; // <--- NOVAROTA ADICIONADA
         else { setIsLoading(false); return; }
 
         const response = await fetch(urlKpi);
@@ -46,6 +50,7 @@ function CockpitPage() {
         if (data && data.graficos) {
             setGraficos({
                 riscoPorNivel: data.graficos.riscoPorNivel || [],
+                // O Backend Mestre retorna 'topRiosPorRisco', então essa lógica mantém a compatibilidade
                 topRiosPorRisco: data.graficos.topRiosPorRisco || data.graficos.topMunicipios || []
             });
         }

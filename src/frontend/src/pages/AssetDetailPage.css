@@ -1,168 +1,242 @@
-/* src/pages/AssetDetailPage.css (VERSÃO FINAL COMPLETA E REFINADA) */
+/* src/frontend/pages/AssetDetailPage.css */
 
-.asset-detail-page-container {
-  height: 100vh;
-  box-sizing: border-box; 
-  padding: 2vh 2.5vw;
-  background-color: var(--fundo-principal);
-  color: var(--texto-principal);
-  display: flex;
-  flex-direction: column;
+.asset-page-container {
+    padding: 2rem;
+    min-height: 100vh;
+    background-color: var(--fundo-principal);
+    color: var(--texto-principal);
+    overflow-x: hidden;
 }
-
-.asset-detail-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  flex-shrink: 0;
-}
-.asset-detail-header h1 { font-family: var(--fonte-titulo); font-size: 2.5rem; margin: 0; font-weight: 700; }
-.asset-detail-header h1 span { color: var(--acento-primario); }
-.back-link { color: var(--texto-secundario); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; }
-.back-link:hover { color: var(--texto-principal); }
-
-.analysis-layout-wrapper {
-  flex-grow: 1;
-  display: grid;
-  grid-template-columns: 3fr 4fr; 
-  gap: 2rem;
-  min-height: 0;
-  overflow: hidden;
+  
+.asset-header {
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--borda-sutil);
+    padding-bottom: 1rem;
 }
 
-.analysis-sidebar-main {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  min-width: 450px;
-  min-height: 0;
+.asset-header h1 {
+    font-size: 2rem;
+    margin: 0.5rem 0;
+    font-family: var(--fonte-titulo);
 }
 
-/* KPI Compacto */
-.kpi-panel {
-  background-color: var(--fundo-secundario);
-  border: 1px solid var(--borda);
-  border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-  padding: 1.5rem;
-  text-align: center;
+.asset-meta-tags {
+    display: flex;
+    gap: 1rem;
 }
-.kpi-panel .kpi-title { font-size: 0.9rem; color: var(--texto-secundario); margin-bottom: 0.8rem; text-transform: uppercase; letter-spacing: 1.5px; }
-.kpi-panel .kpi-value { font-family: var(--fonte-titulo); font-size: 3.5rem; font-weight: 800; line-height: 1; }
-.kpi-panel-interactive { position: relative; cursor: pointer; transition: background-color 0.2s ease; }
-.kpi-panel-interactive:hover { background-color: rgba(255, 255, 255, 0.05); }
-
-/* Estilo "Pill" moderno para as abas */
-.analysis-tabs {
-  display: flex;
-  background-color: var(--fundo-secundario);
-  border-radius: 10px;
-  padding: 4px;
-  border: 1px solid var(--borda);
-}
-.tab-button {
-  flex: 1;
-  padding: 0.6rem 1rem;
-  background-color: transparent;
-  border: none;
-  border-radius: 8px;
-  color: var(--texto-secundario);
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-}
-.tab-button:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-  color: var(--texto-principal);
-}
-.tab-button.active {
-  background-color: var(--acento-primario);
-  color: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+.meta-tag {
+    background: var(--fundo-secundario);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    border: 1px solid var(--borda-sutil);
+    color: var(--texto-secundario);
 }
 
-.sidebar-tab-content {
-  flex-grow: 1;
-  min-height: 0;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  padding-right: 10px;
+/* GRID LAYOUT */
+.asset-grid {
+    display: grid;
+    grid-template-columns: 450px 1fr; /* Esquerda Fixa | Direita Mapa */
+    gap: 2rem;
+    height: calc(100vh - 180px);
 }
 
-.analysis-grid-content {
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
+.asset-col-left {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    overflow-y: auto; /* Permite scroll na lista se for muito grande */
+    padding-right: 10px;
 }
 
-/* Painéis de Conteúdo */
-.details-panel, .risk-forecast-panel, .tendencia-analysis-panel, .current-weather-panel {
-  background-color: var(--fundo-secundario);
-  border: 1px solid var(--borda);
-  border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-  padding: 1.5rem;
+/* CARD PRINCIPAL */
+.risk-card-main {
+    background: var(--fundo-secundario);
+    padding: 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+    border-width: 2px;
+    border-style: solid;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+.risk-score-big {
+    font-size: 4rem;
+    font-weight: 800;
+    line-height: 1;
+    margin: 10px 0;
+}
+.weather-quick-view {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    color: var(--texto-secundario);
+    font-size: 0.9rem;
 }
 
-.details-panel, .risk-forecast-panel { flex: 1; }
-
-.details-panel h4, .risk-forecast-panel h4, .tendencia-analysis-panel h4, .current-weather-panel h4 {
-  margin: 0 0 1rem 0;
-  font-family: var(--fonte-titulo);
-  font-size: 1.2rem;
-  border-bottom: 1px solid var(--borda);
-  padding-bottom: 0.8rem;
+/* TOGGLES */
+.view-toggles {
+    display: flex;
+    background: var(--fundo-secundario);
+    padding: 4px;
+    border-radius: 8px;
+    border: 1px solid var(--borda-sutil);
+}
+.view-toggles button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--texto-secundario);
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: 0.3s;
+}
+.view-toggles button.active {
+    background: var(--acento-primario);
+    color: white;
 }
 
-/* Classe para o novo resumo em português */
-.forecast-summary {
-  font-style: italic;
-  color: var(--texto-secundario);
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-  line-height: 1.4;
+/* GRÁFICO */
+.chart-section {
+    background: var(--fundo-secundario);
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--borda-sutil);
+}
+.custom-chart-tooltip {
+    background: #1a1a1a;
+    border: 1px solid #444;
+    padding: 10px;
+    border-radius: 4px;
+}
+.tooltip-header {
+    font-weight: bold;
+    border-bottom: 1px solid #444;
+    margin-bottom: 5px;
+    padding-bottom: 3px;
+    color: #fff;
 }
 
-.weather-details { display: flex; flex-direction: column; gap: 0.8rem; border-top: 1px solid var(--borda); padding-top: 1rem; }
-.weather-details span { display: flex; justify-content: space-between; }
-
-.hourly-analysis-panel, .tendencia-analysis-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+/* LISTA INTELIGENTE (TOOLTIP NO HOVER) */
+.forecast-list-container {
+    background: var(--fundo-secundario);
+    border-radius: 12px;
+    border: 1px solid var(--borda-sutil);
+    padding: 1rem;
+    flex: 1; /* Ocupa o resto do espaço */
+    display: flex;
+    flex-direction: column;
 }
 
-/* Área do Mapa */
-.analysis-map-area {
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--borda);
+.forecast-list-scroll {
+    overflow-y: auto;
+    flex: 1;
+    padding-right: 5px;
 }
 
-/* Estilos dos Gráficos (mantido do original) */
-.risk-trend-chart-content {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+.forecast-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--borda-sutil);
+    position: relative; /* Necessário para o Tooltip Absoluto */
+    cursor: help;
+    transition: background 0.2s;
 }
-.risk-trend-chart-content h4 {
-  margin: 0 0 1rem 0;
-  font-family: var(--fonte-titulo);
-  font-size: 1.2rem;
-  color: var(--texto-principal);
-  border-bottom: 1px solid var(--borda);
-  padding-bottom: 0.8rem;
+.forecast-item:hover {
+    background: rgba(255,255,255,0.05);
 }
-.risk-trend-chart-content svg {
-  width: 100%;
-  flex-grow: 1;
-  overflow: visible;
+
+.forecast-date {
+    width: 70px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--texto-secundario);
 }
-.chart-labels {
-  display: none;
+.forecast-bar-wrapper {
+    flex: 1;
+    height: 8px;
+    background: #333;
+    border-radius: 4px;
+    margin: 0 15px;
+    overflow: hidden;
+}
+.forecast-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+}
+.forecast-score {
+    width: 40px;
+    font-weight: bold;
+    text-align: right;
+}
+
+/* --- O TOOLTIP FLUTUANTE DA LISTA --- */
+.attribute-tooltip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: 100%; /* Aparece acima do item */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 250px;
+    background-color: rgba(20, 20, 20, 0.95);
+    border: 1px solid var(--borda);
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    z-index: 1000;
+    transition: opacity 0.3s, visibility 0.3s;
+    pointer-events: none; /* Mouse não interage com ele */
+}
+
+/* Seta do tooltip */
+.attribute-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(20, 20, 20, 0.95) transparent transparent transparent;
+}
+
+/* Mostrar tooltip no hover */
+.forecast-item:hover .attribute-tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+.tooltip-title {
+    color: var(--acento-primario);
+    font-weight: bold;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #444;
+    padding-bottom: 4px;
+}
+
+.tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+    color: #ddd;
+}
+
+.tooltip-note {
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: 8px;
+    font-style: italic;
+}
+
+/* MAPA */
+.asset-map-frame {
+    height: 100%;
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--borda);
 }
