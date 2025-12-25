@@ -1,5 +1,6 @@
 // src/cockpit/components/CockpitMap.jsx
-import React, { useState, useEffect } from "react";
+
+import React, { useState, useEffect, useMemo } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -13,7 +14,7 @@ import CockpitMapLegend from "./CockpitMapLegend";
 import "leaflet/dist/leaflet.css";
 import "./CockpitMap.css";
 
-// Ajuste de ícone padrão do Leaflet (para evitar problema do pino padrão não aparecer)
+// --- CORREÇÃO DE ÍCONES DO LEAFLET ---
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
 
@@ -26,59 +27,69 @@ let DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-// ---------------- Utilitários ----------------
+// --- UTILITÁRIOS ---
+
+// Normalização para garantir o match de nomes
 const norm = (v) => {
-  if (v === null || v === undefined) return "";
-  return String(v).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+  if (!v) return "";
+  return String(v)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+    .replace(/[^a-zA-Z0-9]/g, "")    // Remove caracteres especiais
+    .toUpperCase();
 };
 
+// Cores Oficiais da Legenda
 const getRiskColor = (risk) => {
-  const r = Number(risk);
-  if (r >= 8) return "var(--cor-critica)";
-  if (r >= 6) return "var(--cor-alerta)";
-  if (r >= 4) return "var(--cor-cuidado)";
-  if (r >= 2) return "var(--cor-sucesso)";
-  if (r > 0) return "var(--cor-neutra)";
-  return "transparent";
+  const r = Number(risk) || 0;
+  if (r >= 8) return "#e74c3c"; // Crítico (Vermelho)
+  if (r >= 6) return "#e67e22"; // Alto (Laranja)
+  if (r >= 4) return "#f1c40f"; // Moderado (Amarelo)
+  if (r >= 2) return "#2ecc71"; // Baixo (Verde)
+  if (r > 0) return "#3498db";  // Mínimo (Azul)
+  return "transparent";         // Sem dados
 };
 
 const getRiskLevel = (risk) => {
   const r = Number(risk);
+  if (isNaN(r) || r === 0) return "Sem Dados";
   if (r >= 8) return "Crítico";
   if (r >= 6) return "Alto";
   if (r >= 4) return "Moderado";
   if (r >= 2) return "Baixo";
-  if (r > 0) return "Mínimo";
-  return "Sem Dados";
+  return "Mínimo";
 };
 
-// ---------------- Zoom Inteligente ----------------
+// --- ZOOM HANDLER ---
 const MapZoomHandler = ({ mapFilter, geoJsonData, activeFocus, assetData }) => {
   const map = useMap();
 
   useEffect(() => {
-    // Visão ativos → foco nos marcadores
-    if (activeFocus === "ativos" && Array.isArray(assetData) && assetData.length > 0) {
-      const markers = assetData
-        .map((a) => {
-          const coords = a?.geometry?.coordinates;
-          if (!coords || coords.length < 2) return null;
-          return L.marker([coords[1], coords[0]]);
-        })
-        .filter(Boolean);
+    // 1. Zoom em Pontos (Ativos)
+    const hasAssets = Array.isArray(assetData) && assetData.length > 0;
+    if (hasAssets && (activeFocus === "ativos" || !geoJsonData)) {
+      const markers = assetData.map((a) => {
+          const c = a?.geometry?.coordinates;
+          if (!c || c.length < 2) return null;
+          return L.marker([c[1], c[0]]);
+      }).filter(Boolean);
 
-      if (markers.length === 0) return;
-
-      const group = L.featureGroup(markers);
-      map.fitBounds(group.getBounds(), { padding: [50, 50] });
-      return;
+      if (markers.length > 0) {
+        const group = L.featureGroup(markers);
+        try { map.fitBounds(group.getBounds(), { padding: [50, 50] }); } catch (e) {}
+        return;
+      }
     }
 
-    // Visão nacional (com ou sem filtro)
-    if (!geoJsonData) return;
+    // 2. Zoom em GeoJSON (Municípios)
+    if (!geoJsonData) {
+        // Se limpou o filtro e não tem shape, volta pro Brasil
+        if (!hasAssets && !mapFilter) map.flyTo([-14.235, -51.925], 4);
+        return;
+    }
 
     if (!mapFilter) {
-      map.flyTo([-14.235, -51.925], 4, { duration: 1.5 });
+      map.flyTo([-14.235, -51.925], 4);
       return;
     }
 
@@ -90,278 +101,244 @@ const MapZoomHandler = ({ mapFilter, geoJsonData, activeFocus, assetData }) => {
 
     if (feature) {
       const layer = L.geoJSON(feature);
-      map.flyToBounds(layer.getBounds(), { padding: [100, 100], maxZoom: 9, duration: 1.5 });
+      try { map.flyToBounds(layer.getBounds(), { padding: [100, 100], maxZoom: 9 }); } catch (e) {}
     }
   }, [mapFilter, geoJsonData, map, activeFocus, assetData]);
 
   return null;
 };
 
-// ---------------- Componente Principal ----------------
-const CockpitMap = ({ mapFilter, activeIntel = "rios", activeFocus = "nacional" }) => {
-  // props:
-  // - mapFilter (string) - filtro por nome do município ou nível (ex: "Crítico")
-  // - activeIntel ("rios" | "clima")
-  // - activeFocus ("nacional" | "ativos")
-  const [geoJsonData, setGeoJsonData] = useState(null); // shapes
-  const [assetData, setAssetData] = useState([]); // assets (markers)
+// --- COMPONENTE PRINCIPAL ---
+const CockpitMap = ({ mapFilter, activeIntel = "rios", activeFocus = "nacional", externalData }) => {
+  const [geoJsonData, setGeoJsonData] = useState(null);
+  const [assetData, setAssetData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(null);
 
-  // Fetch dos dados (geojson e assets quando necessário)
+  // Mapeamento Otimizado (Lookup Table)
+  const realScores = useMemo(() => {
+     const map = {};
+     // Verifica se externalData existe e tem features antes de rodar
+     if (externalData && Array.isArray(externalData.features)) {
+         externalData.features.forEach(f => {
+             if (f.properties && f.properties.name) {
+                 const key = norm(f.properties.name);
+                 map[key] = f.properties.risk;
+             }
+         });
+     }
+     return map;
+  }, [externalData]);
+
+  // Carregamento de Dados
   useEffect(() => {
     let canceled = false;
-
-    const fetchGeo = async () => {
-      try {
-        const url = activeIntel === "clima"
-          ? "http://127.0.0.1:8000/macro/clima/map"
-          : "http://127.0.0.1:8000/macro/grc/map";
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`Falha ao buscar geojson (${res.status})`);
-        const data = await res.json();
-        if (!canceled) setGeoJsonData(data);
-      } catch (err) {
-        console.error("Erro fetch geojson:", err);
-        if (!canceled) setErrorMsg("Mapa Indisponível");
-      }
-    };
-
-    const fetchAssets = async () => {
-      try {
-        const url = "http://127.0.0.1:8000/macro/assets/map";
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`Falha ao buscar assets (${res.status})`);
-        const data = await res.json();
-        if (!canceled) setAssetData(data.features || []);
-      } catch (err) {
-        console.error("Erro fetch assets:", err);
-        if (!canceled) setErrorMsg("Ativos indisponíveis");
-      }
-    };
-
-    const run = async () => {
-      setIsLoading(true);
-      setErrorMsg(null);
-      setGeoJsonData(null);
-      setAssetData([]);
-
-      try {
-        if (activeFocus === "ativos") {
-          // quando em ativos, buscamos ambos: assets + shapes (para colorir apenas municípios que têm ativos)
-          await Promise.all([fetchAssets(), fetchGeo()]);
+    
+    // MODO MESTRE
+    if (activeIntel === "mestre") {
+        if (externalData) {
+            setAssetData(externalData.features || []);
+            // Sempre carrega o mapa base para desenhar os municípios
+            fetch("http://127.0.0.1:8000/macro/grc/map")
+                .then(r => r.json())
+                .then(data => { if(!canceled) setGeoJsonData(data); })
+                .catch(e => console.warn("Erro ao carregar mapa base", e));
+            setIsLoading(false);
         } else {
-          // visão nacional: só shapes
-          await fetchGeo();
+            setIsLoading(true);
         }
-      } finally {
-        if (!canceled) setIsLoading(false);
-      }
+        return;
+    }
+
+    // MODOS ANTIGOS
+    const runLegacy = async () => {
+        setIsLoading(true);
+        setGeoJsonData(null);
+        setAssetData([]);
+        try {
+            const fetchGeo = async () => {
+                const url = activeIntel === "clima" ? "http://127.0.0.1:8000/macro/clima/map" : "http://127.0.0.1:8000/macro/grc/map";
+                const res = await fetch(url);
+                if (!res.ok) throw new Error("Erro de rede");
+                const data = await res.json();
+                if (!canceled) setGeoJsonData(data);
+            };
+            const fetchAssets = async () => {
+                const res = await fetch("http://127.0.0.1:8000/macro/assets/map");
+                if (!res.ok) throw new Error("Erro de rede");
+                const data = await res.json();
+                if (!canceled) setAssetData(data.features || []);
+            };
+            if (activeFocus === "ativos") await Promise.all([fetchAssets(), fetchGeo()]);
+            else await fetchGeo();
+        } catch (err) { 
+            console.error(err); 
+        } finally { 
+            if (!canceled) setIsLoading(false); 
+        }
     };
-
-    run();
-
+    runLegacy();
     return () => { canceled = true; };
-  }, [activeIntel, activeFocus]);
+  }, [activeIntel, activeFocus, externalData]);
 
-  // ---------------- Estilo do GeoJSON ----------------
+  // --- LÓGICA DE DADOS (FALLBACK INTELIGENTE) ---
+  const getFeatureData = (props) => {
+      const name = norm(props.NM_MUN_PADRONIZADO || props.name);
+      
+      // Mestre: Tenta pegar do cálculo do backend
+      if (activeIntel === 'mestre') {
+          const calculatedScore = realScores[name];
+          
+          if (calculatedScore !== undefined && calculatedScore !== null) {
+              return { risk: Number(calculatedScore), label: "Risco Mestre" };
+          }
+          
+          // Se não achou no backend (ex: cidade sem rio mapeado),
+          // tenta usar o dado de clima local do próprio GeoJSON para não ficar vazio
+          const climaLocal = Number(props.risco_clima_nota || 0);
+          if (climaLocal > 0) {
+              return { risk: climaLocal * 0.5, label: "Risco Mestre (Clima)" };
+          }
+          
+          return { risk: 0, label: "Sem Dados" };
+      }
+      
+      // Clima
+      if (activeIntel === 'clima') return { risk: Number(props.risco_clima_nota || 0), label: "Risco Climático" };
+      
+      // Rios
+      return { risk: Number(props.risco_rio_nota || props.RISCO_RIO || props.nota || 0), label: "Risco Rio (GRC)" };
+  };
+
+  // --- ESTILIZAÇÃO ---
   const geoJsonStyle = (feature) => {
+    const { risk } = getFeatureData(feature.properties || {});
     const props = feature.properties || {};
-    // risco do município vindo do backend
-    const risk = activeIntel === "clima"
-      ? (props.risco_clima_nota ?? 0)
-      : (props.risco_rio_nota ?? 0);
-
     const municipioName = norm(props.NM_MUN_PADRONIZADO || props.name);
     const filterName = norm(mapFilter);
 
-    // VISÃO ATIVOS: esconder tudo que não possui asset; destacar municípios onde há asset
-    if (activeFocus === "ativos") {
-      const hasAsset = Array.isArray(assetData) && assetData.some((a) => {
-        const assetMunicipio = norm(a?.properties?.municipio ?? a?.properties?.name ?? "");
-        return assetMunicipio === municipioName;
-      });
+    // Filtro Visual (diminui opacidade dos outros)
+    if (mapFilter) {
+        const riskLevel = norm(getRiskLevel(risk));
+        if (riskLevel !== filterName && municipioName !== filterName) {
+            return { fillColor: "#222", fillOpacity: 0.1, weight: 0.5, color: "#333" };
+        }
+    }
 
-      if (!hasAsset) {
-        return {
-          fillColor: "transparent",
-          fillOpacity: 0,
-          weight: 0,
+    if (risk > 0) {
+        return { 
+            fillColor: getRiskColor(risk), 
+            fillOpacity: 0.75, 
+            weight: 0.5, 
+            color: "#666", 
+            opacity: 1 
         };
-      }
-
-      // município com ativo → cor segundo risco do município (coerente com visão nacional)
-      return {
-        fillColor: getRiskColor(risk),
-        fillOpacity: 0.85,
-        weight: 0.6,
-        color: "#FFFFFF",
-        opacity: 0.85,
-      };
     }
-
-    // VISÃO NACIONAL (preservando comportamento do código base)
-    if (!mapFilter) {
-      if (risk > 0) {
-        return {
-          fillColor: getRiskColor(risk),
-          fillOpacity: 0.8,
-          weight: 0.4,
-          color: "#FFFFFF",
-          opacity: 0.5,
-        };
-      }
-      return {
-        fillColor: "transparent",
-        fillOpacity: 0,
-        weight: 0.2,
-        color: "var(--borda-sutil, #444)",
-        opacity: 0.5,
-      };
-    }
-
-    // cross-filter ativo: comparar níveis e nomes normalizados (remove acentos)
-    const riskLevel = norm(getRiskLevel(risk));
-    const isMatch = riskLevel === filterName || municipioName === filterName;
-
-    if (isMatch) {
-      return {
-        fillColor: getRiskColor(risk),
-        fillOpacity: 0.9,
-        weight: 0.6,
-        color: "#FFFFFF",
-        opacity: 0.5,
-      };
-    }
-
-    // estilo "apagado" quando houver filtro mas não houver match
-    return {
-      fillColor: "#222",
-      fillOpacity: 0.1,
-      weight: 0,
-      opacity: 0,
+    
+    // Estilo para locais "Sem Dados" (Evita buraco negro, deixa levemente visível)
+    return { 
+        fillColor: "transparent", // ou "#333" se preferir fundo cinza
+        fillOpacity: 0, 
+        weight: 0.3, 
+        color: "#444", 
+        opacity: 0.3 
     };
   };
 
-  // ---------------- onEachFeature ----------------
+  // --- POPUP E INTERAÇÃO ---
   const onEachFeature = (feature, layer) => {
     const props = feature.properties || {};
     const municipioName = props.NM_MUN_PADRONIZADO || props.name || "Desconhecido";
-    const risk = activeIntel === "clima"
-      ? (props.risco_clima_nota ?? 0)
-      : (props.risco_rio_nota ?? 0);
-
-    const label = activeIntel === "clima" ? "Risco Climático" : "Nota de Risco (Rios)";
-
-    if (risk > 0) {
-      layer.bindPopup(`<strong>${municipioName}</strong><br/>${label}: ${Number(risk).toFixed(2)}`);
-    } else {
-      layer.bindPopup(`<strong>${municipioName}</strong><br/>Sem Dados`);
-    }
+    
+    const { risk, label } = getFeatureData(props);
+    const color = getRiskColor(risk);
+    
+    const popupContent = `
+        <div style="text-align:center; min-width: 140px;">
+            <strong style="font-size:1rem; color:#fff; text-transform:uppercase;">${municipioName}</strong>
+            <hr style="margin:6px 0; border-color:#444;"/>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.8rem; color:#ccc;">${label}:</span>
+                <strong style="font-size:1.2rem; color:${color};">${risk.toFixed(2)}</strong>
+            </div>
+            <div style="font-size:0.75rem; color:#888; margin-top:4px;">
+                Nível: <span style="color:${color}">${getRiskLevel(risk)}</span>
+            </div>
+        </div>
+    `;
+    
+    layer.bindPopup(popupContent);
 
     layer.on({
       mouseover: (e) => {
-        // apenas destaca no hover quando NÂO há filtro ativo (comportamento original)
-        if (!mapFilter) {
-          const target = e.target;
-          target.setStyle({ weight: 2, color: "#FFFFFF", opacity: 1 });
-          if (target.bringToFront) target.bringToFront();
-        }
+        const target = e.target;
+        target.setStyle({ weight: 2, color: "#FFFFFF", fillOpacity: 0.9 });
+        if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) target.bringToFront();
       },
       mouseout: (e) => {
-        if (!mapFilter) {
-          e.target.setStyle(geoJsonStyle(feature));
-        }
+        if (!mapFilter) e.target.setStyle(geoJsonStyle(feature));
+      },
+      click: (e) => {
+        map.fitBounds(e.target.getBounds(), { padding: [50, 50] });
       }
     });
   };
 
-  // Decide se mostramos o mapa
-  const showMap = !isLoading && !!geoJsonData;
+  // Decide se mostra o mapa
+  const showMap = !isLoading && (!!geoJsonData || (assetData && assetData.length > 0) || activeIntel === 'mestre');
 
   return (
-    <div className="cockpit-map-container" style={{ height: "100%", width: "100%" }}>
+    <div className="cockpit-map-container" style={{ height: "100%", width: "100%", position: 'relative' }}>
+      {isLoading && <div className="map-loading-overlay">Processando Mapa...</div>}
+
       {showMap ? (
         <MapContainer center={[-14.235, -51.925]} zoom={4} style={{ height: "100%", width: "100%" }} preferCanvas={true}>
-          <TileLayer
-            attribution='&copy; CARTO'
-            url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
-          />
+          <TileLayer attribution='&copy; CARTO' url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png" />
 
-          {/* GeoJSON: desenha sempre (mas o style decide se aparece completamente ou apenas municípios com assets) */}
-          <GeoJSON
-            key={`${activeIntel}-${activeFocus}-${mapFilter || "all"}`}
-            data={geoJsonData}
-            style={geoJsonStyle}
-            onEachFeature={onEachFeature}
-          />
+          {geoJsonData && (
+            <GeoJSON
+              // Key: força atualização quando mudam os filtros ou dados
+              key={`geo-${activeIntel}-${mapFilter || 'all'}-${Object.keys(realScores).length}`}
+              data={geoJsonData}
+              style={geoJsonStyle}
+              onEachFeature={onEachFeature}
+            />
+          )}
 
-          {/* Marcadores de ativos (apenas se assetData existir) */}
           {Array.isArray(assetData) && assetData.map((asset, i) => {
             const coords = asset?.geometry?.coordinates;
             if (!coords || coords.length < 2) return null;
             const lat = coords[1], lon = coords[0];
+            const assetRisk = (asset?.properties?.risk ?? 0);
+            
+            if (mapFilter) {
+               const level = getRiskLevel(assetRisk);
+               if (norm(level) !== norm(mapFilter)) return null;
+            }
 
-            // risco do ativo (pode vir em different.casing)
-            const assetRisk = (asset?.properties?.risk ?? asset?.properties?.RISK ?? asset?.properties?.risco ?? 0);
             const pinColor = getRiskColor(assetRisk);
-
-            // ícone div colorido para distinguir riscos
-            const iconHtml = `
-              <div style="
-                background: ${pinColor};
-                width: 18px;
-                height: 18px;
-                border-radius: 50%;
-                border: 2px solid white;
-                box-shadow: 0 0 3px rgba(0,0,0,0.45);
-              "></div>
-            `;
-            const coloredIcon = L.divIcon({
-              className: "custom-pin-icon",
-              html: iconHtml,
-              iconSize: [18, 18],
-              iconAnchor: [9, 9],
-              popupAnchor: [0, -9],
-            });
-
+            const iconHtml = `<div style="background:${pinColor}; width:12px; height:12px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 6px ${pinColor};"></div>`;
+            
             return (
               <Marker
-                key={`asset-${asset?.properties?.id ?? i}-${lat}-${lon}`}
+                key={`pt-${i}`}
                 position={[lat, lon]}
-                icon={coloredIcon}
+                icon={L.divIcon({ className: "custom-pin", html: iconHtml, iconSize: [12, 12] })}
               >
                 <Popup>
-                  <div style={{ textAlign: "center", color: "#333" }}>
-                    <strong>{asset?.properties?.name ?? asset?.properties?.nome ?? "Ativo"}</strong>
-                    <div style={{ marginTop: 6, fontWeight: "bold", color: pinColor }}>
-                      Risco Estimado: {typeof assetRisk === "number" ? assetRisk.toFixed(2) : assetRisk}
+                    <div style={{textAlign:'center', color:'#333'}}>
+                        <strong>{asset.properties.name}</strong><br/>
+                        <strong style={{color:pinColor}}>{assetRisk.toFixed(2)}</strong>
                     </div>
-                    {asset?.properties?.id && (
-                      <a href={`/asset/${asset.properties.id}`} style={{ display: "block", marginTop: 8, color: "#007bff" }}>
-                        Ver Detalhes
-                      </a>
-                    )}
-                  </div>
                 </Popup>
               </Marker>
             );
           })}
 
-          {/* Legenda só aparece na visão nacional */}
           {activeFocus !== "ativos" && <CockpitMapLegend getRiskColor={getRiskColor} />}
-
-          <MapZoomHandler
-            mapFilter={mapFilter}
-            geoJsonData={geoJsonData}
-            activeFocus={activeFocus}
-            assetData={assetData}
-          />
+          <MapZoomHandler mapFilter={mapFilter} geoJsonData={geoJsonData} activeFocus={activeFocus} assetData={assetData} />
         </MapContainer>
       ) : (
-        <div className="map-loading">
-          {errorMsg ? errorMsg : (isLoading ? "Carregando Inteligência..." : "Selecione uma camada.")}
-        </div>
+        <div className="map-loading">Aguardando dados...</div>
       )}
     </div>
   );

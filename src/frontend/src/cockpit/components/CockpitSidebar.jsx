@@ -1,25 +1,32 @@
-// src/cockpit/components/CockpitSidebar.jsx (VERSÃO FINAL COM MODAL DE ATIVO)
+// src/cockpit/components/CockpitSidebar.jsx (VERSÃO ATUALIZADA)
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import CreateAssetModal from './CreateAssetModal'; // <--- IMPORTA O MODAL
+import CreateAssetModal from './CreateAssetModal';
 import './CockpitSidebar.css';
 
-// (Funções Auxiliares mantidas...)
+// --- Funções Auxiliares ---
 const getKpiColor = (value, type) => {
   const val = parseFloat(value);
   if (isNaN(val)) return 'var(--texto-principal)';
   if (type === 'score') {
-    if (val >= 8) return 'var(--cor-critica)'; 
-    if (val >= 6) return 'var(--cor-alerta)';  
-    if (val >= 4) return 'var(--cor-cuidado)'; 
-    return 'var(--cor-sucesso)';               
+    if (val >= 8) return 'var(--cor-critica)'; // Vermelho
+    if (val >= 6) return 'var(--cor-alerta)';  // Laranja
+    if (val >= 4) return 'var(--cor-cuidado)'; // Amarelo
+    return 'var(--cor-sucesso)';               // Verde
   }
   if (type === 'count') {
     if (val > 0) return 'var(--cor-critica)'; 
     return 'var(--cor-sucesso)';              
   }
   return 'var(--acento-primario)';
+};
+
+const formatNumber = (num) => {
+    if (!num && num !== 0) return '-';
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(0) + 'k';
+    return num;
 };
 
 const KpiCard = ({ title, value, unit = "", type = "neutral" }) => {
@@ -29,23 +36,50 @@ const KpiCard = ({ title, value, unit = "", type = "neutral" }) => {
       <span className="kpi-title">{title}</span>
       <span className="kpi-value" style={{ color: color }}>
         {value}
-        {unit && <span style={{fontSize: '1rem', marginLeft: '4px', color: '#888'}}>{unit}</span>}
+        {unit && <span style={{fontSize: '0.8rem', marginLeft: '4px', color: '#888'}}>{unit}</span>}
       </span>
     </div>
   );
 };
 
+// --- Componente Principal ---
 const CockpitSidebar = ({ kpis, isLoading, activeFocus, setActiveFocus, activeIntel, setActiveIntel }) => {
   
-  // Estado para controlar a abertura do Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
-
   const isGrcExplorerActive = activeFocus === 'nacional' && activeIntel === 'rios'; 
 
   const renderKpis = () => {
     if (isLoading) return <div className="loading-text">Carregando Inteligência...</div>;
     if (!kpis) return <div className="error-text">Aguardando Dados...</div>;
     
+    // --- 1. VISÃO MESTRA (NOVA) ---
+    if (activeIntel === 'mestre') {
+        return (
+            <div className="kpi-section">
+                <h3 className="kpi-section-title" style={{ color: '#e74c3c' }}>⚡ Risco Mestre (Fundido)</h3>
+                
+                {/* KPI Principal */}
+                <KpiCard 
+                    title="Risco Nacional Médio" 
+                    value={kpis.riscoNacionalMedio ? kpis.riscoNacionalMedio.toFixed(2) : '--'} 
+                    type="score" 
+                />
+                
+                {/* KPI de Impacto Social */}
+                <div className="cockpit-kpi-card">
+                    <span className="kpi-title">População em Risco</span>
+                    <span className="kpi-value" style={{ color: '#f39c12' }}>
+                        {formatNumber(kpis.populacaoEmRisco)}
+                    </span>
+                </div>
+
+                <KpiCard title="Municípios Críticos" value={kpis.municipiosAlertaCritico || 0} type="count" />
+                <KpiCard title="Total Monitorado" value={formatNumber(kpis.totalMonitorado)} type="neutral" />
+            </div>
+        );
+    }
+
+    // --- 2. VISÃO RIOS (GRC) ---
     if (activeIntel === 'rios') {
       return (
         <div className="kpi-section">
@@ -58,6 +92,7 @@ const CockpitSidebar = ({ kpis, isLoading, activeFocus, setActiveFocus, activeIn
       );
     }
 
+    // --- 3. VISÃO CLIMA ---
     if (activeIntel === 'clima') {
       return (
         <div className="kpi-section">
@@ -93,11 +128,10 @@ const CockpitSidebar = ({ kpis, isLoading, activeFocus, setActiveFocus, activeIn
           <button className={`toggle-button ${activeFocus === 'ativos' ? 'active' : ''}`} onClick={() => setActiveFocus('ativos')}>Meus Ativos</button>
         </div>
         
-        {/* Botão Criar Ativo - Agora abre o Modal! */}
         {activeFocus === 'ativos' && (
             <button 
                 className="create-asset-button" 
-                onClick={() => setIsModalOpen(true)} // Abre o modal
+                onClick={() => setIsModalOpen(true)}
             >
                 + Criar Novo Ativo
             </button>
@@ -117,7 +151,6 @@ const CockpitSidebar = ({ kpis, isLoading, activeFocus, setActiveFocus, activeIn
         {renderKpis()}
       </div>
 
-      {/* Renderiza o Modal aqui */}
       <CreateAssetModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 

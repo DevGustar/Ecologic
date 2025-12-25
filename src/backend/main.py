@@ -11,6 +11,7 @@ import json
 import pandas as pd
 import geopandas as gpd
 import os
+import unicodedata # <--- IMPORTANTE: Adicione no topo do arquivo
 
 from .api_connectors import buscar_clima_openweather, fetch_elevation_data, get_municipality_from_coords
 from .risk_calculator import calculate_daily_risk, calculate_hourly_risk
@@ -432,7 +433,6 @@ def get_asset_hourly_risk(asset_id: str, db: Session = Depends(get_db)):
 
     return {"asset_info": asset, "hourly_forecast_with_risk": previsao_enriquecida}
 
-# src/backend/main.py (Atualização do Endpoint do Mapa)
 
 @app.get("/macro/assets/map")
 def get_assets_map_points(
@@ -487,94 +487,152 @@ def get_assets_map_points(
 
     return {"type": "FeatureCollection", "features": features}
     
-    # ==========================================
-# 7. KPI DEDICADO: RISCO MESTRE (FUSÃO)
+# src/backend/main.py
+
+# ... (Mantenha seus imports e variáveis globais lá em cima)
+
+# --- HELPER FUNCTIONS (Auxiliares da Regra de Negócio) ---
+def converter_vuln_para_fator(texto):
+    """Transforma texto (ex: 'Muito Alto') em multiplicador matemático."""
+    if not isinstance(texto, str): return 1.0
+    t = texto.lower().strip()
+    if 'muito alto' in t or 'crítico' in t: return 1.25 # Aumenta risco em 25%
+    if 'alto' in t: return 1.15
+    return 1.0
+
+def estimar_populacao_impactada(impacto_texto):
+    """Estimativa de pessoas afetadas baseada no grau de impacto da ANA."""
+    if not isinstance(impacto_texto, str): return 0
+    t = impacto_texto.lower()
+    if 'muito alto' in t: return 50000
+    if 'alto' in t: return 10000
+    if 'médio' in t: return 1000
+    return 100
+
 # ==========================================
-@app.get("/macro/mestre/kpis")
-def get_mestre_kpi_data(db: Session = Depends(get_db)):
+# 7. FUSÃO MESTRA: DADOS COMPLETOS (ÚNICO ENDPOINT)
+# ==========================================
+# Função para limpar texto (Remove acentos: Corumbá -> CORUMBA)
+def normalizar_chave(texto):
+    if not isinstance(texto, str): return ""
+    return unicodedata.normalize('NFKD', texto).encode('ASCII', 'ignore').decode('ASCII').upper().strip()
+
+@app.get("/macro/mestre/full_data")
+def get_mestre_full_data():
     """
-    Endpoint MESTRE: Realiza a fusão de todos os riscos (Rio, Clima, Altitude)
-    e retorna os KPIs e Gráficos consolidados para o Frontend.
+    ENDPOINT MESTRE (SEM FILTROS):
+    - Manda 100% dos municípios, mesmo com nota 0.
+    - Garante que o mapa pinte tudo.
     """
-    assets = db.query(models.Asset).all()
-    
-    # Estruturas para agregação
+    if map_rivers_data is None:
+        return {"kpis": {}, "graficos": {}, "mapa": {"type": "FeatureCollection", "features": []}}
+
+    # 1. Indexação Clima
+    df_clima = map_climate_data if map_climate_data is not None else pd.DataFrame()
+    climate_map = {}
+    try:
+        if not df_clima.empty:
+            col_city = next((c for c in df_clima.columns if c.lower() in ['municipio', 'city', 'nome']), None)
+            col_risk = next((c for c in df_clima.columns if c.lower() in ['risk_score', 'nota', 'risk']), None)
+            if col_city and col_risk:
+                climate_map = {
+                    normalizar_chave(str(k)): float(v) 
+                    for k, v in zip(df_clima[col_city], pd.to_numeric(df_clima[col_risk], errors='coerce').fillna(0))
+                }
+    except: pass
+
+    # 2. Inicialização
     stats = {'Crítico': 0, 'Alto': 0, 'Moderado': 0, 'Baixo': 0, 'Mínimo': 0}
     top_list = []
-    total_score_sum = 0
+    map_features = []
     
-    # Loop de Cálculo (O "Cérebro")
-    for asset in assets:
-        # 1. Busca Clima (Cache/API)
-        climate_raw = buscar_clima_openweather(asset.latitude, asset.longitude)
-        
-        rain_mm = 0
-        pop = 0
-        wind_kmh = 0
-        temp = 25
+    total_score_sum = 0
+    total_pop_risco = 0
+    count = 0
 
-        if climate_raw:
-            if 'daily' in climate_raw and len(climate_raw['daily']) > 0:
-                d = climate_raw['daily'][0]
-                # Tenta extrair chuva (pode vir como float ou dict)
-                rain_obj = d.get('rain', 0)
-                if isinstance(rain_obj, dict):
-                    rain_mm = float(rain_obj.get('1h', 0))
-                else:
-                    rain_mm = float(rain_obj)
-                
-                pop = float(d.get('pop', 0)) * 100
-                wind_kmh = max(float(d.get('wind_speed', 0)), float(d.get('wind_gust', 0))) * 3.6
-                temp = d.get('temp', {}).get('day', 25)
-            elif 'current' in climate_raw:
-                c = climate_raw['current']
-                wind_kmh = float(c.get('wind_speed', 0)) * 3.6
-                temp = c.get('temp', 25)
+    records = map_rivers_data.to_dict('records')
 
-        # 2. Aplica a Fórmula Mestra (Risk Calculator)
-        inputs = { "volume_chuva_mm": rain_mm, "prob_chuva_%": pop, "rajadas_kmh": wind_kmh, "temp": temp }
-        structure = { "elevation_m": asset.elevation_m, "river_risk_factor": asset.river_risk_factor }
+    for row in records:
+        # A) Inputs
+        r_rio = float(row.get('Nota_de_Risco', 0))
+        mun_nome = str(row.get('NM_MUN_PADRONIZADO', ''))
+        mun_chave = normalizar_chave(mun_nome)
         
-        # O cálculo acontece aqui
-        analise = calculate_daily_risk(inputs, structure)
-        score = analise['score_final']
+        r_clima = climate_map.get(mun_chave, 0.0)
         
-        # 3. Agregação para KPIs
-        total_score_sum += score
+        vuln_txt = str(row.get('Vulnerabilidade', 'Baixo'))
+        impacto_txt = str(row.get('Impacto', 'Baixo'))
+        fator_vuln = converter_vuln_para_fator(vuln_txt)
+
+        # B) FÓRMULA (50/50 Pura)
+        base_score = (r_rio * 0.5) + (r_clima * 0.5)
+        final_score = base_score * fator_vuln
+        if final_score > 10.0: final_score = 10.0
+
+        # C) Consolidação
+        count += 1
+        total_score_sum += final_score
         
-        # Classificação para o Gráfico de Pizza
-        classe = get_risk_classification_from_note(score)
-        if classe in stats: stats[classe] += 1
+        if final_score >= 4.0:
+            total_pop_risco += estimar_populacao_impactada(impacto_txt)
+
+        cat = get_risk_classification_from_note(final_score)
+        if cat in stats: stats[cat] += 1
+
+        # D) Output (SEM FILTRO DE NOTA MÍNIMA)
+        nome_rio = str(row.get('NORIOCOMP', 'Rio'))
+        label_principal = mun_nome if len(mun_nome) > 2 else nome_rio
         
-        # Lista de "Top Críticos" (Filtra apenas quem tem algum risco relevante)
-        if score >= 4.0:
-            municipio = get_municipality_from_coords(asset.latitude, asset.longitude)
+        # Só filtra da LISTA lateral se for muito irrelevante, pra não poluir
+        if final_score > 0.1:
             top_list.append({
-                "nome": asset.name,     # Nome do Ativo
-                "nota": round(score, 2),
-                "municipio": municipio or "N/A"
+                "nome": label_principal,
+                "nota": round(final_score, 2),
+                "detalhe": nome_rio
             })
 
-    # Finalização
-    top_list.sort(key=lambda x: x['nota'], reverse=True) # Ordena decrescente
-    
-    # Formato do Gráfico para o Recharts (Frontend)
-    grafico_pizza = [{"name": k, "value": v} for k, v in stats.items() if v > 0]
-    
-    # Médias
-    avg_risk = total_score_sum / len(assets) if len(assets) > 0 else 0
-    total_alerts = stats['Crítico'] + stats['Alto']
+        # NO MAPA: MANDA TUDO, SEMPRE.
+        # Precisamos lat/lon. Se não tiver, infelizmente não dá pra plotar ponto.
+        lat = row.get('Latitude') or row.get('LATITUDE')
+        lon = row.get('Longitude') or row.get('LONGITUDE')
+        
+        if lat and lon:
+            map_features.append({
+                "type": "Feature",
+                "geometry": { "type": "Point", "coordinates": [float(lon), float(lat)] },
+                "properties": {
+                    "id": str(uuid.uuid4()),
+                    "name": mun_nome, # Nome oficial para bater com GeoJSON
+                    "risk": round(final_score, 2),
+                    "municipio": nome_rio
+                }
+            })
 
-    # Retorno Padronizado (Exatamente o que o CockpitPage.jsx espera)
+    # 3. Retorno
+    top_list.sort(key=lambda x: x['nota'], reverse=True)
+    avg_risk = total_score_sum / count if count > 0 else 0
+
+    grafico_pizza = []
+    if count > 0:
+        for k, v in stats.items():
+            if v > 0:
+                pct = (v / count) * 100
+                grafico_pizza.append({"name": k, "value": round(pct, 1)})
+
     return {
         "kpis": {
             "riscoNacionalMedio": round(avg_risk, 2),
-            "municipiosAlertaCritico": total_alerts,
-            "totalMonitorado": len(assets)
+            "municipiosAlertaCritico": stats['Crítico'] + stats['Alto'],
+            "totalMonitorado": count,
+            "populacaoEmRisco": total_pop_risco
         },
         "graficos": {
             "riscoPorNivel": grafico_pizza,
-            "topRiosPorRisco": top_list[:20] # Manda os top 20
+            "topRiosPorRisco": top_list[:20]
+        },
+        "mapa": {
+            "type": "FeatureCollection",
+            "features": map_features
         }
     }
 
