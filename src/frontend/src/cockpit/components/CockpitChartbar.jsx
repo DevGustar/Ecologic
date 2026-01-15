@@ -1,4 +1,4 @@
-// src/cockpit/components/CockpitChartbar.jsx (VERSÃO ATUALIZADA - SUPORTE A MESTRE)
+// src/cockpit/components/CockpitChartbar.jsx
 
 import React from 'react';
 import { 
@@ -7,16 +7,17 @@ import {
 } from 'recharts';
 import './CockpitChartbar.css';
 
+// --- CORES SINCRONIZADAS COM O MAPA ---
 const COLORS = {
-  'Crítico': 'var(--cor-critica)',
-  'Alto': 'var(--cor-alerta)',
-  'Moderado': 'var(--cor-cuidado)',
-  'Baixo': 'var(--cor-sucesso)',
-  'Mínimo': 'var(--cor-neutra)',
-  'Sem Dados': 'var(--borda-sutil)'
+  'Crítico': '#e74c3c',  
+  'Alto': '#e67e22',     
+  'Moderado': '#f1c40f', 
+  'Baixo': '#2ecc71',    
+  'Mínimo': '#3498db',   
+  'Sem Dados': '#555'
 };
 
-// --- Tooltip Donut (Pizza) ---
+// --- TOOLTIPS PERSONALIZADOS ---
 const CustomDonutTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
@@ -24,72 +25,40 @@ const CustomDonutTooltip = ({ active, payload }) => {
       <div className="custom-tooltip-donut">
         <span className="tooltip-label-donut">{data.name}</span>
         <span className="tooltip-value-donut">{data.value.toFixed(1)}%</span>
-        {/* Se o backend mandar contagem, mostramos. Se não, oculta */}
-        {data.count !== undefined && (
-            <span className="tooltip-count-donut">({data.count} regs)</span>
-        )}
       </div>
     );
   }
   return null;
 };
 
-// --- Legenda Donut ---
-const CustomDonutLegend = ({ payload, onFilterChange, activeFilter }) => (
-  <div className="grafico-donut-legenda">
-    {payload.map((entry, index) => (
-      <div 
-        key={`legend-${index}`} 
-        className={`legenda-item ${activeFilter && activeFilter !== entry.payload.name ? 'inactive' : ''}`}
-        onClick={() => onFilterChange(entry.payload.name)} 
-        style={{ cursor: 'pointer' }}
-      >
-        <span className="legenda-cor" style={{ backgroundColor: entry.color }}></span>
-        <span className="legenda-nome">{entry.payload.name}</span>
-        <span className="legenda-valor">{entry.payload.value.toFixed(1)}%</span>
-      </div>
-    ))}
-  </div>
-);
-
-// --- Tooltip Barra (Ranking) ---
-const CustomBarTooltip = ({ active, payload }) => {
+const CustomBarTooltip = ({ active, payload, activeIntel }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     
-    // Verifica se temos detalhes extras (GRC ou Mestre)
-    const isRio = data.frequencia && data.frequencia !== 'N/A';
-    const hasDetalhe = data.detalhe; // Campo novo do Mestre (Nome do Rio)
+    // Define cor do tooltip
+    let color = '#2ecc71';
+    if (data.nota >= 8) color = '#e74c3c';
+    else if (data.nota >= 6) color = '#e67e22';
+    else if (data.nota >= 4) color = '#f1c40f';
+    else if (data.nota > 0) color = '#3498db';
 
     return (
       <div className="custom-tooltip-bar tooltip-shift-left">
         <p className="tooltip-label-bar">{data.nome}</p>
         
-        {/* Se for Mestre, mostra o Rio como detalhe */}
-        {hasDetalhe && (
-            <div style={{fontSize:'0.85rem', color:'#ccc', marginBottom:'5px'}}>
-                Rio: {data.detalhe}
+        {/* Detalhe extra (ex: Rio) se houver */}
+        {activeIntel === 'mestre' && data.detalhe && (
+            <div style={{fontSize:'0.8rem', color:'#ccc', marginBottom:'5px'}}>
+                {data.detalhe}
             </div>
         )}
 
         <div className="tooltip-score-row">
             <span>Nota:</span>
-            <span className="score-value" style={{
-                color: data.nota >= 8 ? 'var(--cor-critica)' : 
-                       data.nota >= 6 ? 'var(--cor-alerta)' : 'var(--cor-sucesso)'
-            }}>
+            <span className="score-value" style={{ color: color }}>
                 {data.nota ? data.nota.toFixed(2) : '0.00'}
             </span>
         </div>
-        
-        {/* Detalhes específicos da visão GRC/Rios */}
-        {isRio && (
-           <div className="tooltip-grc-breakdown">
-             <span>Freq: <strong>{data.frequencia}</strong></span>
-             <span>Vuln: <strong>{data.vulnerabilidade}</strong></span>
-             <span>Imp: <strong>{data.impacto}</strong></span>
-           </div>
-        )}
       </div>
     );
   }
@@ -99,64 +68,49 @@ const CustomBarTooltip = ({ active, payload }) => {
 // --- COMPONENTE PRINCIPAL ---
 const CockpitChartbar = ({ graficos, isLoading, onFilterChange, activeFilter, activeIntel }) => {
 
-  // Dados do Donut
+  // 1. DADOS PIZZA
   const donutData = graficos?.riscoPorNivel ? 
     [...graficos.riscoPorNivel].sort((a, b) => b.value - a.value) : [];
 
-  // Dados do Ranking (Top 10/20)
+  // 2. DADOS RANKING
   const rawTopData = graficos?.topRanking || graficos?.topRiosPorRisco || [];
   
-  // Processamento dos nomes para exibição (nomeCurto)
-  const topData = rawTopData.map(item => ({
-      ...item,
-      nomeCurto: (activeIntel === 'rios')
-        ? item.nome.split(' (')[0].replace('Rio ', '').replace('Arroio ', '') // Limpa p/ caber na barra
-        : item.nome // Para Clima e Mestre, o nome já vem certo (Município)
-    }));
+  // Tratamento de nomes longos para exibição
+  const topData = rawTopData.map(item => {
+      let displayName = item.nome;
+      if (displayName.length > 18) displayName = displayName.substring(0, 16) + '...';
+      return { ...item, displayName: displayName };
+  });
 
-  // Definição dinâmica dos Títulos
-  let titleDonut = 'Risco por Nível';
-  let titleBar = 'Top Ranking';
+  // Títulos
+  let titleDonut = 'Distribuição de Risco';
+  let titleBar = 'Ranking de Risco';
 
   if (activeIntel === 'mestre') {
       titleDonut = 'Risco Mestre (Fundido)';
       titleBar = 'Top Municípios em Risco';
-  } else if (activeIntel === 'clima') {
-      titleDonut = 'Risco Climático (Hoje)';
-      titleBar = 'Alertas Climáticos';
-  } else {
+  } else if (activeIntel === 'rios') {
       titleDonut = 'Risco por Nível (Rios)';
-      titleBar = 'Top 10 Rios por Risco';
+      titleBar = 'Top Rios por Risco';
   }
 
-  // Função de clique na barra para filtrar o mapa
+  // --- AÇÃO DE CLIQUE (INTERATIVIDADE) ---
   const handleBarClick = (data) => {
-      if (activeIntel === 'rios') {
-          // Lógica GRC: Tenta pegar municipio explícito ou extrair de "Rio (MUNICIPIO)"
-          if (data.municipio) {
-              onFilterChange(data.municipio);
-          } else {
-              const match = data.nome.match(/\(([^)]+)\)/);
-              if (match) onFilterChange(match[1]);
-          }
-      } else {
-          // Lógica Clima e Mestre: O nome principal JÁ É o município
-          // Se tiver activeIntel='mestre', data.nome é "Joinville", data.detalhe é "Rio Cachoeira"
-          onFilterChange(data.nome); 
+      // Garante que envia o NOME REAL para o filtro
+      if (data && data.nome) {
+          onFilterChange(data.nome);
       }
   };
 
   const renderCharts = () => {
-    if (isLoading) { return <div className="loading-text">Carregando Gráficos...</div>; }
-    
-    // Se não tiver dados ou listas vazias
+    if (isLoading) return <div className="loading-text">Carregando...</div>;
     if (!graficos || (donutData.length === 0 && topData.length === 0)) { 
-        return <div className="error-text">Sem dados para exibir.</div>; 
+        return <div className="error-text">Aguardando dados...</div>; 
     }
 
     return (
       <>
-        {/* --- GRÁFICO 1: DONUT --- */}
+        {/* GRÁFICO 1: PIZZA */}
         <div className="grafico-section">
           <h4>{titleDonut}</h4>
           <ResponsiveContainer width="100%" height={310}> 
@@ -165,51 +119,53 @@ const CockpitChartbar = ({ graficos, isLoading, onFilterChange, activeFilter, ac
                 data={donutData}
                 cx="50%"
                 cy="45%"
-                innerRadius={50}
+                innerRadius={55}
                 outerRadius={80}
-                fill="#8884d8"
                 dataKey="value"
-                labelLine={false}
-                onClick={(data) => onFilterChange(data.name)}
+                stroke="none"
+                paddingAngle={2}
                 cursor="pointer"
+                onClick={(data) => onFilterChange(data.name)} // Clique na fatia
               >
                 {donutData.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`} 
-                    fill={COLORS[entry.name] || '#8884d8'} 
-                    opacity={!activeFilter || activeFilter === entry.name ? 1 : 0.3}
+                    fill={COLORS[entry.name] || '#555'} 
+                    // Se houver filtro ativo, apaga as outras fatias
+                    opacity={!activeFilter || activeFilter === entry.name ? 1 : 0.2}
                   />
                 ))}
               </Pie>
               <Tooltip content={<CustomDonutTooltip />} />
               <Legend 
-                content={<CustomDonutLegend 
-                  payload={donutData.map(entry => ({...entry, color: COLORS[entry.name]}))}
-                  onFilterChange={onFilterChange}
-                  activeFilter={activeFilter}
-                />} 
+                verticalAlign="bottom" 
+                height={36}
+                iconType="circle"
+                formatter={(value) => <span style={{color: '#ccc', fontSize: '0.8rem'}}>{value}</span>}
+                onClick={(e) => onFilterChange(e.value)} // Clique na legenda
+                wrapperStyle={{ cursor: 'pointer' }}
               />
             </PieChart>
           </ResponsiveContainer>
         </div>
 
-        {/* --- GRÁFICO 2: BARRAS (RANKING) --- */}
+        {/* GRÁFICO 2: BARRAS (RANKING) */}
         <div className="grafico-section">
           <h4>{titleBar}</h4>
-          <ResponsiveContainer width="100%" height={270}>
+          <ResponsiveContainer width="100%" height={280}>
             <BarChart 
                 data={topData} 
                 layout="vertical" 
-                margin={{ left: 10, right: 30 }} 
-                barCategoryGap="20%" // Barras um pouco mais gordinhas
+                margin={{ left: 0, right: 30, top: 10, bottom: 0 }} 
+                barCategoryGap="20%" 
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--borda-sutil)" horizontal={false} />
-              <XAxis type="number" stroke="var(--texto-secundario)" domain={[0, 10]} ticks={[0, 5, 10]} hide />
+              <CartesianGrid strokeDasharray="3 3" stroke="#333" horizontal={false} />
+              <XAxis type="number" hide domain={[0, 10]} />
               <YAxis 
                 type="category" 
-                dataKey="nomeCurto" 
-                width={130} 
-                stroke="var(--texto-secundario)" 
+                dataKey="displayName" 
+                width={110} 
+                stroke="#aaa" 
                 fontSize="0.75rem" 
                 tickLine={false} 
                 axisLine={false} 
@@ -218,26 +174,32 @@ const CockpitChartbar = ({ graficos, isLoading, onFilterChange, activeFilter, ac
               
               <Tooltip 
                 cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
-                content={<CustomBarTooltip />}
+                content={<CustomBarTooltip activeIntel={activeIntel} />}
               />
               
               <Bar 
                 dataKey="nota" 
                 radius={[0, 4, 4, 0]}
-                onClick={handleBarClick}
                 cursor="pointer"
+                onClick={handleBarClick} // <--- AQUI ESTÁ A INTERAÇÃO
               >
-                {topData.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={
-                        entry.nota >= 8 ? 'var(--cor-critica)' : 
-                        (entry.nota >= 6 ? 'var(--cor-alerta)' : 
-                        (entry.nota >= 4 ? 'var(--cor-cuidado)' : 'var(--cor-sucesso)'))
-                    } 
-                    opacity={!activeFilter || activeFilter === (activeIntel === 'rios' ? entry.municipio : entry.nome) ? 1 : 0.3}
-                  />
-                ))}
+                {topData.map((entry, index) => {
+                    // Cores baseadas na nota
+                    let color = '#2ecc71';
+                    if (entry.nota >= 8) color = '#e74c3c';
+                    else if (entry.nota >= 6) color = '#e67e22';
+                    else if (entry.nota >= 4) color = '#f1c40f';
+                    else if (entry.nota > 0) color = '#3498db';
+
+                    return (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={color} 
+                        // Destaque visual: apaga os outros se um estiver selecionado
+                        opacity={!activeFilter || activeFilter === entry.nome ? 1 : 0.3}
+                      />
+                    );
+                })}
               </Bar>
             </BarChart>
           </ResponsiveContainer>

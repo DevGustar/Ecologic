@@ -228,9 +228,9 @@ const CockpitMap = ({ mapFilter, activeIntel = "rios", activeFocus = "nacional",
         return { 
             fillColor: getRiskColor(risk), 
             fillOpacity: 0.75, 
-            weight: 0.5, 
-            color: "#666", 
-            opacity: 1 
+            weight: 0.3, 
+            color: "#fff", 
+            opacity: .8 
         };
     }
     
